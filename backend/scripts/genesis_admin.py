@@ -15,6 +15,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.database import AsyncSessionLocal
 from app.core.auth.models import User
 from app.core.events.models import EventLog
+from app.models.organization import Department
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
