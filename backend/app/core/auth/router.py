@@ -121,8 +121,9 @@ async def invite_user(
     await db.commit()
     await db.refresh(new_user)
     
-    # Print the full onboarding URL directly to the server terminal as specified
-    onboarding_url = f"http://localhost:5173/onboard?token={token}"
+    import os
+    frontend_url = os.environ.get("FRONTEND_URL", "http://45.88.191.254:3005")
+    onboarding_url = f"{frontend_url}/onboard?token={token}"
     print(f"\n[DEV MAIL] Send to {payload.email}: {onboarding_url}\n", flush=True)
     
     return {"status": "success", "message": "Invitation created successfully"}
