@@ -56,6 +56,8 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://45.88.191.254:8005}
     container_name: nexus_frontend
     ports:
       - "3005:80"
