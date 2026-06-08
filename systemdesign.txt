@@ -1,0 +1,37 @@
+# TECHNICAL SYSTEM DESIGN & DATA CONTRACTS
+# SYSTEM: Headless, Code-First, Instance-Isolated ERP Core
+
+## 1. DATABASE SCHEMA CONTRACTS (POSTGRESQL)
+All models must utilize `SQLAlchemy.ext.asyncio`. 
+
+RULE: The Hybrid Storage Engine.
+- Relational Core: All core application metrics (UUIDs, Foreign Keys, Status Strings, Financial Decimals) MUST use strict PostgreSQL columns to enforce ACID compliance.
+- Elastic Metadata: Client-specific workspace properties (e.g., forklift max load, drug storage temp) MUST be written to a single PostgreSQL `JSONB` column named `custom_attributes`.
+
+RULE: Indexing strategy.
+- Every `JSONB` column must have a Generalized Inverted Index (GIN) applied at creation to guarantee high-velocity read/filter performance.
+  Example: `CREATE INDEX idx_asset_attributes ON assets USING gin (custom_attributes);`
+
+RULE: Schema Validation & Invariants
+- Code-first schemas must validate domain-specific logic prior to database interaction.
+- Example: `JournalEntryCreate` uses `@model_validator(mode="after")` to guarantee that total debits strictly equal total credits.
+
+## 2. API & EVENT LOOP CONTRACTS (FASTAPI)
+- ENFORCEMENT: Zero synchronous database calls. Every database transaction must use `async with AsyncSessionLocal() as session:`. 
+- ENFORCEMENT: Flush Before Commit. All endpoints that insert dependent/relational entities (e.g., adding SalesOrder followed by SalesOrderLines) MUST utilize `await db.flush()` to surface DB-level constraint violations prior to `await db.commit()`. This prevents orphaned records.
+- ENFORCEMENT: N+1 Query prevention. All grid-list endpoints must explicitly define SQLAlchemy `.options(selectinload(...))` for relational entity fetching to maximize async performance.
+- BACKGROUND TASKS: Any endpoint requiring file parsing, inter-instance API pushes, or heavy aggregation (e.g., processing Sales Order Fulfillment) must use FastAPI `BackgroundTasks` to delegate execution without blocking the main event loop.
+
+## 3. SECURITY BOUNDARY CONTRACTS
+- All pluggable workspace endpoints must strictly apply isolation through APIRouter dependencies.
+- ENFORCEMENT: `router = APIRouter(dependencies=[Depends(require_workspace_access("<workspace_name>"))])` to prevent endpoint-specific RBAC bypass.
+
+## 4. WEBSOCKET STATE MANAGEMENT
+- BASE LAYER: FastAPI `ConnectionManager` holds a dictionary of active memory connections mapped to user UUIDs and workspace context.
+- TRIGGERS: Background automation (like fulfillment) imports `ws_manager` and dispatches cross-workspace `STATE_MUTATION` broadcasts upon transaction commit.
+- Broadcast formatting: 
+  { "type": "STATE_MUTATION", "payload": { "workspace": "...", "entity": "...", "action": "..." } }
+
+## 5. FAIL-FAST INFRASTRUCTURE GUARDRAILS
+- Start-up validation: The application must explicitly parse the `.env` file upon execution.
+- If `DATABASE_URL` is undefined, or points to a non-PostgreSQL dialect (e.g., `sqlite://`), the application must raise an unhandled exception and terminate the container. Silent failovers to local file databases are strictly prohibited to prevent volatile container data loss.

@@ -1,0 +1,1 @@
+# CRM workspace package

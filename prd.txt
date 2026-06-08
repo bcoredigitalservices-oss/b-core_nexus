@@ -1,0 +1,44 @@
+# PRODUCT REQUIREMENTS DOCUMENT (PRD)
+# SYSTEM: Headless, Code-First, Instance-Isolated ERP Core
+# TARGET PARSER: Antigravity AI / Autonomous Coding Agents
+# STATUS: V1 BETA AUDIT PASSED
+
+## 1. SYSTEM THESIS & INVARIANTS
+INVARIANT 1: CODE-FIRST DEFINITION. The system strictly prohibits dynamic GUI-based database configuration (e.g., no Frappe/ERPNext-style DocTypes). All schemas, field validations, and route handlers are hardcoded in backend Python/Pydantic files.
+INVARIANT 2: ABSOLUTE ISOLATION. Multi-tenancy via row-level security is explicitly rejected. Each client/company requires an independent application deployment (isolated API container + isolated PostgreSQL database).
+INVARIANT 3: LAYERED ROLLOUT. Development must strictly isolate the "Naked Core" (Auth, Directory, Catalog, Base Events) from specific business workspaces (Finance, CRM, Inventory, Operations, HR).
+
+## 2. USER HIERARCHY (ROLE TIERS)
+The application enforces strict, integer-based operational access:
+- TIER 1 (Executive Admin): System-wide visibility, multi-instance orchestration, capability override configuration, system broadcasts.
+- TIER 2 (Directional): Scopes workspaces, defines master items, manages high-level directory profiles.
+- TIER 3 (Leadership): Field supervisors. Assigns tasks, overrides asset states, resolves system blockers.
+- TIER 4 (Execution): Field operators. Read-only on configurations, mutates state on assigned tasks/assets, triggers blocker beacons.
+
+## 3. PHASE 1: THE NAKED CORE (REQUIRED BASE)
+The base system must be deployed before any workspace modules.
+- IAM (Identity & Access Management): User UUIDs, bcrypt hashing, JWT issuance.
+- Global Directory: Base structural profiles for Customers, Vendors, and internal Sites.
+- Universal Catalog: Base item definitions (ID, SKU, Title). Stripped of all specific metadata.
+- Event Engine: Real-time WebSocket connection manager and core messaging tables.
+
+## 4. PHASE 2: V1 BETA PLUGGABLE WORKSPACES
+The system expands the Naked Core with business-specific, isolated workspaces under `/api/v1/workspaces/`. Each is guarded by its respective access requirements.
+- CRM: Sales Orders, Pipelines, Quotations, Interaction Logs.
+- Finance: General Ledger, Chart of Accounts, Journal Entries (enforces double-entry).
+- Inventory: Items, Warehouses, Stock Ledger adjustments & tracking.
+- Operations: Manufacturing, Resource Allocation.
+- HR: Employee Lifecycle, Department hierarchies.
+
+## 5. CORE OPERATIONAL FEATURES
+FEATURE: Context-Attached Event Streams
+- Description: Every entity (Customer, Asset, Dispatch Log) automatically hooks to a dedicated WebSocket channel.
+- Requirement: Operators post text, code snippets, or media directly to the entity ID. Pushed <100ms to all active viewers.
+
+FEATURE: Blocker Beacon Emergency Protocol
+- Description: Field-level emergency UI override.
+- Requirement: Operator sets an asset to "Blocked". System broadcasts a `blocker_beacon` JSON payload. Central dashboards render persistent visual alerts. Only Tier 1-3 can execute the resolution payload.
+
+## 6. NON-FUNCTIONAL REQUIREMENTS
+- FRONTEND: React-based. Must use DOM virtualization (e.g., TanStack Virtual) to render up to 100k grid rows without browser degradation.
+- BACKEND: FastAPI. Must utilize true async/await loops. Heavy processing offloaded to background tasks.
