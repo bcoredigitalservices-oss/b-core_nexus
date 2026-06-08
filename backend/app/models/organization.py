@@ -38,7 +38,7 @@ class Department(CoreModel):
     organization_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str | None] = mapped_column(String, nullable=True)
-    manager_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    manager_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL", use_alter=True, name="fk_departments_manager_id_users"), nullable=True)
 
     # Self-referential parent_id column
     parent_id = Column(UUID(as_uuid=True), ForeignKey('departments.id', ondelete='CASCADE'), nullable=True)
@@ -51,7 +51,8 @@ class Department(CoreModel):
     )
     manager: Mapped["User | None"] = relationship(
         "User", 
-        foreign_keys=[manager_id]
+        foreign_keys=[manager_id],
+        post_update=True
     )
 
     # Self-referential children relationship tracking child departments
