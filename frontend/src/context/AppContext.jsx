@@ -147,7 +147,15 @@ export function AppProvider({ children }) {
 
   // Re-bootstrap whenever token changes (e.g., after manual login)
   useEffect(() => {
-    if (token) bootstrap(token);
+    const reBoot = async () => {
+      setIsBooting(true);
+      try {
+        await bootstrap(token);
+      } finally {
+        setIsBooting(false);
+      }
+    };
+    if (token) reBoot();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
