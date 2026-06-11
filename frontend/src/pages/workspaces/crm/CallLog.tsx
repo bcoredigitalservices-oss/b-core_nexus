@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import {
   Phone, Plus, X, AlertCircle, CheckCircle2, RefreshCw,
   Search, Users, MessageSquare, Calendar, Trash2, User,
-  Clock, Shield, Award, Clipboard, ChevronRight, FileText, CheckSquare
+  Clock, Shield, Award, Clipboard, ChevronRight, FileText,
+  CheckSquare, BarChart2, Filter, Activity, TrendingUp, Grid
 } from 'lucide-react';
 import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { useAppContext } from '../../../context/AppContext';
@@ -37,13 +38,25 @@ interface Customer {
   contact_name: string;
 }
 
+const VIEWS = [
+  { id: 'LIST', label: 'List View', icon: Filter },
+  { id: 'TIMELINE', label: 'Timeline', icon: Clock },
+  { id: 'DASHBOARD', label: 'Analytics', icon: BarChart2 },
+];
+
 export default function CallLog() {
   const { currentUser, authFetch } = useAppContext();
   const [calls, setCalls] = useState<Interaction[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  
+  // Filtering & View state
+  const [activeView, setActiveView] = useState('LIST');
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All Statuses');
+  const [purposeFilter, setPurposeFilter] = useState('All Purposes');
+  const [typeFilter, setTypeFilter] = useState('All Types');
   
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -140,13 +153,10 @@ export default function CallLog() {
     }
 
     try {
-      // For fallback/compatibility, we build a summary text block and attach the attributes
       const fullSummary = `[${callPurpose} - ${callStatus}] (${durationMinutes} mins) - ${remarks.substring(0, 150)}${remarks.length > 150 ? '...' : ''}`;
-
-      // If customer is selected from dropdown, use it. Otherwise default to a generic fallback/first customer
       let resolvedCustomerId = customerId;
       if (!resolvedCustomerId && customers.length > 0) {
-        resolvedCustomerId = customers[0].id; // Fallback to satisfy DB constraint
+        resolvedCustomerId = customers[0].id; // Fallback
       }
 
       if (!resolvedCustomerId) {
@@ -211,20 +221,31 @@ export default function CallLog() {
     return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
-  // Filter call log based on search query
+  // Filter call log based on search query and drop down parameters
   const filteredCalls = calls.filter(c => {
-    const targetName = c.custom_attributes?.client_name || custMap[c.customer_id] || '';
-    const caller = c.custom_attributes?.caller_name || '';
-    const purpose = c.custom_attributes?.call_purpose || '';
-    const notesContent = c.custom_attributes?.remarks || c.summary || '';
+    const attrs = c.custom_attributes || {};
+    const targetName = attrs.client_name || custMap[c.customer_id] || '';
+    const caller = attrs.caller_name || '';
+    const purpose = attrs.call_purpose || '';
+    const status = attrs.call_status || 'Answered';
+    const type = attrs.client_type || 'Customer';
+    const notesContent = attrs.remarks || c.summary || '';
     
-    return targetName.toLowerCase().includes(search.toLowerCase()) ||
-           caller.toLowerCase().includes(search.toLowerCase()) ||
-           purpose.toLowerCase().includes(search.toLowerCase()) ||
-           notesContent.toLowerCase().includes(search.toLowerCase());
+    // Text search filter
+    const matchesSearch = targetName.toLowerCase().includes(search.toLowerCase()) ||
+                          caller.toLowerCase().includes(search.toLowerCase()) ||
+                          purpose.toLowerCase().includes(search.toLowerCase()) ||
+                          notesContent.toLowerCase().includes(search.toLowerCase());
+
+    // Category drop down filters
+    const matchesStatus = statusFilter === 'All Statuses' || status === statusFilter;
+    const matchesPurpose = purposeFilter === 'All Purposes' || purpose === purposeFilter;
+    const matchesType = typeFilter === 'All Types' || type === typeFilter;
+
+    return matchesSearch && matchesStatus && matchesPurpose && matchesType;
   });
 
-  // Helper colors for Call Status
+  // Color helper functions
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'Answered': return { bg: 'rgba(16,185,129,0.1)', color: '#10b981' };
@@ -234,7 +255,6 @@ export default function CallLog() {
     }
   };
 
-  // Helper colors for Call Purpose
   const getPurposeStyle = (purpose: string) => {
     switch (purpose) {
       case 'Sales': return { bg: 'rgba(99,91,255,0.08)', color: '#635bff', border: 'rgba(99,91,255,0.2)' };
@@ -244,6 +264,21 @@ export default function CallLog() {
       default: return { bg: 'var(--bg-main)', color: 'var(--text-muted)', border: 'var(--border-color)' };
     }
   };
+
+  // Summary Metrics calculations for Analytics View
+  const answeredCount = calls.filter(c => (c.custom_attributes?.call_status || 'Answered') === 'Answered').length;
+  const missedCount = calls.filter(c => (c.custom_attributes?.call_status || '') === 'Missed Call').length;
+  const totalDuration = calls.reduce((acc, c) => acc + (c.custom_attributes?.duration_minutes || 5), 0);
+
+  // Grouping for analytics distributions
+  const purposeCounts: Record<string, number> = {};
+  const statusCounts: Record<string, number> = {};
+  calls.forEach(c => {
+    const p = c.custom_attributes?.call_purpose || 'Follow-Up';
+    const s = c.custom_attributes?.call_status || 'Answered';
+    purposeCounts[p] = (purposeCounts[p] || 0) + 1;
+    statusCounts[s] = (statusCounts[s] || 0) + 1;
+  });
 
   return (
     <WorkspaceLayout config={CRM_SIDEBAR}>
@@ -307,9 +342,128 @@ export default function CallLog() {
           height: 15px;
           cursor: pointer;
         }
+        .crm-metric-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          padding: 1.25rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+          transition: all 0.2s ease-in-out;
+        }
+        .crm-metric-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+        }
+        .crm-input-element {
+          width: 100%;
+          padding: 0.65rem 0.85rem;
+          background-color: var(--bg-input);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          color: var(--text-main) !important;
+          font-size: 0.88rem;
+          outline: none;
+          transition: all 0.2s ease;
+        }
+        .crm-input-element:focus {
+          border-color: #10b981;
+          box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+        }
+        .crm-label {
+          display: block;
+          margin-bottom: 0.4rem;
+          font-size: 0.72rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: var(--text-muted);
+        }
+        .crm-btn-primary {
+          background: #10b981;
+          color: #000;
+          font-weight: 700;
+          border: none;
+          height: 40px;
+          padding: 0 1.25rem;
+          border-radius: 8px;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.2s;
+        }
+        .crm-btn-primary:hover {
+          background: #059669;
+          transform: translateY(-1px);
+        }
+        .crm-btn-secondary {
+          background: var(--bg-main);
+          border: 1px solid var(--border-color);
+          color: var(--text-main);
+          font-weight: 600;
+          height: 40px;
+          padding: 0 1.25rem;
+          border-radius: 8px;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.2s;
+        }
+        .crm-btn-secondary:hover {
+          background: var(--bg-card-hover);
+        }
+        .crm-table th {
+          padding: 1rem;
+          font-size: 0.78rem;
+          color: var(--text-muted);
+          font-weight: 700;
+          border-bottom: 1px solid var(--border-color);
+          background: var(--bg-main);
+        }
+        .crm-table td {
+          padding: 1rem;
+          font-size: 0.85rem;
+          color: var(--text-main);
+          border-bottom: 1px solid var(--border-color);
+        }
+        .crm-timeline-node {
+          position: relative;
+          padding-left: 2.25rem;
+          padding-bottom: 2rem;
+        }
+        .crm-timeline-node::before {
+          content: '';
+          position: absolute;
+          left: 9px;
+          top: 24px;
+          bottom: 0;
+          width: 2px;
+          background: var(--border-color);
+        }
+        .crm-timeline-node:last-child::before {
+          display: none;
+        }
+        .crm-timeline-circle {
+          position: absolute;
+          left: 0;
+          top: 4px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          border: 4px solid var(--bg-main);
+          background: var(--border-color);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
       `}</style>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+        
         {/* Header Block */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
@@ -330,18 +484,102 @@ export default function CallLog() {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div style={{ display: 'flex', gap: '0.75rem', background: 'var(--bg-card)', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 8px rgba(0,0,0,0.01)' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input 
-              type="text" 
-              placeholder="Search call logs by client, caller, purpose, or notes..." 
-              value={search} 
-              onChange={e => setSearch(e.target.value)} 
-              className="crm-input-element"
-              style={{ paddingLeft: '2.5rem', height: '40px' }}
-            />
+        {/* Unified Search & Multi-Filter bar */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-card)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 8px rgba(0,0,0,0.01)' }}>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            
+            {/* Search Input */}
+            <div style={{ position: 'relative', flex: 2, minWidth: '250px' }}>
+              <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input 
+                type="text" 
+                placeholder="Search call logs by client, caller, purpose, or notes..." 
+                value={search} 
+                onChange={e => setSearch(e.target.value)} 
+                className="crm-input-element"
+                style={{ paddingLeft: '2.5rem', height: '40px' }}
+              />
+            </div>
+
+            {/* View Switcher */}
+            <div style={{ display: 'flex', background: 'var(--bg-main)', borderRadius: '8px', padding: '3px', border: '1px solid var(--border-color)' }}>
+              {VIEWS.map(v => (
+                <button
+                  key={v.id}
+                  onClick={() => setActiveView(v.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', height: '32px',
+                    background: activeView === v.id ? 'var(--bg-card)' : 'transparent',
+                    color: activeView === v.id ? '#10b981' : 'var(--text-muted)',
+                    border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.78rem',
+                    cursor: 'pointer', transition: 'all 0.2s', boxShadow: activeView === v.id ? '0 1px 3px rgba(0,0,0,0.04)' : 'none'
+                  }}
+                >
+                  <v.icon size={13} />
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Filters */}
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', borderTop: '1px solid var(--border-color)', paddingTop: '0.85rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '160px' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status:</span>
+              <select 
+                value={statusFilter} 
+                onChange={e => setStatusFilter(e.target.value)} 
+                className="crm-input-element"
+                style={{ height: '32px', padding: '0 8px', fontSize: '0.78rem' }}
+              >
+                <option value="All Statuses">All Statuses</option>
+                <option value="Answered">Answered</option>
+                <option value="Missed Call">Missed Call</option>
+                <option value="Busy">Busy</option>
+                <option value="No Answer">No Answer</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '160px' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Purpose:</span>
+              <select 
+                value={purposeFilter} 
+                onChange={e => setPurposeFilter(e.target.value)} 
+                className="crm-input-element"
+                style={{ height: '32px', padding: '0 8px', fontSize: '0.78rem' }}
+              >
+                <option value="All Purposes">All Purposes</option>
+                <option value="Follow-Up">Follow-Up</option>
+                <option value="Sales">Sales</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Support">Support</option>
+                <option value="Cold Call">Cold Call</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '160px' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Type:</span>
+              <select 
+                value={typeFilter} 
+                onChange={e => setTypeFilter(e.target.value)} 
+                className="crm-input-element"
+                style={{ height: '32px', padding: '0 8px', fontSize: '0.78rem' }}
+              >
+                <option value="All Types">All Types</option>
+                <option value="Customer">Customer</option>
+                <option value="Lead">Lead</option>
+                <option value="Opportunity">Opportunity</option>
+              </select>
+            </div>
+
+            {(statusFilter !== 'All Statuses' || purposeFilter !== 'All Purposes' || typeFilter !== 'All Types' || search !== '') && (
+              <button 
+                onClick={() => { setStatusFilter('All Statuses'); setPurposeFilter('All Purposes'); setTypeFilter('All Types'); setSearch(''); }}
+                style={{ background: 'transparent', border: 'none', color: '#ff3366', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}
+              >
+                Clear Filters
+              </button>
+            )}
           </div>
         </div>
 
@@ -351,105 +589,279 @@ export default function CallLog() {
           </div>
         )}
 
-        {/* Table of Call Logs */}
-        <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.01)' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="crm-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead>
-                <tr>
-                  <th style={{ paddingLeft: '1.25rem', width: '180px' }}>TIME</th>
-                  <th style={{ width: '180px' }}>CALLER</th>
-                  <th>TARGET & CONTACT</th>
-                  <th style={{ width: '220px' }}>METRICS & PURPOSE</th>
-                  <th>REMARKS</th>
-                  <th style={{ paddingRight: '1.25rem', width: '60px' }}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
+        {/* ── VIEW 1: LIST VIEW ──────────────────────────────────────────────────────── */}
+        {activeView === 'LIST' && (
+          <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.01)' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="crm-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
                   <tr>
-                    <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                      <RefreshCw size={22} className="spin" style={{ animation: 'spin 1.5s linear infinite', margin: '0 auto 0.75rem' }} /><br />Loading call log...
-                    </td>
+                    <th style={{ paddingLeft: '1.25rem', width: '180px' }}>TIME</th>
+                    <th style={{ width: '180px' }}>CALLER</th>
+                    <th>TARGET & CONTACT</th>
+                    <th style={{ width: '220px' }}>METRICS & PURPOSE</th>
+                    <th>REMARKS</th>
+                    <th style={{ paddingRight: '1.25rem', width: '60px' }}></th>
                   </tr>
-                ) : filteredCalls.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                      No calls logged.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredCalls.map(call => {
-                    const attrs = call.custom_attributes || {};
-                    const client = attrs.client_name || custMap[call.customer_id] || 'Unknown Client';
-                    const clientT = attrs.client_type || 'Customer';
-                    const contactP = attrs.contact_person || custContactMap[call.customer_id] || '-';
-                    const caller = attrs.caller_name || 'System';
-                    const status = attrs.call_status || 'Answered';
-                    const purpose = attrs.call_purpose || 'Follow-Up';
-                    const duration = attrs.duration_minutes || 5;
-                    const notesSummary = attrs.remarks || call.summary;
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        <RefreshCw size={22} className="spin" style={{ animation: 'spin 1.5s linear infinite', margin: '0 auto 0.75rem' }} /><br />Loading call log...
+                      </td>
+                    </tr>
+                  ) : filteredCalls.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        No matching call logs.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredCalls.map(call => {
+                      const attrs = call.custom_attributes || {};
+                      const client = attrs.client_name || custMap[call.customer_id] || 'Unknown Client';
+                      const clientT = attrs.client_type || 'Customer';
+                      const contactP = attrs.contact_person || custContactMap[call.customer_id] || '-';
+                      const caller = attrs.caller_name || 'System';
+                      const status = attrs.call_status || 'Answered';
+                      const purpose = attrs.call_purpose || 'Follow-Up';
+                      const duration = attrs.duration_minutes || 5;
+                      const notesSummary = attrs.remarks || call.summary;
 
-                    const statusColor = getStatusStyle(status);
-                    const purposeColor = getPurposeStyle(purpose);
+                      const statusColor = getStatusStyle(status);
+                      const purposeColor = getPurposeStyle(purpose);
 
-                    return (
-                      <tr 
-                        key={call.id} 
-                        onClick={() => { setSelectedCall(call); setIsDetailOpen(true); }}
-                        style={{ cursor: 'pointer', transition: 'background-color 0.15s' }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-card-hover)'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        <td style={{ paddingLeft: '1.25rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                          {formatTime(call.timestamp)}
-                        </td>
-                        <td style={{ color: 'var(--text-main)', fontSize: '0.85rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <User size={12} style={{ color: 'var(--text-muted)' }} />
-                            <span>{caller}</span>
-                          </div>
-                        </td>
-                        <td style={{ color: 'var(--text-main)' }}>
-                          <div style={{ fontWeight: 700 }}>{client}</div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', gap: '6px', marginTop: '2px' }}>
-                            <span>{clientT}</span> • <span>Contact: {contactP}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                            <span className="crm-status-badge" style={{ background: statusColor.bg, color: statusColor.color }}>
-                              {status}
-                            </span>
-                            <span className="crm-purpose-badge" style={{ background: purposeColor.bg, color: purposeColor.color, borderColor: purposeColor.border }}>
-                              {purpose}
-                            </span>
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Clock size={10} /> {duration} mins
-                          </div>
-                        </td>
-                        <td style={{ color: 'var(--text-main)', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.82rem' }}>
-                          {notesSummary}
-                        </td>
-                        <td style={{ paddingRight: '1.25rem', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-                          <button 
-                            onClick={(e) => handleDeleteCall(call.id, e)} 
-                            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '6px', borderRadius: '6px' }}
-                            onMouseEnter={e => e.currentTarget.style.color = '#ff5c75'}
-                            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                      return (
+                        <tr 
+                          key={call.id} 
+                          onClick={() => { setSelectedCall(call); setIsDetailOpen(true); }}
+                          style={{ cursor: 'pointer', transition: 'background-color 0.15s' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-card-hover)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <td style={{ paddingLeft: '1.25rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                            {formatTime(call.timestamp)}
+                          </td>
+                          <td style={{ color: 'var(--text-main)', fontSize: '0.85rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <User size={12} style={{ color: 'var(--text-muted)' }} />
+                              <span>{caller}</span>
+                            </div>
+                          </td>
+                          <td style={{ color: 'var(--text-main)' }}>
+                            <div style={{ fontWeight: 700 }}>{client}</div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', gap: '6px', marginTop: '2px' }}>
+                              <span>{clientT}</span> • <span>Contact: {contactP}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                              <span className="crm-status-badge" style={{ background: statusColor.bg, color: statusColor.color }}>
+                                {status}
+                              </span>
+                              <span className="crm-purpose-badge" style={{ background: purposeColor.bg, color: purposeColor.color, borderColor: purposeColor.border }}>
+                                {purpose}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Clock size={10} /> {duration} mins
+                            </div>
+                          </td>
+                          <td style={{ color: 'var(--text-main)', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.82rem' }}>
+                            {notesSummary}
+                          </td>
+                          <td style={{ paddingRight: '1.25rem', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                            <button 
+                              onClick={(e) => handleDeleteCall(call.id, e)} 
+                              style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '6px', borderRadius: '6px' }}
+                              onMouseEnter={e => e.currentTarget.style.color = '#ff5c75'}
+                              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* ── VIEW 2: TIMELINE VIEW ─────────────────────────────────────────────────── */}
+        {activeView === 'TIMELINE' && (
+          <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 1px 3px rgba(0,0,0,0.01)' }}>
+            {loading ? (
+              <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading timeline...</div>
+            ) : filteredCalls.length === 0 ? (
+              <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>No calls logged for current filters.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {filteredCalls.map((call, idx) => {
+                  const attrs = call.custom_attributes || {};
+                  const client = attrs.client_name || custMap[call.customer_id] || 'Unknown Client';
+                  const clientT = attrs.client_type || 'Customer';
+                  const caller = attrs.caller_name || 'System';
+                  const status = attrs.call_status || 'Answered';
+                  const purpose = attrs.call_purpose || 'Follow-Up';
+                  const duration = attrs.duration_minutes || 5;
+                  const remarksText = attrs.remarks || call.summary;
+
+                  const statusColor = getStatusStyle(status);
+                  const purposeColor = getPurposeStyle(purpose);
+
+                  return (
+                    <div key={call.id} className="crm-timeline-node">
+                      <div className="crm-timeline-circle" style={{ background: statusColor.color }}>
+                        <Phone size={10} color="#fff" />
+                      </div>
+                      
+                      <div 
+                        onClick={() => { setSelectedCall(call); setIsDetailOpen(true); }}
+                        style={{ background: 'var(--bg-main)', border: '1px solid var(--border-color)', padding: '1.25rem', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = statusColor.color; e.currentTarget.style.transform = 'translateX(4px)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.transform = 'none'; }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                          <div>
+                            <span style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.95rem' }}>{client}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '8px' }}>({clientT})</span>
+                          </div>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{formatTime(call.timestamp)}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.75rem' }}>
+                          <span className="crm-status-badge" style={{ background: statusColor.bg, color: statusColor.color }}>{status}</span>
+                          <span className="crm-purpose-badge" style={{ background: purposeColor.bg, color: purposeColor.color, borderColor: purposeColor.border }}>{purpose}</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Clock size={12} /> {duration} mins
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
+                            <User size={12} /> Logged by: <strong>{caller}</strong>
+                          </span>
+                        </div>
+
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.5', margin: 0 }}>{remarksText}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── VIEW 3: ANALYTICS DASHBOARD ────────────────────────────────────────────── */}
+        {activeView === 'DASHBOARD' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            
+            {/* Top metrics summary cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+              <div className="crm-metric-card" style={{ borderLeft: '4px solid #10b981' }}>
+                <div>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Calls Logged</span>
+                  <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.2rem', fontFamily: 'var(--font-display)' }}>
+                    {calls.length}
+                  </h2>
+                </div>
+                <div style={{ background: 'rgba(16,185,129,0.08)', padding: '10px', borderRadius: '10px', color: '#10b981' }}>
+                  <Phone size={20} />
+                </div>
+              </div>
+
+              <div className="crm-metric-card" style={{ borderLeft: '4px solid #3b82f6' }}>
+                <div>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Answered Connection</span>
+                  <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.2rem', fontFamily: 'var(--font-display)' }}>
+                    {answeredCount}
+                  </h2>
+                </div>
+                <div style={{ background: 'rgba(59,130,246,0.08)', padding: '10px', borderRadius: '10px', color: '#3b82f6' }}>
+                  <Activity size={20} />
+                </div>
+              </div>
+
+              <div className="crm-metric-card" style={{ borderLeft: '4px solid #ef4444' }}>
+                <div>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Missed / Busy Calls</span>
+                  <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.2rem', fontFamily: 'var(--font-display)' }}>
+                    {missedCount}
+                  </h2>
+                </div>
+                <div style={{ background: 'rgba(239,68,68,0.08)', padding: '10px', borderRadius: '10px', color: '#ef4444' }}>
+                  <Trash2 size={20} />
+                </div>
+              </div>
+
+              <div className="crm-metric-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
+                <div>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Talk Time</span>
+                  <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.2rem', fontFamily: 'var(--font-display)' }}>
+                    {totalDuration} mins
+                  </h2>
+                </div>
+                <div style={{ background: 'rgba(139,92,246,0.08)', padding: '10px', borderRadius: '10px', color: '#8b5cf6' }}>
+                  <Clock size={20} />
+                </div>
+              </div>
+            </div>
+
+            {/* Distribution Charts/Lists */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+              
+              {/* Call Purpose Distribution */}
+              <div style={{ background: 'var(--bg-card)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 1px 3px rgba(0,0,0,0.01)' }}>
+                <h4 style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '1.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Calls Logged by Purpose</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+                  {['Follow-Up', 'Sales', 'Marketing', 'Support', 'Cold Call'].map(p => {
+                    const count = purposeCounts[p] || 0;
+                    const percent = calls.length > 0 ? (count / calls.length) * 100 : 0;
+                    const style = getPurposeStyle(p);
+                    return (
+                      <div key={p} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 700 }}>
+                          <span style={{ color: style.color }}>{p}</span>
+                          <span style={{ color: 'var(--text-main)' }}>{count} ({Math.round(percent)}%)</span>
+                        </div>
+                        <div style={{ width: '100%', height: '6px', background: 'var(--bg-main)', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ width: `${percent}%`, height: '100%', background: style.color, borderRadius: '3px' }}></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Call Status Distribution */}
+              <div style={{ background: 'var(--bg-card)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 1px 3px rgba(0,0,0,0.01)' }}>
+                <h4 style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '1.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Call Outcomes & Status</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+                  {['Answered', 'Missed Call', 'Busy', 'No Answer'].map(s => {
+                    const count = statusCounts[s] || 0;
+                    const percent = calls.length > 0 ? (count / calls.length) * 100 : 0;
+                    const style = getStatusStyle(s);
+                    return (
+                      <div key={s} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 700 }}>
+                          <span style={{ color: style.color }}>{s}</span>
+                          <span style={{ color: 'var(--text-main)' }}>{count} ({Math.round(percent)}%)</span>
+                        </div>
+                        <div style={{ width: '100%', height: '6px', background: 'var(--bg-main)', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ width: `${percent}%`, height: '100%', background: style.color, borderRadius: '3px' }}></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* ── ERPNext-Style Call Log Creator Modal ────────────────────────────────────── */}
