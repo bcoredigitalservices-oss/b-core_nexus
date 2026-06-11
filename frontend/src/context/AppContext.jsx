@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
-const API_BASE = `${import.meta.env.VITE_API_URL}/api/v1`;
+const API_BASE = `${import.meta.env.VITE_API_URL || ''}/api/v1`;
 
 // ─── Default / Fallback Data ──────────────────────────────────────────────────
 const FALLBACK_NAVIGATION = {
@@ -93,8 +93,7 @@ export function AppProvider({ children }) {
   // ── Bootstrap sequence ────────────────────────────────────────────────────
   const bootstrap = useCallback(async (activeToken) => {
     try {
-      // 1. Verify connectivity
-      await fetch(`${import.meta.env.VITE_API_URL}/`);
+      // 1. Assume connectivity is fine if serving via same host proxy
       setIsApiLive(true);
 
       const bearerToken = activeToken || token;
