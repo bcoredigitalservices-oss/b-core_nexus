@@ -57,6 +57,8 @@ services:
     build:
       context: ./frontend
     container_name: nexus_frontend
+    depends_on:
+      - backend
     ports:
       - "3005:80"
     networks:
