@@ -137,7 +137,7 @@ export default function OperationsDashboard() {
         {/* Header Block */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
               Project & Service Operations
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
@@ -181,8 +181,8 @@ export default function OperationsDashboard() {
         }}>
           {/* Card 1: Active Projects */}
           <div style={{
-            background: 'rgba(20,30,50,0.4)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             padding: '1.5rem',
             position: 'relative',
@@ -199,7 +199,7 @@ export default function OperationsDashboard() {
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Active Projects
                 </p>
-                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#ffffff', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
+                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
                   {loading ? '...' : activeProjectsCount}
                 </h3>
               </div>
@@ -221,8 +221,8 @@ export default function OperationsDashboard() {
 
           {/* Card 2: Tasks Overdue */}
           <div style={{
-            background: 'rgba(20,30,50,0.4)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             padding: '1.5rem',
             position: 'relative',
@@ -239,7 +239,7 @@ export default function OperationsDashboard() {
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Tasks Overdue
                 </p>
-                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#ffffff', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
+                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
                   {loading ? '...' : tasksOverdueCount}
                 </h3>
               </div>
@@ -260,8 +260,8 @@ export default function OperationsDashboard() {
 
           {/* Card 3: Upcoming Deadlines */}
           <div style={{
-            background: 'rgba(20,30,50,0.4)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             padding: '1.5rem',
             position: 'relative',
@@ -278,7 +278,7 @@ export default function OperationsDashboard() {
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Upcoming Deadlines
                 </p>
-                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#ffffff', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
+                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
                   {loading ? '...' : upcomingDeadlinesCount}
                 </h3>
               </div>
@@ -307,8 +307,8 @@ export default function OperationsDashboard() {
         }}>
           {/* Projects List Card */}
           <div style={{
-            background: 'rgba(20,30,50,0.3)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             padding: '1.5rem',
             display: 'flex',
@@ -316,7 +316,7 @@ export default function OperationsDashboard() {
             gap: '1rem'
           }}>
             <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
                 Corporate Projects
               </h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.1rem' }}>
@@ -324,13 +324,13 @@ export default function OperationsDashboard() {
               </p>
             </div>
 
-            <div style={{ overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+            <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                 <thead>
                   <tr style={{
-                    borderBottom: '1px solid rgba(255,255,255,0.08)',
+                    borderBottom: '1px solid var(--border-color)',
                     color: 'var(--text-muted)',
-                    background: 'rgba(12,18,36,0.6)',
+                    background: 'var(--bg-card)',
                     fontWeight: 600
                   }}>
                     <th style={{ padding: '0.75rem' }}>Project Name</th>
@@ -353,7 +353,7 @@ export default function OperationsDashboard() {
                     </tr>
                   ) : (
                     projects.slice(0, 5).map((proj) => {
-                      let statusColor = '#94a3b8';
+                      let statusColor = 'var(--text-muted)';
                       let statusBg = 'rgba(148, 163, 184, 0.12)';
                       if (proj.status === 'ACTIVE') {
                         statusColor = '#06b6d4';
@@ -367,8 +367,8 @@ export default function OperationsDashboard() {
                       }
 
                       return (
-                        <tr key={proj.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                          <td style={{ padding: '0.75rem', fontWeight: 700, color: '#ffffff' }}>
+                        <tr key={proj.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                          <td style={{ padding: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>
                             {proj.project_name}
                           </td>
                           <td style={{ padding: '0.75rem', color: 'var(--text-muted)' }}>
@@ -399,8 +399,8 @@ export default function OperationsDashboard() {
 
           {/* Tasks List Card */}
           <div style={{
-            background: 'rgba(20,30,50,0.3)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             padding: '1.5rem',
             display: 'flex',
@@ -408,7 +408,7 @@ export default function OperationsDashboard() {
             gap: '1rem'
           }}>
             <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
                 Recent Tasks
               </h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.1rem' }}>
@@ -416,13 +416,13 @@ export default function OperationsDashboard() {
               </p>
             </div>
 
-            <div style={{ overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+            <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                 <thead>
                   <tr style={{
-                    borderBottom: '1px solid rgba(255,255,255,0.08)',
+                    borderBottom: '1px solid var(--border-color)',
                     color: 'var(--text-muted)',
-                    background: 'rgba(12,18,36,0.6)',
+                    background: 'var(--bg-card)',
                     fontWeight: 600
                   }}>
                     <th style={{ padding: '0.75rem' }}>Task Title</th>
@@ -445,14 +445,14 @@ export default function OperationsDashboard() {
                     </tr>
                   ) : (
                     tasks.slice(0, 5).map((tsk) => {
-                      let priorityColor = '#94a3b8';
+                      let priorityColor = 'var(--text-muted)';
                       if (tsk.priority === 'URGENT') priorityColor = '#ff3366';
                       else if (tsk.priority === 'HIGH') priorityColor = '#f59e0b';
                       else if (tsk.priority === 'MEDIUM') priorityColor = '#3b82f6';
 
                       return (
-                        <tr key={tsk.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                          <td style={{ padding: '0.75rem', fontWeight: 600, color: '#ffffff' }}>
+                        <tr key={tsk.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                          <td style={{ padding: '0.75rem', fontWeight: 600, color: 'var(--text-main)' }}>
                             {tsk.task_title}
                           </td>
                           <td style={{ padding: '0.75rem', textAlign: 'center', color: priorityColor, fontWeight: 700, fontSize: '0.75rem' }}>

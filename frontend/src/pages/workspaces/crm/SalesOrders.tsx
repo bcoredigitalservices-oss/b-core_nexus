@@ -18,24 +18,9 @@ import {
   DollarSign,
   Tag
 } from 'lucide-react';
-import WorkspaceLayout, { WorkspaceLayoutConfig } from '../../../layouts/WorkspaceLayout';
+import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { useAppContext } from '../../../context/AppContext';
-
-// ─── Sidebar Config ────────────────────────────────────────────────────────────
-const CRM_SIDEBAR: WorkspaceLayoutConfig = {
-  workspaceKey: 'crm',
-  workspaceName: 'CRM',
-  accentColor: '#00f5a0',
-  icon: <Users size={18} />,
-  navItems: [
-    { label: 'Dashboard',           subPath: '',             icon: <Layers size={15} /> },
-    { label: 'Pipeline & Leads',    subPath: 'pipeline',     icon: <TrendingUp size={15} /> },
-    { label: 'Customer Accounts',   subPath: 'accounts',     icon: <Users size={15} /> },
-    { label: 'Sales Orders',        subPath: 'sales-orders', icon: <ShoppingBag size={15} /> },
-    { label: 'Quotations',          subPath: 'quotations',   icon: <FileText size={15} /> },
-    { label: 'Interaction History', subPath: 'interactions', icon: <History size={15} /> },
-  ],
-};
+import { CRM_SIDEBAR } from './crmSidebarConfig';
 
 interface Customer {
   id: string;
@@ -326,7 +311,7 @@ export default function SalesOrders() {
         {/* Header Block */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
               Sales Orders
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
@@ -348,7 +333,7 @@ export default function SalesOrders() {
               className="btn btn-primary"
               style={{
                 background: 'linear-gradient(135deg, #00f5a0, #00d980)',
-                color: '#0a0f1d',
+                color: 'var(--text-main)',
                 fontWeight: 700,
                 boxShadow: '0 4px 12px rgba(0,245,160,0.2)',
               }}
@@ -379,9 +364,9 @@ export default function SalesOrders() {
 
         {/* Data Grid Table */}
         <div style={{
-          background: 'rgba(20,30,50,0.4)',
+          background: 'var(--bg-card)',
           borderRadius: '12px',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: '1px solid var(--border-color)',
           overflow: 'hidden'
         }}>
           <div style={{ overflowX: 'auto' }}>
@@ -390,7 +375,7 @@ export default function SalesOrders() {
                 <tr style={{
                   borderBottom: '2px solid rgba(255,255,255,0.08)',
                   color: 'var(--text-muted)',
-                  background: 'rgba(12,18,36,0.6)',
+                  background: 'var(--bg-card)',
                   fontWeight: 600
                 }}>
                   <th style={{ padding: '1rem' }}>Order Reference</th>
@@ -416,7 +401,7 @@ export default function SalesOrders() {
                   </tr>
                 ) : (
                   orders.map((ord) => {
-                    let pillColor = '#94a3b8';
+                    let pillColor = 'var(--text-muted)';
                     let pillBg = 'rgba(148, 163, 184, 0.12)';
                     if (ord.status === 'CONFIRMED') {
                       pillColor = '#3b82f6';
@@ -431,25 +416,25 @@ export default function SalesOrders() {
 
                     return (
                       <tr key={ord.id} style={{
-                        borderBottom: '1px solid rgba(255,255,255,0.05)',
+                        borderBottom: '1px solid var(--border-color)',
                         transition: 'background 0.2s',
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                       >
-                        <td style={{ padding: '1rem', fontWeight: 700, color: '#ffffff' }}>
+                        <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <FileText size={14} color="#00f5a0" />
                             {ord.order_reference}
                           </div>
                         </td>
-                        <td style={{ padding: '1rem', color: '#e2e8f0' }}>
+                        <td style={{ padding: '1rem', color: 'var(--text-main)' }}>
                           {customerMap[ord.customer_id] || ord.customer_id}
                         </td>
                         <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>
                           {ord.order_date}
                         </td>
-                        <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 700, color: '#ffffff' }}>
+                        <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 700, color: 'var(--text-main)' }}>
                           ${Number(ord.grand_total).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         <td style={{ padding: '1rem', textAlign: 'center' }}>
@@ -481,8 +466,8 @@ export default function SalesOrders() {
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: '1rem',
-              borderTop: '1px solid rgba(255,255,255,0.06)',
-              background: 'rgba(12,18,36,0.4)'
+              borderTop: '1px solid var(--border-color)',
+              background: 'var(--bg-card)'
             }}>
               <button
                 disabled={page === 1}
@@ -513,7 +498,7 @@ export default function SalesOrders() {
         <div style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.6)',
+          backgroundColor: 'rgba(0,0,0,0.4)',
           backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
@@ -523,7 +508,7 @@ export default function SalesOrders() {
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #141b2e 0%, #0c1224 100%)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             width: '100%',
             maxWidth: '800px',
@@ -539,17 +524,17 @@ export default function SalesOrders() {
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: '1.25rem 1.5rem',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
-              background: 'rgba(255,255,255,0.01)'
+              borderBottom: '1px solid var(--border-color)',
+              background: 'var(--bg-card-hover)'
             }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ShoppingBag size={18} color="#00f5a0" />
                 Create New Sales Order
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
               >
                 <X size={18} />
@@ -598,10 +583,10 @@ export default function SalesOrders() {
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
                   gap: '1rem',
-                  background: 'rgba(255,255,255,0.02)',
+                  background: 'var(--bg-card-hover)',
                   padding: '1rem',
                   borderRadius: '12px',
-                  border: '1px solid rgba(255,255,255,0.04)'
+                  border: '1px solid var(--border-color)'
                 }}>
                   {/* Customer Select dropdown */}
                   <div>
@@ -663,7 +648,7 @@ export default function SalesOrders() {
                 {/* ─── Middle Section: Line Items ─── */}
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
                       Order Line Items
                     </h4>
                     <button
@@ -680,12 +665,12 @@ export default function SalesOrders() {
                   <div style={{
                     background: 'rgba(0,0,0,0.2)',
                     borderRadius: '8px',
-                    border: '1px solid rgba(255,255,255,0.05)',
+                    border: '1px solid var(--border-color)',
                     overflow: 'hidden'
                   }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                       <thead>
-                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.01)', color: 'var(--text-muted)' }}>
+                        <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card-hover)', color: 'var(--text-muted)' }}>
                           <th style={{ padding: '0.75rem', width: '45%' }}>Inventory Item *</th>
                           <th style={{ padding: '0.75rem', width: '15%', textAlign: 'right' }}>Qty *</th>
                           <th style={{ padding: '0.75rem', width: '20%', textAlign: 'right' }}>Unit Price (USD) *</th>
@@ -700,7 +685,7 @@ export default function SalesOrders() {
                           const total = qty * price;
 
                           return (
-                            <tr key={field.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                            <tr key={field.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                               {/* Item select */}
                               <td style={{ padding: '0.5rem 0.75rem' }}>
                                 <select
@@ -748,7 +733,7 @@ export default function SalesOrders() {
                               </td>
 
                               {/* Calculated line total */}
-                              <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right', fontWeight: 700, color: '#ffffff' }}>
+                              <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right', fontWeight: 700, color: 'var(--text-main)' }}>
                                 ${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </td>
 
@@ -784,10 +769,10 @@ export default function SalesOrders() {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  background: 'rgba(255,255,255,0.01)',
+                  background: 'var(--bg-card-hover)',
                   padding: '1.25rem',
                   borderRadius: '12px',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  border: '1px solid var(--border-color)',
                   marginTop: '0.5rem'
                 }}>
                   <div>
@@ -814,7 +799,7 @@ export default function SalesOrders() {
                       className="btn btn-primary"
                       style={{
                         background: 'linear-gradient(135deg, #00f5a0, #00d980)',
-                        color: '#0a0f1d',
+                        color: 'var(--text-main)',
                         fontWeight: 700,
                         height: '40px',
                         padding: '0 1.5rem',

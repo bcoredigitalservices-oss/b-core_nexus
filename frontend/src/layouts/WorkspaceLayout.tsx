@@ -64,7 +64,7 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
         height: '100%',
         width: '100%',
         overflow: 'hidden',
-        background: '#090D1A',
+        background: 'var(--bg-main)',
       }}
     >
       {/* ── Workspace Localized Sidebar ── */}
@@ -72,8 +72,8 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
         style={{
           width: '230px',
           flexShrink: 0,
-          backgroundColor: '#0A0F1E',
-          borderRight: '1px solid rgba(255,255,255,0.07)',
+          backgroundColor: 'var(--bg-card)',
+          borderRight: '1px solid var(--border-color)',
           display: 'flex',
           flexDirection: 'column',
           height: '100%',
@@ -92,10 +92,10 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
             gap: '8px',
             margin: '1rem 0.875rem 0.5rem',
             padding: '8px 10px',
-            background: hoverBack ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.07)',
+            background: hoverBack ? 'var(--bg-card-hover)' : 'transparent',
+            border: '1px solid var(--border-color)',
             borderRadius: '8px',
-            color: hoverBack ? '#ffffff' : '#64748B',
+            color: hoverBack ? 'var(--text-main)' : 'var(--text-muted)',
             fontSize: '0.75rem',
             fontWeight: 600,
             cursor: 'pointer',
@@ -112,7 +112,7 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
         <div
           style={{
             padding: '0.875rem 1rem 1rem',
-            borderBottom: '1px solid rgba(255,255,255,0.07)',
+            borderBottom: '1px solid var(--border-color)',
             marginBottom: '0.5rem',
           }}
         >
@@ -149,7 +149,7 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
                 style={{
                   fontSize: '0.9rem',
                   fontWeight: 800,
-                  color: '#ffffff',
+                  color: 'var(--text-main)',
                   fontFamily: 'var(--font-display)',
                   letterSpacing: '-0.01em',
                 }}
@@ -191,7 +191,7 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
                   border: active
                     ? `1px solid ${accentColor}30`
                     : '1px solid transparent',
-                  color: active ? '#ffffff' : '#64748B',
+                  color: active ? 'var(--text-main)' : 'var(--text-muted)',
                   fontSize: '0.82rem',
                   fontWeight: active ? 700 : 500,
                   cursor: 'pointer',
@@ -202,13 +202,13 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
                 }}
                 onMouseEnter={(e) => {
                   if (!active) {
-                    e.currentTarget.style.color = '#cbd5e1';
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                    e.currentTarget.style.color = 'var(--text-main)';
+                    e.currentTarget.style.background = 'var(--bg-card-hover)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!active) {
-                    e.currentTarget.style.color = '#64748B';
+                    e.currentTarget.style.color = 'var(--text-muted)';
                     e.currentTarget.style.background = 'transparent';
                   }
                 }}
@@ -270,7 +270,7 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
           flex: 1,
           overflowY: 'auto',
           padding: '2rem',
-          background: '#090D1A',
+          background: 'var(--bg-main)',
         }}
       >
         {children || <Outlet />}

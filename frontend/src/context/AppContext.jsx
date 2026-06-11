@@ -36,6 +36,12 @@ export function AppProvider({ children }) {
   const [isApiLive, setIsApiLive]               = useState(false);
   const [isBooting, setIsBooting]               = useState(true);
   const [inviteModalOpen, setInviteModalOpen]   = useState(false);
+  const [theme, setTheme]                       = useState(() => localStorage.getItem('bcore_theme') || 'Stripe Blurple');
+
+  useEffect(() => {
+    localStorage.setItem('bcore_theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   const login = useCallback(async (username, password) => {
@@ -174,6 +180,8 @@ export function AppProvider({ children }) {
     authFetch,
     inviteModalOpen,
     setInviteModalOpen,
+    theme,
+    setTheme,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

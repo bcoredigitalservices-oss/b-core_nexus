@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu, Bell, RefreshCw, Database, Server, User, ChevronDown, Settings, LogOut,
 } from 'lucide-react';
@@ -12,6 +12,8 @@ const MOBILE_BREAKPOINT = 768; // px
 export default function AppShell() {
   const { isApiLive, currentUser, systemSettings, logout, isBooting } = useAppContext();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isWorkspaceRoute = location.pathname.startsWith('/workspaces');
 
   // ── Responsive state ────────────────────────────────────────────────────────
   const [isMobile, setIsMobile]           = useState(window.innerWidth < MOBILE_BREAKPOINT);
@@ -55,18 +57,20 @@ export default function AppShell() {
   return (
     <div className="appshell">
       {/* ── Sidebar ──────────────────────────────────────────────── */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        onCollapse={setSidebarCollapsed}
-        isMobile={isMobile}
-      />
+      {!isWorkspaceRoute && (
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          onCollapse={setSidebarCollapsed}
+          isMobile={isMobile}
+        />
+      )}
 
       {/* ── Main Column (header + content) ───────────────────────── */}
       <div className={[
         'appshell-main',
-        !isMobile && 'appshell-main--desktop',
-        !isMobile && sidebarCollapsed && 'sidebar-is-collapsed',
+        !isMobile && !isWorkspaceRoute && 'appshell-main--desktop',
+        !isMobile && !isWorkspaceRoute && sidebarCollapsed && 'sidebar-is-collapsed',
       ].filter(Boolean).join(' ')}>
 
         {/* ── Top Header ─────────────────────────────────────────── */}
@@ -168,7 +172,12 @@ export default function AppShell() {
         </header>
 
         {/* ── Scrollable Workspace Content ───────────────────────── */}
-        <main className="appshell-content" id="main-content" role="main">
+        <main 
+          className="appshell-content" 
+          id="main-content" 
+          role="main"
+          style={isWorkspaceRoute ? { padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' } : {}}
+        >
           <Outlet />
         </main>
       </div>

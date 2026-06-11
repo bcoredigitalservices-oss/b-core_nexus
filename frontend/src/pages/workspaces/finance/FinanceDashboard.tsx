@@ -87,7 +87,7 @@ export default function FinanceDashboard() {
         {/* Header Block */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
               General Ledger & Financial Control
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
@@ -131,8 +131,8 @@ export default function FinanceDashboard() {
         }}>
           {/* Card 1: Total Assets */}
           <div style={{
-            background: 'rgba(20,30,50,0.4)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             padding: '1.5rem',
             position: 'relative',
@@ -149,7 +149,7 @@ export default function FinanceDashboard() {
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Total Assets
                 </p>
-                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#ffffff', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
+                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
                   $1,245,680.00
                 </h3>
               </div>
@@ -171,8 +171,8 @@ export default function FinanceDashboard() {
 
           {/* Card 2: Total Liabilities */}
           <div style={{
-            background: 'rgba(20,30,50,0.4)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             padding: '1.5rem',
             position: 'relative',
@@ -189,7 +189,7 @@ export default function FinanceDashboard() {
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Total Liabilities
                 </p>
-                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#ffffff', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
+                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
                   $412,350.00
                 </h3>
               </div>
@@ -211,8 +211,8 @@ export default function FinanceDashboard() {
 
           {/* Card 3: Net Revenue */}
           <div style={{
-            background: 'rgba(20,30,50,0.4)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             padding: '1.5rem',
             position: 'relative',
@@ -229,7 +229,7 @@ export default function FinanceDashboard() {
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Net Revenue
                 </p>
-                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#ffffff', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
+                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
                   $833,330.00
                 </h3>
               </div>
@@ -255,13 +255,13 @@ export default function FinanceDashboard() {
           display: 'flex',
           flexDirection: 'column',
           gap: '1rem',
-          background: 'rgba(20,30,50,0.3)',
-          border: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
           borderRadius: '16px',
           padding: '1.5rem'
         }}>
           <div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
               Chart of Accounts (COA) Status
             </h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.1rem' }}>
@@ -269,13 +269,13 @@ export default function FinanceDashboard() {
             </p>
           </div>
 
-          <div style={{ overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+          <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
               <thead>
                 <tr style={{
-                  borderBottom: '1px solid rgba(255,255,255,0.08)',
+                  borderBottom: '1px solid var(--border-color)',
                   color: 'var(--text-muted)',
-                  background: 'rgba(12,18,36,0.6)',
+                  background: 'var(--bg-card)',
                   fontWeight: 600
                 }}>
                   <th style={{ padding: '0.85rem' }}>Account Code</th>
@@ -299,7 +299,7 @@ export default function FinanceDashboard() {
                   </tr>
                 ) : (
                   accounts.slice(0, 10).map((acc) => {
-                    let typeColor = '#cbd5e1';
+                    let typeColor = 'var(--text-main)';
                     if (acc.account_type === 'ASSET') typeColor = '#3b82f6';
                     else if (acc.account_type === 'LIABILITY') typeColor = '#f59e0b';
                     else if (acc.account_type === 'EQUITY') typeColor = '#a855f7';
@@ -308,16 +308,16 @@ export default function FinanceDashboard() {
 
                     return (
                       <tr key={acc.id} style={{
-                        borderBottom: '1px solid rgba(255,255,255,0.04)',
+                        borderBottom: '1px solid var(--border-color)',
                         transition: 'background 0.2s',
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.01)'}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                       >
-                        <td style={{ padding: '0.85rem', fontWeight: 700, color: '#ffffff' }}>
+                        <td style={{ padding: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>
                           {acc.account_code}
                         </td>
-                        <td style={{ padding: '0.85rem', color: '#e2e8f0' }}>
+                        <td style={{ padding: '0.85rem', color: 'var(--text-main)' }}>
                           {acc.account_name}
                         </td>
                         <td style={{ padding: '0.85rem' }}>

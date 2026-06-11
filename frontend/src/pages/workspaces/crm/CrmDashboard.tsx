@@ -7,35 +7,20 @@ import {
   History,
   RefreshCw,
   AlertCircle,
-  CheckCircle2,
-  TrendingDown,
   PhoneCall,
-  UserPlus,
   FileText,
   ShoppingBag,
-  DollarSign,
-  FileCheck
+  FileCheck,
+  Calendar,
+  ChevronDown,
+  ChevronRight,
+  TrendingDown,
+  ArrowUpRight,
+  Filter
 } from 'lucide-react';
-import WorkspaceLayout, { WorkspaceLayoutConfig } from '../../../layouts/WorkspaceLayout';
+import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { useAppContext } from '../../../context/AppContext';
-
-// ─── Sidebar Config ────────────────────────────────────────────────────────────
-const CRM_SIDEBAR: WorkspaceLayoutConfig = {
-  workspaceKey: 'crm',
-  workspaceName: 'CRM',
-  accentColor: '#00f5a0',
-  icon: <Users size={18} />,
-  navItems: [
-    { label: 'Dashboard',           subPath: '',             icon: <Layers size={15} /> },
-    { label: 'Pipeline & Leads',    subPath: 'pipeline',     icon: <TrendingUp size={15} /> },
-    { label: 'Customer Accounts',   subPath: 'accounts',     icon: <Users size={15} /> },
-    { label: 'Sales Orders',        subPath: 'sales-orders', icon: <ShoppingBag size={15} /> },
-    { label: 'Quotations',          subPath: 'quotations',   icon: <FileText size={15} /> },
-    { label: 'Contacts',            subPath: 'contacts',     icon: <PhoneCall size={15} /> },
-    { label: 'Tasks & ToDo',        subPath: 'tasks',        icon: <FileCheck size={15} /> },
-    { label: 'Interaction History', subPath: 'interactions', icon: <History size={15} /> },
-  ],
-};
+import { CRM_SIDEBAR } from './crmSidebarConfig';
 
 interface Customer {
   id: string;
@@ -45,16 +30,6 @@ interface Customer {
   phone: string | null;
   lifecycle_status: 'LEAD' | 'OPPORTUNITY' | 'ACTIVE_CUSTOMER' | 'INACTIVE';
   created_at: string;
-  custom_attributes: Record<string, any>;
-}
-
-interface SalesOrder {
-  id: string;
-  customer_id: string;
-  order_reference: string;
-  order_date: string;
-  status: 'DRAFT' | 'CONFIRMED' | 'FULFILLED' | 'CANCELLED';
-  grand_total: number;
 }
 
 export default function CrmDashboard() {
@@ -63,17 +38,27 @@ export default function CrmDashboard() {
 
   // State
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [salesOrders, setSalesOrders] = useState<SalesOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  
+  // Local UI filters
+  const [leadsFilterRange, setLeadsFilterRange] = useState('Last Quarter');
+  const [leadsFilterInterval, setLeadsFilterInterval] = useState('Weekly');
+  const [trendsFilterRange, setTrendsFilterRange] = useState('Last Quarter');
+  const [trendsFilterInterval, setTrendsFilterInterval] = useState('Weekly');
+  const [wonFilterRange, setWonFilterRange] = useState('Last Year');
+  const [wonFilterInterval, setWonFilterInterval] = useState('Monthly');
+
+  // Interactive Hover Tooltip for Charts
+  const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; label: string; value: string } | null>(null);
 
   const API_BASE = `${import.meta.env.VITE_API_URL}/api/v1/workspaces/crm`;
 
-  const fetchCustomers = async () => {
+  const fetchCrmData = async () => {
     setErrorMsg('');
     try {
       const token = localStorage.getItem('bcore_token');
-      const response = await fetch(`${API_BASE}/customers?limit=200`, {
+      const response = await fetch(`${API_BASE}/customers?limit=100`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -93,323 +78,849 @@ export default function CrmDashboard() {
     }
   };
 
-  const fetchSalesOrders = async () => {
-    try {
-      const token = localStorage.getItem('bcore_token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/workspaces/crm/sales-orders?page_size=100`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setSalesOrders(data.items || []);
-      }
-    } catch (err) {
-      console.warn('Failed to fetch sales orders', err);
-    }
-  };
-
   useEffect(() => {
     const initData = async () => {
       setLoading(true);
-      await Promise.all([fetchCustomers(), fetchSalesOrders()]);
+      await fetchCrmData();
       setLoading(false);
     };
     initData();
   }, []);
 
-  // Compute Metrics
-  const openOrdersCount = salesOrders.filter(so => so.status === 'DRAFT' || so.status === 'CONFIRMED').length;
-  
-  const now = new Date();
-  const currentMonthOrders = salesOrders.filter(so => {
-    if (so.status !== 'CONFIRMED' && so.status !== 'FULFILLED') return false;
-    const orderDate = new Date(so.order_date);
-    return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
-  });
-  const totalBookedRevenue = currentMonthOrders.reduce((sum, so) => sum + Number(so.grand_total), 0);
+  // Compute live counts from DB
+  const leadCount = customers.filter(c => c.lifecycle_status === 'LEAD').length;
+  const opportunityCount = customers.filter(c => c.lifecycle_status === 'OPPORTUNITY').length;
+  const wonOpportunityCount = customers.filter(c => c.lifecycle_status === 'ACTIVE_CUSTOMER').length;
+  const openOpportunityCount = opportunityCount;
 
-  const pendingFulfillmentsCount = salesOrders.filter(so => so.status === 'CONFIRMED').length;
+  // Helper to generate dynamic time series data from DB customers list
+  const getLeadsChartData = (
+    customersList: any[],
+    status: string,
+    range: string,
+    interval: string
+  ) => {
+    const filtered = customersList.filter(c => c.lifecycle_status === status);
+    const now = new Date();
+    let startDate = new Date();
+
+    if (range === 'Last Year') {
+      startDate.setFullYear(now.getFullYear() - 1);
+    } else if (range === 'Last Quarter') {
+      startDate.setMonth(now.getMonth() - 3);
+    } else {
+      // Last Month
+      startDate.setMonth(now.getMonth() - 1);
+    }
+
+    const points: { start: Date; end: Date; label: string; value: number }[] = [];
+
+    if (interval === 'Daily') {
+      const temp = new Date(startDate);
+      while (temp <= now) {
+        const start = new Date(temp);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(temp);
+        end.setHours(23, 59, 59, 999);
+        points.push({
+          start,
+          end,
+          label: temp.toLocaleDateString([], { day: '2-digit', month: '2-digit' }),
+          value: 0
+        });
+        temp.setDate(temp.getDate() + 1);
+      }
+    } else if (interval === 'Monthly') {
+      const temp = new Date(startDate);
+      temp.setDate(1);
+      while (temp <= now) {
+        const start = new Date(temp);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(temp.getFullYear(), temp.getMonth() + 1, 0);
+        end.setHours(23, 59, 59, 999);
+        points.push({
+          start,
+          end,
+          label: temp.toLocaleDateString([], { month: 'short', year: '2-digit' }),
+          value: 0
+        });
+        temp.setMonth(temp.getMonth() + 1);
+      }
+    } else {
+      // Weekly
+      const temp = new Date(startDate);
+      temp.setDate(temp.getDate() - temp.getDay()); // align to start of week
+      while (temp <= now) {
+        const start = new Date(temp);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(temp);
+        end.setDate(end.getDate() + 6);
+        end.setHours(23, 59, 59, 999);
+        points.push({
+          start,
+          end,
+          label: start.toLocaleDateString([], { day: '2-digit', month: '2-digit' }),
+          value: 0
+        });
+        temp.setDate(temp.getDate() + 7);
+      }
+    }
+
+    filtered.forEach(item => {
+      const createdDate = new Date(item.created_at);
+      for (const pt of points) {
+        if (createdDate >= pt.start && createdDate <= pt.end) {
+          pt.value += 1;
+          break;
+        }
+      }
+    });
+
+    // Make sure we have at least 2 points
+    if (points.length === 0) {
+      points.push({ start: now, end: now, label: now.toLocaleDateString([], { day: '2-digit', month: '2-digit' }), value: 0 });
+    }
+    if (points.length === 1) {
+      const prev = new Date(points[0].start);
+      prev.setDate(prev.getDate() - 1);
+      points.unshift({ start: prev, end: prev, label: prev.toLocaleDateString([], { day: '2-digit', month: '2-digit' }), value: 0 });
+    }
+
+    return points.map(pt => ({ date: pt.label, value: pt.value }));
+  };
+
+  const incomingLeadsData = getLeadsChartData(customers, 'LEAD', leadsFilterRange, leadsFilterInterval);
+  const opportunityTrendsData = getLeadsChartData(customers, 'OPPORTUNITY', trendsFilterRange, trendsFilterInterval);
+  const wonOpportunitiesData = getLeadsChartData(customers, 'ACTIVE_CUSTOMER', wonFilterRange, wonFilterInterval);
+
+  // Dynamic scaling functions for Incoming Leads Line Chart
+  const leadsCount = incomingLeadsData.length;
+  const getLeadsX = (index: number) => {
+    if (leadsCount <= 1) return 500;
+    return 50 + (index / (leadsCount - 1)) * 900;
+  };
+  const maxLeadsVal = Math.max(...incomingLeadsData.map(d => d.value), 0);
+  const getLeadsY = (val: number) => {
+    if (maxLeadsVal === 0) return 190;
+    return 190 - (val / maxLeadsVal) * 150; // scales values up to height 150px (y from 40 to 190)
+  };
+
+  const leadsLinePath = incomingLeadsData.length > 0
+    ? incomingLeadsData.map((d, i) => `${i === 0 ? 'M' : 'L'} ${getLeadsX(i)},${getLeadsY(d.value)}`).join(' ')
+    : 'M 50,190 L 950,190';
+
+  const leadsFillPath = incomingLeadsData.length > 0
+    ? `${leadsLinePath} L ${getLeadsX(leadsCount - 1)},190 L ${getLeadsX(0)},190 Z`
+    : 'M 50,190 L 950,190 Z';
+
+  // Dynamic scaling functions for Opportunity Trends Bar Chart
+  const trendsCount = opportunityTrendsData.length;
+  const getTrendsX = (index: number) => {
+    if (trendsCount <= 1) return 500;
+    return 80 + (index / (trendsCount - 1)) * 840;
+  };
+  const maxTrendsVal = Math.max(...opportunityTrendsData.map(d => d.value), 0);
+  const getTrendsHeight = (val: number) => {
+    if (maxTrendsVal === 0) return 0;
+    return (val / maxTrendsVal) * 150;
+  };
+
+  // Dynamic scaling functions for Won Opportunities Bar Chart
+  const wonCount = wonOpportunitiesData.length;
+  const getWonX = (index: number) => {
+    if (wonCount <= 1) return 500;
+    return 80 + (index / (wonCount - 1)) * 840;
+  };
+  const maxWonVal = Math.max(...wonOpportunitiesData.map(d => d.value), 0);
+  const getWonHeight = (val: number) => {
+    if (maxWonVal === 0) return 0;
+    return (val / maxWonVal) * 150;
+  };
 
   return (
     <WorkspaceLayout config={CRM_SIDEBAR}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', width: '100%' }}>
-        {/* Header Block */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
-              Commercial CRM Command Center
-            </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
-              Real-time sales lifecycle reporting, contact management, and pipeline analytics.
-            </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+        
+        {/* Breadcrumb Navigation Bar */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          fontSize: '0.85rem',
+          color: 'var(--text-muted)',
+          borderBottom: '1px solid var(--border-color)',
+          paddingBottom: '0.75rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>/</span>
+            <span>Dashboard</span>
+            <ChevronRight size={12} />
+            <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>CRM</span>
           </div>
+          
           <button
             onClick={async () => {
               setLoading(true);
-              await Promise.all([fetchCustomers(), fetchSalesOrders()]);
+              await fetchCrmData();
               setLoading(false);
             }}
             disabled={loading}
-            className="btn btn-secondary"
-            style={{ height: '38px', padding: '0 0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.8rem',
+              fontWeight: 500
+            }}
           >
-            <RefreshCw size={14} className={loading ? 'spin' : ''} style={{ animation: loading ? 'spin 1.5s linear infinite' : 'none' }} />
-            Sync Metrics
+            <RefreshCw size={12} className={loading ? 'spin' : ''} style={{ animation: loading ? 'spin 1.5s linear infinite' : 'none' }} />
+            Sync Dashboard
           </button>
         </div>
 
-        {/* Error notification */}
+        {/* Error notification if api fails */}
         {errorMsg && (
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            background: 'rgba(255,51,102,0.1)',
-            border: '1px solid rgba(255,51,102,0.25)',
+            background: 'rgba(255,51,102,0.08)',
+            border: '1px solid rgba(255,51,102,0.2)',
             color: '#ff3366',
-            padding: '1rem',
-            borderRadius: '8px',
-            fontSize: '0.85rem'
+            padding: '0.75rem 1rem',
+            borderRadius: '10px',
+            fontSize: '0.8rem'
           }}>
-            <AlertCircle size={16} />
+            <AlertCircle size={15} />
             <span>{errorMsg}</span>
           </div>
         )}
 
-        {/* Metric Cards Grid */}
+        {/* ─── 4 Metric Cards Row (ERPNext Style) ─── */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '1.25rem'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '1rem'
         }}>
-          {/* Card 1: Open Sales Orders */}
-          <div style={{
-            background: 'rgba(20,30,50,0.4)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: '16px',
-            padding: '1.5rem',
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0 8px 32px 0 rgba(0,0,0,0.2)',
-            backdropFilter: 'blur(8px)',
-            transition: 'transform 0.2s',
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Open Sales Orders
-                </p>
-                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#ffffff', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
-                  {loading ? '...' : openOrdersCount}
-                </h3>
+          {/* Card 1: New Lead */}
+          <div className="glass-panel" style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            height: '110px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)'
+          }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                  New Lead (Last 1 Month)
+                </span>
               </div>
-              <div style={{
-                background: 'rgba(0, 245, 160, 0.1)',
-                padding: '10px',
-                borderRadius: '12px',
-                color: '#00f5a0',
-                border: '1px solid rgba(0, 245, 160, 0.15)'
-              }}>
-                <ShoppingBag size={20} />
-              </div>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.4rem', fontFamily: 'var(--font-display)' }}>
+                {loading ? '...' : leadCount}
+              </h2>
             </div>
-            <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#00f5a0' }}>
-              <TrendingUp size={12} />
-              <span>Draft & Confirmed status</span>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              <span style={{ fontWeight: 600 }}>0%</span> since yesterday
             </div>
           </div>
 
-          {/* Card 2: Total Booked Revenue (MTD) */}
-          <div style={{
-            background: 'rgba(20,30,50,0.4)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: '16px',
-            padding: '1.5rem',
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0 8px 32px 0 rgba(0,0,0,0.2)',
-            backdropFilter: 'blur(8px)',
-            transition: 'transform 0.2s',
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Total Booked Revenue (MTD)
-                </p>
-                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#ffffff', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
-                  {loading ? '...' : `$${totalBookedRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                </h3>
+          {/* Card 2: New Opportunity */}
+          <div className="glass-panel" style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            height: '110px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)'
+          }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                  New Opportunity (Last 1 Month)
+                </span>
               </div>
-              <div style={{
-                background: 'rgba(147, 51, 234, 0.1)',
-                padding: '10px',
-                borderRadius: '12px',
-                color: '#a855f7',
-                border: '1px solid rgba(147, 51, 234, 0.15)'
-              }}>
-                <DollarSign size={20} />
-              </div>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.4rem', fontFamily: 'var(--font-display)' }}>
+                {loading ? '...' : opportunityCount}
+              </h2>
             </div>
-            <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#a855f7' }}>
-              <CheckCircle2 size={12} />
-              <span>Confirmed & Fulfilled this month</span>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              <span style={{ fontWeight: 600 }}>0%</span> since yesterday
             </div>
           </div>
 
-          {/* Card 3: Pending Fulfillments */}
-          <div style={{
-            background: 'rgba(20,30,50,0.4)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: '16px',
-            padding: '1.5rem',
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0 8px 32px 0 rgba(0,0,0,0.2)',
-            backdropFilter: 'blur(8px)',
-            transition: 'transform 0.2s',
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Pending Fulfillments
-                </p>
-                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#ffffff', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
-                  {loading ? '...' : pendingFulfillmentsCount}
-                </h3>
+          {/* Card 3: Won Opportunity */}
+          <div className="glass-panel" style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            height: '110px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)'
+          }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                  Won Opportunity (Last 1 Month)
+                </span>
               </div>
-              <div style={{
-                background: 'rgba(251, 191, 36, 0.1)',
-                padding: '10px',
-                borderRadius: '12px',
-                color: '#fbbf24',
-                border: '1px solid rgba(251, 191, 36, 0.15)'
-              }}>
-                <FileCheck size={20} />
-              </div>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.4rem', fontFamily: 'var(--font-display)' }}>
+                {loading ? '...' : wonOpportunityCount}
+              </h2>
             </div>
-            <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#fbbf24' }}>
-              <History size={12} />
-              <span>Confirmed orders awaiting dispatch</span>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              <span style={{ fontWeight: 600 }}>0%</span> since yesterday
+            </div>
+          </div>
+
+          {/* Card 4: Open Opportunity */}
+          <div className="glass-panel" style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            height: '110px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)'
+          }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                  Open Opportunity
+                </span>
+              </div>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.4rem', fontFamily: 'var(--font-display)' }}>
+                {loading ? '...' : openOpportunityCount}
+              </h2>
+            </div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              <span style={{ fontWeight: 600 }}>0%</span> since yesterday
             </div>
           </div>
         </div>
 
-        {/* Recent Accounts Roster */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1rem',
-          background: 'rgba(20,30,50,0.3)',
-          border: '1px solid rgba(255,255,255,0.06)',
+        {/* ─── Chart 1: Incoming Leads (Line Chart) ─── */}
+        <div className="glass-panel" style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
           borderRadius: '16px',
-          padding: '1.5rem'
+          padding: '1.5rem',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+          position: 'relative'
         }}>
-          <div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
-              Recent Account Roster
-            </h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.1rem' }}>
-              Latest customer files added to the sales lifecycle database.
-            </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                Incoming Leads
+              </h3>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Last synced just now</span>
+            </div>
+
+            {/* Filter selectors */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <select 
+                  value={leadsFilterRange}
+                  onChange={(e) => setLeadsFilterRange(e.target.value)}
+                  style={{
+                    appearance: 'none',
+                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    padding: '5px 24px 5px 12px',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="Last Quarter">Last Quarter</option>
+                  <option value="Last Month">Last Month</option>
+                </select>
+                <ChevronDown size={12} style={{ position: 'absolute', right: '8px', pointerEvents: 'none', color: 'var(--text-muted)' }} />
+              </div>
+
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <select 
+                  value={leadsFilterInterval}
+                  onChange={(e) => setLeadsFilterInterval(e.target.value)}
+                  style={{
+                    appearance: 'none',
+                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    padding: '5px 24px 5px 12px',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="Weekly">Weekly</option>
+                  <option value="Daily">Daily</option>
+                </select>
+                <ChevronDown size={12} style={{ position: 'absolute', right: '8px', pointerEvents: 'none', color: 'var(--text-muted)' }} />
+              </div>
+            </div>
           </div>
 
-          <div style={{ overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
-              <thead>
-                <tr style={{
-                  borderBottom: '1px solid rgba(255,255,255,0.08)',
-                  color: 'var(--text-muted)',
-                  background: 'rgba(12,18,36,0.6)',
-                  fontWeight: 600
-                }}>
-                  <th style={{ padding: '0.85rem' }}>Company</th>
-                  <th style={{ padding: '0.85rem' }}>Contact Name</th>
-                  <th style={{ padding: '0.85rem' }}>Email Address</th>
-                  <th style={{ padding: '0.85rem' }}>Phone</th>
-                  <th style={{ padding: '0.85rem', textAlign: 'center' }}>Lifecycle Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                      Syncing account registry...
-                    </td>
-                  </tr>
-                ) : customers.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                      No customers registered. Use the Commercial API or Accounts view to seed data.
-                    </td>
-                  </tr>
-                ) : (
-                  customers.slice(0, 10).map((c) => {
-                    let statusColor = '#00f5a0';
-                    let statusBg = 'rgba(0, 245, 160, 0.1)';
-                    if (c.lifecycle_status === 'OPPORTUNITY') {
-                      statusColor = '#3b82f6';
-                      statusBg = 'rgba(59, 130, 246, 0.1)';
-                    } else if (c.lifecycle_status === 'ACTIVE_CUSTOMER') {
-                      statusColor = '#a855f7';
-                      statusBg = 'rgba(168, 85, 247, 0.1)';
-                    } else if (c.lifecycle_status === 'INACTIVE') {
-                      statusColor = '#ff3366';
-                      statusBg = 'rgba(255, 51, 102, 0.1)';
-                    }
+          {/* SVG Line Chart */}
+          <div style={{ width: '100%', height: '220px', position: 'relative', overflow: 'visible' }}>
+            <svg style={{ width: '100%', height: '100%' }} viewBox="0 0 1000 220" preserveAspectRatio="none">
+              {/* Grid Lines */}
+              <line x1="0" y1="20" x2="1000" y2="20" stroke="var(--border-color)" strokeDasharray="3,3" strokeWidth="0.5" />
+              <line x1="0" y1="70" x2="1000" y2="70" stroke="var(--border-color)" strokeDasharray="3,3" strokeWidth="0.5" />
+              <line x1="0" y1="120" x2="1000" y2="120" stroke="var(--border-color)" strokeDasharray="3,3" strokeWidth="0.5" />
+              <line x1="0" y1="170" x2="1000" y2="170" stroke="var(--border-color)" strokeDasharray="3,3" strokeWidth="0.5" />
 
-                    return (
-                      <tr key={c.id} style={{
-                        borderBottom: '1px solid rgba(255,255,255,0.04)',
-                        transition: 'background 0.2s',
+              {/* Main Line path */}
+              <path
+                d={leadsLinePath}
+                fill="none"
+                stroke="#00f5a0"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+
+              {/* Gradient area under the line */}
+              <path
+                d={leadsFillPath}
+                fill="url(#green-gradient)"
+                opacity="0.08"
+              />
+
+              {/* Gradient definitions */}
+              <defs>
+                <linearGradient id="green-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#00f5a0" />
+                  <stop offset="100%" stopColor="#00f5a0" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+
+              {/* Data Interactive Dots & Invisible Hover zones */}
+              {incomingLeadsData.map((d, index) => {
+                const x = getLeadsX(index);
+                const y = getLeadsY(d.value);
+
+                return (
+                  <g key={d.date}>
+                    {/* Visual dot */}
+                    <circle 
+                      cx={x} 
+                      cy={y} 
+                      r="4" 
+                      fill="#00f5a0" 
+                      stroke="var(--bg-card)" 
+                      strokeWidth="1.5" 
+                      style={{ transition: 'all 0.2s' }}
+                    />
+                    {/* Hover detector */}
+                    <circle 
+                      cx={x} 
+                      cy={y} 
+                      r="16" 
+                      fill="transparent" 
+                      style={{ cursor: 'pointer' }}
+                      onMouseEnter={(e) => {
+                        setHoveredPoint({
+                          x: x,
+                          y: y - 20,
+                          label: d.date,
+                          value: `${Math.round(d.value)} Leads`
+                        });
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.01)'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        <td style={{ padding: '0.85rem', fontWeight: 600, color: '#ffffff' }}>
-                          {c.company_name}
-                        </td>
-                        <td style={{ padding: '0.85rem', color: '#cbd5e1' }}>
-                          {c.contact_name}
-                        </td>
-                        <td style={{ padding: '0.85rem', color: 'var(--text-muted)' }}>
-                          {c.email}
-                        </td>
-                        <td style={{ padding: '0.85rem', color: 'var(--text-muted)' }}>
-                          {c.phone || '—'}
-                        </td>
-                        <td style={{ padding: '0.85rem', textAlign: 'center' }}>
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                            background: statusBg,
-                            color: statusColor,
-                            border: `1px solid ${statusColor}33`
-                          }}>
-                            {c.lifecycle_status.replace('_', ' ')}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                      onMouseLeave={() => setHoveredPoint(null)}
+                    />
+                  </g>
+                );
+              })}
+            </svg>
+
+            {/* X Axis Labels */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              marginTop: '8px', 
+              fontSize: '0.68rem', 
+              color: 'var(--text-muted)',
+              paddingLeft: '50px',
+              paddingRight: '50px'
+            }}>
+              {incomingLeadsData.length > 0 && Array.from(new Set([
+                incomingLeadsData[0].date,
+                incomingLeadsData[Math.floor(incomingLeadsData.length * 0.25)].date,
+                incomingLeadsData[Math.floor(incomingLeadsData.length * 0.5)].date,
+                incomingLeadsData[Math.floor(incomingLeadsData.length * 0.75)].date,
+                incomingLeadsData[incomingLeadsData.length - 1].date
+              ])).map((date, i) => (
+                <span key={i}>{date}</span>
+              ))}
+            </div>
+
+            {/* Custom Tooltip */}
+            {hoveredPoint && (
+              <div style={{
+                position: 'absolute',
+                left: `${(hoveredPoint.x / 1000) * 100}%`,
+                top: `${hoveredPoint.y - 15}px`,
+                transform: 'translateX(-50%)',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                borderRadius: '6px',
+                padding: '6px 10px',
+                pointerEvents: 'none',
+                zIndex: 10,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px',
+                minWidth: '90px'
+              }}>
+                <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 500 }}>{hoveredPoint.label}</span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-main)', fontWeight: 700 }}>{hoveredPoint.value}</span>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* ─── Chart 2: Opportunity Trends (Bar Chart) ─── */}
+        <div className="glass-panel" style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.06)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                Opportunity Trends
+              </h3>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Last synced just now</span>
+            </div>
+
+            {/* Filter selectors */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <select 
+                  value={trendsFilterRange}
+                  onChange={(e) => setTrendsFilterRange(e.target.value)}
+                  style={{
+                    appearance: 'none',
+                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    padding: '5px 24px 5px 12px',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="Last Quarter">Last Quarter</option>
+                  <option value="Last Month">Last Month</option>
+                </select>
+                <ChevronDown size={12} style={{ position: 'absolute', right: '8px', pointerEvents: 'none', color: 'var(--text-muted)' }} />
+              </div>
+
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <select 
+                  value={trendsFilterInterval}
+                  onChange={(e) => setTrendsFilterInterval(e.target.value)}
+                  style={{
+                    appearance: 'none',
+                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    padding: '5px 24px 5px 12px',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="Weekly">Weekly</option>
+                  <option value="Daily">Daily</option>
+                </select>
+                <ChevronDown size={12} style={{ position: 'absolute', right: '8px', pointerEvents: 'none', color: 'var(--text-muted)' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* SVG Bar Chart */}
+          <div style={{ width: '100%', height: '220px', position: 'relative', overflow: 'visible' }}>
+            <svg style={{ width: '100%', height: '100%' }} viewBox="0 0 1000 220" preserveAspectRatio="none">
+              {/* Grid Lines */}
+              <line x1="0" y1="20" x2="1000" y2="20" stroke="var(--border-color)" strokeDasharray="3,3" strokeWidth="0.5" />
+              <line x1="0" y1="70" x2="1000" y2="70" stroke="var(--border-color)" strokeDasharray="3,3" strokeWidth="0.5" />
+              <line x1="0" y1="120" x2="1000" y2="120" stroke="var(--border-color)" strokeDasharray="3,3" strokeWidth="0.5" />
+              <line x1="0" y1="170" x2="1000" y2="170" stroke="var(--border-color)" strokeDasharray="3,3" strokeWidth="0.5" />
+
+              {/* Rendering Bar Columns (Opportunity values) */}
+              {opportunityTrendsData.map((d, index) => {
+                const colWidth = Math.max(6, Math.min(24, 700 / trendsCount));
+                const x = getTrendsX(index);
+                const height = getTrendsHeight(d.value);
+                const y = 190 - height;
+
+                return (
+                  <g key={d.date}>
+                    <rect
+                      x={x - colWidth/2}
+                      y={y}
+                      width={colWidth}
+                      height={height > 0 ? height : 1} // minimal 1px height line for zero state
+                      rx="4"
+                      fill={height > 0 ? '#ff3366' : 'rgba(255,255,255,0.03)'}
+                      style={{ transition: 'all 0.3s' }}
+                    />
+                    {/* Hover zone */}
+                    <rect
+                      x={x - colWidth/2 - 10}
+                      y="20"
+                      width={colWidth + 20}
+                      height="170"
+                      fill="transparent"
+                      style={{ cursor: 'pointer' }}
+                      onMouseEnter={(e) => {
+                        setHoveredPoint({
+                          x: x,
+                          y: y - 20,
+                          label: d.date,
+                          value: `${Math.round(d.value)} Opportunities`
+                        });
+                      }}
+                      onMouseLeave={() => setHoveredPoint(null)}
+                    />
+                  </g>
+                );
+              })}
+            </svg>
+
+            {/* X Axis Labels */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              marginTop: '8px', 
+              fontSize: '0.68rem', 
+              color: 'var(--text-muted)',
+              paddingLeft: '50px',
+              paddingRight: '50px'
+            }}>
+              {opportunityTrendsData.length > 0 && Array.from(new Set([
+                opportunityTrendsData[0].date,
+                opportunityTrendsData[Math.floor(opportunityTrendsData.length * 0.25)].date,
+                opportunityTrendsData[Math.floor(opportunityTrendsData.length * 0.5)].date,
+                opportunityTrendsData[Math.floor(opportunityTrendsData.length * 0.75)].date,
+                opportunityTrendsData[opportunityTrendsData.length - 1].date
+              ])).map((date, i) => (
+                <span key={i}>{date}</span>
+              ))}
+            </div>
+
+            {/* Custom Bar Tooltip */}
+            {hoveredPoint && (
+              <div style={{
+                position: 'absolute',
+                left: `${(hoveredPoint.x / 1000) * 100}%`,
+                top: `${hoveredPoint.y - 15}px`,
+                transform: 'translateX(-50%)',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                borderRadius: '6px',
+                padding: '6px 10px',
+                pointerEvents: 'none',
+                zIndex: 10,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px',
+                minWidth: '110px'
+              }}>
+                <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 500 }}>{hoveredPoint.label}</span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-main)', fontWeight: 700 }}>{hoveredPoint.value}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ─── Chart 3: Won Opportunities (Bar Chart) ─── */}
+        <div className="glass-panel" style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.06)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                Won Opportunities
+              </h3>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Last synced just now</span>
+            </div>
+
+            {/* Filter selectors */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <select 
+                  value={wonFilterRange}
+                  onChange={(e) => setWonFilterRange(e.target.value)}
+                  style={{
+                    appearance: 'none',
+                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    padding: '5px 24px 5px 12px',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="Last Year">Last Year</option>
+                  <option value="Last Quarter">Last Quarter</option>
+                </select>
+                <ChevronDown size={12} style={{ position: 'absolute', right: '8px', pointerEvents: 'none', color: 'var(--text-muted)' }} />
+              </div>
+
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <select 
+                  value={wonFilterInterval}
+                  onChange={(e) => setWonFilterInterval(e.target.value)}
+                  style={{
+                    appearance: 'none',
+                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    padding: '5px 24px 5px 12px',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="Monthly">Monthly</option>
+                  <option value="Weekly">Weekly</option>
+                </select>
+                <ChevronDown size={12} style={{ position: 'absolute', right: '8px', pointerEvents: 'none', color: 'var(--text-muted)' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* SVG Bar Chart for Won Opportunities */}
+          <div style={{ width: '100%', height: '220px', position: 'relative', overflow: 'visible' }}>
+            <svg style={{ width: '100%', height: '100%' }} viewBox="0 0 1000 220" preserveAspectRatio="none">
+              {/* Grid Lines */}
+              <line x1="0" y1="20" x2="1000" y2="20" stroke="var(--border-color)" strokeDasharray="3,3" strokeWidth="0.5" />
+              <line x1="0" y1="70" x2="1000" y2="70" stroke="var(--border-color)" strokeDasharray="3,3" strokeWidth="0.5" />
+              <line x1="0" y1="120" x2="1000" y2="120" stroke="var(--border-color)" strokeDasharray="3,3" strokeWidth="0.5" />
+              <line x1="0" y1="170" x2="1000" y2="170" stroke="var(--border-color)" strokeDasharray="3,3" strokeWidth="0.5" />
+
+              {/* Rendering Bar Columns (Won Opportunity values) */}
+              {wonOpportunitiesData.map((d, index) => {
+                const colWidth = Math.max(6, Math.min(24, 700 / wonCount));
+                const x = getWonX(index);
+                const height = getWonHeight(d.value);
+                const y = 190 - height;
+
+                return (
+                  <g key={d.date}>
+                    <rect
+                      x={x - colWidth/2}
+                      y={y}
+                      width={colWidth}
+                      height={height > 0 ? height : 1}
+                      rx="4"
+                      fill={height > 0 ? '#38bdf8' : 'rgba(255,255,255,0.03)'}
+                      style={{ transition: 'all 0.3s' }}
+                    />
+                    <rect
+                      x={x - colWidth/2 - 10}
+                      y="20"
+                      width={colWidth + 20}
+                      height="170"
+                      fill="transparent"
+                      style={{ cursor: 'pointer' }}
+                      onMouseEnter={(e) => {
+                        setHoveredPoint({
+                          x: x,
+                          y: y - 20,
+                          label: d.date,
+                          value: `${Math.round(d.value)} Won Opportunities`
+                        });
+                      }}
+                      onMouseLeave={() => setHoveredPoint(null)}
+                    />
+                  </g>
+                );
+              })}
+            </svg>
+
+            {/* X Axis Labels */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              marginTop: '8px', 
+              fontSize: '0.68rem', 
+              color: 'var(--text-muted)',
+              paddingLeft: '50px',
+              paddingRight: '50px'
+            }}>
+              {wonOpportunitiesData.length > 0 && Array.from(new Set([
+                wonOpportunitiesData[0].date,
+                wonOpportunitiesData[Math.floor(wonOpportunitiesData.length * 0.25)].date,
+                wonOpportunitiesData[Math.floor(wonOpportunitiesData.length * 0.5)].date,
+                wonOpportunitiesData[Math.floor(wonOpportunitiesData.length * 0.75)].date,
+                wonOpportunitiesData[wonOpportunitiesData.length - 1].date
+              ])).map((date, i) => (
+                <span key={i}>{date}</span>
+              ))}
+            </div>
+
+            {/* Custom Tooltip */}
+            {hoveredPoint && (
+              <div style={{
+                position: 'absolute',
+                left: `${(hoveredPoint.x / 1000) * 100}%`,
+                top: `${hoveredPoint.y - 15}px`,
+                transform: 'translateX(-50%)',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                borderRadius: '6px',
+                padding: '6px 10px',
+                pointerEvents: 'none',
+                zIndex: 10,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px',
+                minWidth: '110px'
+              }}>
+                <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 500 }}>{hoveredPoint.label}</span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-main)', fontWeight: 700 }}>{hoveredPoint.value}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
       </div>
 
       <style>{`

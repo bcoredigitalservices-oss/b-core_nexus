@@ -4,27 +4,11 @@ import {
   FileText, Plus, RefreshCw, X, AlertCircle, CheckCircle2,
   Trash2, ChevronLeft, ChevronRight, TrendingUp, Users, Target, Phone
 } from 'lucide-react';
-import WorkspaceLayout, { WorkspaceLayoutConfig } from '../../../layouts/WorkspaceLayout';
-
-const CRM_SIDEBAR: WorkspaceLayoutConfig = {
-  workspaceKey: 'crm',
-  workspaceName: 'CRM',
-  accentColor: '#00f2fe',
-  icon: <Users size={18} />,
-  navItems: [
-    { label: 'Dashboard',           subPath: '',                icon: <TrendingUp size={15} /> },
-    { label: 'Pipeline & Leads',    subPath: 'pipeline',        icon: <Target size={15} /> },
-    { label: 'Customer Accounts',   subPath: 'accounts',        icon: <Users size={15} /> },
-    { label: 'Sales Orders',        subPath: 'sales-orders',    icon: <TrendingUp size={15} /> },
-    { label: 'Quotations',          subPath: 'quotations',      icon: <FileText size={15} /> },
-    { label: 'Contacts',            subPath: 'contacts',        icon: <Phone size={15} /> },
-    { label: 'Tasks & ToDo',        subPath: 'tasks',           icon: <Target size={15} /> },
-    { label: 'Interaction History', subPath: 'interactions',    icon: <TrendingUp size={15} /> },
-  ],
-};
+import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
+import { CRM_SIDEBAR } from './crmSidebarConfig';
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-  DRAFT:    { label: 'Draft',    color: '#6b7280', bg: 'rgba(107,114,128,0.12)' },
+  DRAFT:    { label: 'Draft',    color: 'var(--text-muted)', bg: 'rgba(107,114,128,0.12)' },
   SENT:     { label: 'Sent',     color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
   ACCEPTED: { label: 'Accepted', color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
   REJECTED: { label: 'Rejected', color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
@@ -161,11 +145,11 @@ export default function Quotations() {
         {errorMsg && <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(255,51,102,0.1)', border: '1px solid rgba(255,51,102,0.25)', color: '#ff3366', padding: '0.75rem', borderRadius: '8px', fontSize: '0.85rem' }}><AlertCircle size={14} />{errorMsg}</div>}
 
         {/* Table */}
-        <div style={{ background: 'rgba(20,30,50,0.4)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
               <thead>
-                <tr style={{ background: 'rgba(12,18,36,0.6)', borderBottom: '2px solid rgba(255,255,255,0.08)', color: 'var(--text-muted)', fontWeight: 600 }}>
+                <tr style={{ background: 'var(--bg-card)', borderBottom: '2px solid rgba(255,255,255,0.08)', color: 'var(--text-muted)', fontWeight: 600 }}>
                   <th style={{ padding: '1rem', textAlign: 'left' }}>Reference</th>
                   <th style={{ padding: '1rem', textAlign: 'left' }}>Customer</th>
                   <th style={{ padding: '1rem', textAlign: 'left' }}>Date</th>
@@ -183,11 +167,11 @@ export default function Quotations() {
                 ) : quotations.length === 0 ? (
                   <tr><td colSpan={7} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>No quotations found.</td></tr>
                 ) : quotations.map(q => (
-                  <tr key={q.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                  <tr key={q.id} style={{ borderBottom: '1px solid var(--border-color)' }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                     <td style={{ padding: '0.9rem 1rem', fontWeight: 700, color: '#00f2fe', fontFamily: 'var(--font-mono)' }}>{q.quotation_reference}</td>
-                    <td style={{ padding: '0.9rem 1rem', color: '#e2e8f0' }}>{custMap[q.customer_id] || q.customer_id.slice(0, 8)}</td>
+                    <td style={{ padding: '0.9rem 1rem', color: 'var(--text-main)' }}>{custMap[q.customer_id] || q.customer_id.slice(0, 8)}</td>
                     <td style={{ padding: '0.9rem 1rem', color: 'var(--text-muted)' }}>{q.quotation_date}</td>
                     <td style={{ padding: '0.9rem 1rem', color: 'var(--text-muted)' }}>{q.expiry_date || '—'}</td>
                     <td style={{ padding: '0.9rem 1rem' }}><StatusPill status={q.status} /></td>
@@ -212,7 +196,7 @@ export default function Quotations() {
             </table>
           </div>
           {total > PAGE_SIZE && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(12,18,36,0.4)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderTop: '1px solid var(--border-color)', background: 'var(--bg-card)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
               <span>Page {page} of {Math.ceil(total / PAGE_SIZE)}</span>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn btn-secondary" style={{ padding: '0.4rem 0.6rem', height: '30px', fontSize: '0.75rem' }}><ChevronLeft size={13} /></button>
@@ -226,8 +210,8 @@ export default function Quotations() {
       {/* Create Modal */}
       {isModalOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }}>
-          <div style={{ background: 'linear-gradient(135deg,#141b2e,#0c1224)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', width: '100%', maxWidth: '680px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', position: 'sticky', top: 0, background: '#141b2e', zIndex: 1 }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', width: '100%', maxWidth: '680px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 1 }}>
               <h3 style={{ fontWeight: 700, color: '#fff', fontSize: '1.1rem' }}>Create Quotation</h3>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}><X size={18} /></button>
             </div>
@@ -264,7 +248,7 @@ export default function Quotations() {
               <div><label>Notes</label><textarea rows={2} placeholder="Optional notes..." {...register('notes')} /></div>
 
               {/* Line Items */}
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
+              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                   <span style={{ fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>Line Items</span>
                   <button type="button" onClick={() => append({ description: '', quantity: '1', unit_price: '0', line_total: '0' })} style={{ fontSize: '0.75rem', padding: '4px 10px', background: 'rgba(0,242,254,0.1)', border: '1px solid rgba(0,242,254,0.3)', borderRadius: '6px', color: '#00f2fe', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -287,7 +271,7 @@ export default function Quotations() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '0.5rem' }}>
                 <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary" style={{ height: '38px' }}>Cancel</button>
                 <button type="submit" disabled={submitting} className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#00f2fe,#0080c6)', color: '#fff', fontWeight: 700, height: '38px' }}>
                   {submitting ? 'Creating...' : 'Create Quotation'}

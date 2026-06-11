@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Menu, Database, Server, User, ChevronDown, Bell, LogOut, Settings, 
   MessageSquare, Send, X, ShieldAlert 
@@ -19,6 +19,8 @@ interface ChatMessage {
 export default function TierOneLayout() {
   const { isApiLive, currentUser, systemSettings, logout, isBooting } = useAppContext();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isWorkspaceRoute = location.pathname.startsWith('/workspaces');
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -111,19 +113,19 @@ export default function TierOneLayout() {
           alignItems: 'center',
           justifyContent: 'center',
           height: '100vh',
-          backgroundColor: '#0F172A',
-          color: '#ffffff',
+          backgroundColor: 'var(--bg-card)',
+          color: 'var(--text-main)',
           gap: '1.5rem'
         }}
       >
         <div className="appshell-boot__spinner" style={{ borderTopColor: '#9d4edd', width: '40px', height: '40px' }} />
-        <p style={{ fontSize: '0.95rem', letterSpacing: '0.05em', color: '#9CA3AF' }}>Initialising Tier 1 Executive Workspace…</p>
+        <p style={{ fontSize: '0.95rem', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>Initialising Tier 1 Executive Workspace…</p>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', backgroundColor: '#090D1A', color: '#F3F4F6' }}>
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)' }}>
       
       {/* Mobile sidebar overlay */}
       {isMobile && mobileSidebarOpen && (
@@ -132,7 +134,7 @@ export default function TierOneLayout() {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            backgroundColor: 'rgba(0,0,0,0.4)',
             backdropFilter: 'blur(4px)',
             zIndex: 40
           }}
@@ -140,20 +142,22 @@ export default function TierOneLayout() {
       )}
 
       {/* Sidebar (sticky left) */}
-      <div 
-        style={{
-          display: isMobile && !mobileSidebarOpen ? 'none' : 'block',
-          position: isMobile ? 'fixed' : 'relative',
-          top: 0,
-          bottom: 0,
-          left: 0,
-          zIndex: 50,
-          height: '100vh',
-          boxShadow: isMobile ? '4px 0 24px rgba(0,0,0,0.5)' : 'none'
-        }}
-      >
-        <TierOneSidebar />
-      </div>
+      {!isWorkspaceRoute && (
+        <div 
+          style={{
+            display: isMobile && !mobileSidebarOpen ? 'none' : 'block',
+            position: isMobile ? 'fixed' : 'relative',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            zIndex: 50,
+            height: '100vh',
+            boxShadow: isMobile ? '4px 0 24px rgba(0,0,0,0.5)' : 'none'
+          }}
+        >
+          <TierOneSidebar />
+        </div>
+      )}
 
       {/* Main Content & Chat Container (right) */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
@@ -162,8 +166,8 @@ export default function TierOneLayout() {
         <header 
           style={{
             height: '64px',
-            backgroundColor: '#0F172A',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            backgroundColor: 'var(--bg-card)',
+            borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -179,7 +183,7 @@ export default function TierOneLayout() {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#9CA3AF',
+                  color: 'var(--text-muted)',
                   cursor: 'pointer',
                   padding: '6px',
                   display: 'flex',
@@ -198,11 +202,11 @@ export default function TierOneLayout() {
                 gap: '6px',
                 fontSize: '0.75rem',
                 fontWeight: 600,
-                color: isApiLive ? 'var(--accent-green)' : '#9CA3AF',
-                background: isApiLive ? 'rgba(0, 245, 160, 0.05)' : 'rgba(255, 255, 255, 0.03)',
+                color: isApiLive ? 'var(--accent-green)' : 'var(--text-muted)',
+                background: isApiLive ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-card-hover)',
                 padding: '4px 10px',
                 borderRadius: '12px',
-                border: `1px solid ${isApiLive ? 'rgba(0, 245, 160, 0.2)' : 'rgba(255, 255, 255, 0.08)'}`
+                border: `1px solid ${isApiLive ? 'rgba(16, 185, 129, 0.2)' : 'var(--border-color)'}`
               }}
             >
               {isApiLive ? <Database size={13} /> : <Server size={13} />}
@@ -212,7 +216,7 @@ export default function TierOneLayout() {
 
           {/* Center Title */}
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#F1F5F9', letterSpacing: '0.05em', fontFamily: 'var(--font-display)' }}>
+            <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '0.05em', fontFamily: 'var(--font-display)' }}>
               BUSINESS OPERATIONS CENTRE
             </span>
           </div>
@@ -224,9 +228,9 @@ export default function TierOneLayout() {
             <button
               onClick={() => setChatOpen(!chatOpen)}
               style={{
-                background: chatOpen ? 'rgba(157, 78, 221, 0.15)' : 'transparent',
+                background: chatOpen ? 'var(--bg-card-hover)' : 'transparent',
                 border: 'none',
-                color: chatOpen ? '#c8b6ff' : '#94A3B8',
+                color: chatOpen ? 'var(--accent-primary)' : 'var(--text-muted)',
                 cursor: 'pointer',
                 padding: '8px',
                 borderRadius: '6px',
@@ -246,7 +250,7 @@ export default function TierOneLayout() {
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: '#94A3B8',
+                color: 'var(--text-muted)',
                 cursor: 'pointer',
                 padding: '8px',
                 position: 'relative',
@@ -280,7 +284,7 @@ export default function TierOneLayout() {
                   alignItems: 'center',
                   gap: '8px',
                   cursor: 'pointer',
-                  color: '#ffffff',
+                  color: 'var(--text-main)',
                   textAlign: 'left'
                 }}
               >
@@ -289,9 +293,9 @@ export default function TierOneLayout() {
                     width: '28px',
                     height: '28px',
                     borderRadius: '50%',
-                    backgroundColor: 'rgba(157, 78, 221, 0.15)',
-                    border: '1px solid rgba(157, 78, 221, 0.3)',
-                    color: '#c8b6ff',
+                    backgroundColor: 'var(--bg-card-hover)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--accent-primary)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -302,14 +306,14 @@ export default function TierOneLayout() {
                   {currentUser?.email?.[0]?.toUpperCase() ?? <User size={13} />}
                 </div>
                 <div style={{ display: isMobile ? 'none' : 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)' }}>
                     {currentUser?.full_name || currentUser?.email?.split('@')[0]}
                   </span>
-                  <span style={{ fontSize: '0.65rem', color: '#94A3B8' }}>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
                     Tier 1 Executive
                   </span>
                 </div>
-                <ChevronDown size={14} style={{ color: '#94A3B8' }} />
+                <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
               </button>
 
               {dropdownOpen && (
@@ -319,10 +323,10 @@ export default function TierOneLayout() {
                     right: 0,
                     marginTop: '8px',
                     width: '180px',
-                    backgroundColor: '#0F172A',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '8px',
-                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                     padding: '4px 0',
                     zIndex: 100
                   }}
@@ -337,13 +341,13 @@ export default function TierOneLayout() {
                       padding: '8px 12px',
                       background: 'transparent',
                       border: 'none',
-                      color: '#94A3B8',
+                      color: 'var(--text-muted)',
                       fontSize: '0.8rem',
                       cursor: 'pointer',
                       textAlign: 'left'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = '#94A3B8'}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
                   >
                     <User size={14} />
                     <span>My Profile</span>
@@ -358,18 +362,18 @@ export default function TierOneLayout() {
                       padding: '8px 12px',
                       background: 'transparent',
                       border: 'none',
-                      color: '#94A3B8',
+                      color: 'var(--text-muted)',
                       fontSize: '0.8rem',
                       cursor: 'pointer',
                       textAlign: 'left'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = '#94A3B8'}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
                   >
                     <Settings size={14} />
                     <span>System Settings</span>
                   </button>
-                  <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', margin: '4px 0' }} />
+                  <div style={{ borderTop: '1px solid var(--border-color)', margin: '4px 0' }} />
                   <button
                     onClick={handleLogout}
                     style={{
@@ -404,10 +408,13 @@ export default function TierOneLayout() {
           <main 
             style={{ 
               flex: 1, 
-              overflowY: 'auto', 
-              padding: '2rem',
-              background: '#090D1A',
-              transition: 'all 0.3s ease'
+              overflow: isWorkspaceRoute ? 'hidden' : 'auto', 
+              padding: isWorkspaceRoute ? '0' : '2rem',
+              background: 'var(--bg-main)',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%'
             }}
           >
             <Outlet />
@@ -419,8 +426,8 @@ export default function TierOneLayout() {
               width: chatOpen ? '280px' : '0px',
               opacity: chatOpen ? 1 : 0,
               visibility: chatOpen ? 'visible' : 'hidden',
-              backgroundColor: '#0F172A',
-              borderLeft: chatOpen ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+              backgroundColor: 'var(--bg-card)',
+              borderLeft: chatOpen ? '1px solid var(--border-color)' : 'none',
               display: 'flex',
               flexDirection: 'column',
               height: '100%',
@@ -433,7 +440,7 @@ export default function TierOneLayout() {
             <div 
               style={{
                 padding: '1rem',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -441,15 +448,15 @@ export default function TierOneLayout() {
               }}
             >
               <div>
-                <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#ffffff' }}>Active Chat</h3>
-                <p style={{ fontSize: '0.65rem', color: '#94A3B8' }}>Real-time team communication</p>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)' }}>Active Chat</h3>
+                <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Real-time team communication</p>
               </div>
               <button 
                 onClick={() => setChatOpen(false)}
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#94A3B8',
+                  color: 'var(--text-muted)',
                   cursor: 'pointer',
                   padding: '4px',
                   display: 'flex',
@@ -457,8 +464,8 @@ export default function TierOneLayout() {
                   justifyContent: 'center',
                   borderRadius: '4px'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#94A3B8'}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
               >
                 <X size={16} />
               </button>
@@ -484,24 +491,24 @@ export default function TierOneLayout() {
                       height: '28px',
                       borderRadius: '50%',
                       backgroundColor: msg.avatarColor,
-                      color: '#c8b6ff',
+                      color: 'var(--accent-primary)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontWeight: 700,
                       fontSize: '0.75rem',
                       flexShrink: 0,
-                      border: '1px solid rgba(255, 255, 255, 0.05)'
+                      border: '1px solid var(--border-color)'
                     }}
                   >
                     {msg.sender[0]}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {msg.sender}
                       </span>
-                      <span style={{ fontSize: '0.6rem', color: '#64748B', marginLeft: '4px' }}>
+                      <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginLeft: '4px' }}>
                         {msg.timestamp}
                       </span>
                     </div>
@@ -509,7 +516,7 @@ export default function TierOneLayout() {
                       style={{ 
                         display: 'inline-block', 
                         fontSize: '0.65rem', 
-                        color: '#9d4edd', 
+                        color: 'var(--accent-primary)', 
                         fontWeight: 600, 
                         marginBottom: '4px', 
                         textTransform: 'uppercase', 
@@ -518,7 +525,7 @@ export default function TierOneLayout() {
                     >
                       {msg.role}
                     </span>
-                    <p style={{ fontSize: '0.75rem', color: '#CBD5E1', lineHeight: '1.4', wordBreak: 'break-word' }}>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-main)', lineHeight: '1.4', wordBreak: 'break-word' }}>
                       {msg.message}
                     </p>
                   </div>
@@ -532,8 +539,8 @@ export default function TierOneLayout() {
               onSubmit={handleSendChat}
               style={{
                 padding: '1rem',
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                background: 'rgba(0, 0, 0, 0.15)'
+                borderTop: '1px solid var(--border-color)',
+                background: 'var(--bg-card-hover)'
               }}
             >
               <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
@@ -543,10 +550,10 @@ export default function TierOneLayout() {
                   value={chatInput} 
                   onChange={(e) => setChatInput(e.target.value)}
                   style={{
-                    backgroundColor: '#1E293B',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    backgroundColor: 'var(--bg-input)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '6px',
-                    color: '#ffffff',
+                    color: 'var(--text-main)',
                     fontSize: '0.75rem',
                     padding: '8px 32px 8px 10px',
                     height: '34px'
@@ -561,7 +568,7 @@ export default function TierOneLayout() {
                     transform: 'translateY(-50%)',
                     background: 'transparent',
                     border: 'none',
-                    color: chatInput.trim() ? '#9d4edd' : '#64748B',
+                    color: chatInput.trim() ? '#9d4edd' : 'var(--text-muted)',
                     cursor: chatInput.trim() ? 'pointer' : 'default',
                     display: 'flex',
                     alignItems: 'center',

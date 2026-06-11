@@ -264,7 +264,7 @@ export default function StockLedgerPage() {
         {/* Header Block */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
               Stock Ledger & Live Levels
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
@@ -293,10 +293,10 @@ export default function StockLedgerPage() {
           gap: '1rem',
           alignItems: 'center',
           flexWrap: 'wrap',
-          background: 'rgba(20,30,50,0.5)',
+          background: 'var(--bg-card)',
           padding: '1rem',
           borderRadius: '12px',
-          border: '1px solid rgba(255,255,255,0.06)'
+          border: '1px solid var(--border-color)'
         }}>
           <div style={{ flex: 1, minWidth: '280px' }}>
             <input
@@ -338,9 +338,9 @@ export default function StockLedgerPage() {
 
         {/* Stock Levels Glassmorphic Table */}
         <div style={{
-          background: 'rgba(20,30,50,0.4)',
+          background: 'var(--bg-card)',
           borderRadius: '12px',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: '1px solid var(--border-color)',
           overflow: 'hidden'
         }}>
           <div style={{ overflowX: 'auto' }}>
@@ -349,7 +349,7 @@ export default function StockLedgerPage() {
                 <tr style={{
                   borderBottom: '2px solid rgba(255,255,255,0.08)',
                   color: 'var(--text-muted)',
-                  background: 'rgba(12,18,36,0.6)',
+                  background: 'var(--bg-card)',
                   fontWeight: 600
                 }}>
                   <th style={{ padding: '1rem' }}>SKU</th>
@@ -377,7 +377,7 @@ export default function StockLedgerPage() {
                     const isLow = stock.current_qty < 10;
                     return (
                       <tr key={idx} style={{
-                        borderBottom: '1px solid rgba(255,255,255,0.05)',
+                        borderBottom: '1px solid var(--border-color)',
                         transition: 'background 0.2s',
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
@@ -386,12 +386,12 @@ export default function StockLedgerPage() {
                         <td style={{ padding: '1rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#ffb703' }}>
                           {stock.sku}
                         </td>
-                        <td style={{ padding: '1rem', fontWeight: 600, color: '#ffffff' }}>
+                        <td style={{ padding: '1rem', fontWeight: 600, color: 'var(--text-main)' }}>
                           {stock.item_name}
                         </td>
-                        <td style={{ padding: '1rem', color: '#cbd5e1' }}>
+                        <td style={{ padding: '1rem', color: 'var(--text-main)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <WarehouseIcon size={12} color="#64748B" />
+                            <WarehouseIcon size={12} color='var(--text-muted)' />
                             {stock.warehouse_name}
                           </div>
                         </td>
@@ -399,7 +399,7 @@ export default function StockLedgerPage() {
                           padding: '1rem',
                           textAlign: 'right',
                           fontWeight: 700,
-                          color: isLow ? '#f59e0b' : '#ffffff'
+                          color: isLow ? '#f59e0b' : 'var(--text-main)'
                         }}>
                           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                             {isLow && <AlertTriangle size={14} color="#f59e0b" style={{ animation: 'pulse 2s infinite' }} />}
@@ -421,7 +421,7 @@ export default function StockLedgerPage() {
         <div style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.6)',
+          backgroundColor: 'rgba(0,0,0,0.4)',
           backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
@@ -431,7 +431,7 @@ export default function StockLedgerPage() {
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #141b2e 0%, #0c1224 100%)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             width: '100%',
             maxWidth: '520px',
@@ -446,16 +446,16 @@ export default function StockLedgerPage() {
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: '1.25rem 1.5rem',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
-              background: 'rgba(255,255,255,0.01)'
+              borderBottom: '1px solid var(--border-color)',
+              background: 'var(--bg-card-hover)'
             }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
                 Log Stock Movement / Adjustment
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
               >
                 <X size={18} />
@@ -512,7 +512,7 @@ export default function StockLedgerPage() {
                     backgroundColor: 'var(--bg-input)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '8px',
-                    color: selectedItem ? '#ffffff' : 'var(--text-muted)',
+                    color: selectedItem ? 'var(--text-main)' : 'var(--text-muted)',
                     cursor: 'pointer',
                     fontSize: '0.9rem'
                   }}
@@ -528,7 +528,7 @@ export default function StockLedgerPage() {
                     left: 0,
                     right: 0,
                     backgroundColor: '#111827',
-                    border: '1px solid rgba(255,255,255,0.15)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '8px',
                     marginTop: '4px',
                     zIndex: 10000,
@@ -570,7 +570,7 @@ export default function StockLedgerPage() {
                               borderRadius: '6px',
                               cursor: 'pointer',
                               fontSize: '0.85rem',
-                              color: selectedItem?.id === item.id ? '#ffb703' : '#cbd5e1',
+                              color: selectedItem?.id === item.id ? '#ffb703' : 'var(--text-main)',
                               backgroundColor: selectedItem?.id === item.id ? 'rgba(255,183,3,0.08)' : 'transparent',
                             }}
                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
@@ -601,7 +601,7 @@ export default function StockLedgerPage() {
                     backgroundColor: 'var(--bg-input)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '8px',
-                    color: selectedWarehouse ? '#ffffff' : 'var(--text-muted)',
+                    color: selectedWarehouse ? 'var(--text-main)' : 'var(--text-muted)',
                     cursor: 'pointer',
                     fontSize: '0.9rem'
                   }}
@@ -617,7 +617,7 @@ export default function StockLedgerPage() {
                     left: 0,
                     right: 0,
                     backgroundColor: '#111827',
-                    border: '1px solid rgba(255,255,255,0.15)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '8px',
                     marginTop: '4px',
                     zIndex: 9999,
@@ -659,7 +659,7 @@ export default function StockLedgerPage() {
                               borderRadius: '6px',
                               cursor: 'pointer',
                               fontSize: '0.85rem',
-                              color: selectedWarehouse?.id === wh.id ? '#ffb703' : '#cbd5e1',
+                              color: selectedWarehouse?.id === wh.id ? '#ffb703' : 'var(--text-main)',
                               backgroundColor: selectedWarehouse?.id === wh.id ? 'rgba(255,183,3,0.08)' : 'transparent',
                             }}
                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
@@ -717,7 +717,7 @@ export default function StockLedgerPage() {
                 display: 'flex',
                 justifyContent: 'flex-end',
                 gap: '0.75rem',
-                borderTop: '1px solid rgba(255,255,255,0.08)',
+                borderTop: '1px solid var(--border-color)',
                 paddingTop: '1.25rem',
                 marginTop: '0.5rem'
               }}>

@@ -142,7 +142,7 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
           <CheckCircle2 size={48} />
         </div>
         <div>
-          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.5rem' }}>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
             User Provisioned Successfully!
           </h3>
           <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
@@ -152,14 +152,14 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
 
         <div 
           style={{
-            background: 'rgba(15, 23, 42, 0.6)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
             padding: '1rem',
             borderRadius: '10px',
             fontSize: '0.8rem',
             fontFamily: 'var(--font-mono)',
             wordBreak: 'break-all',
-            color: '#c8b6ff',
+            color: 'var(--accent-primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -171,9 +171,9 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
             type="button" 
             onClick={handleCopy}
             style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              color: '#ffffff',
+              background: 'var(--bg-card-hover)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-main)',
               padding: '6px',
               borderRadius: '6px',
               cursor: 'pointer',
@@ -351,7 +351,7 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
                   onChange={() => handleToggleWorkspace(ws.id)}
                   style={{ cursor: 'pointer' }}
                 />
-                <span style={{ color: selectedWorkspaces.includes(ws.id) ? '#ffffff' : 'var(--text-muted)' }}>
+                <span style={{ color: selectedWorkspaces.includes(ws.id) ? 'var(--text-main)' : 'var(--text-muted)' }}>
                   {ws.name}
                 </span>
               </label>

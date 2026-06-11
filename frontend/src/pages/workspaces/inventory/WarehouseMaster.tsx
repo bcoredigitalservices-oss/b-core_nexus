@@ -161,7 +161,7 @@ export default function WarehouseMaster() {
         {/* Header Block */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
               Warehouse Master Registry
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
@@ -190,10 +190,10 @@ export default function WarehouseMaster() {
           gap: '1rem',
           alignItems: 'center',
           flexWrap: 'wrap',
-          background: 'rgba(20,30,50,0.5)',
+          background: 'var(--bg-card)',
           padding: '1rem',
           borderRadius: '12px',
-          border: '1px solid rgba(255,255,255,0.06)'
+          border: '1px solid var(--border-color)'
         }}>
           <div style={{ flex: 1, minWidth: '280px' }}>
             <input
@@ -235,9 +235,9 @@ export default function WarehouseMaster() {
 
         {/* Data Grid / Table */}
         <div style={{
-          background: 'rgba(20,30,50,0.4)',
+          background: 'var(--bg-card)',
           borderRadius: '12px',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: '1px solid var(--border-color)',
           overflow: 'hidden'
         }}>
           <div style={{ overflowX: 'auto' }}>
@@ -246,7 +246,7 @@ export default function WarehouseMaster() {
                 <tr style={{
                   borderBottom: '2px solid rgba(255,255,255,0.08)',
                   color: 'var(--text-muted)',
-                  background: 'rgba(12,18,36,0.6)',
+                  background: 'var(--bg-card)',
                   fontWeight: 600
                 }}>
                   <th style={{ padding: '1rem' }}>Warehouse ID</th>
@@ -272,7 +272,7 @@ export default function WarehouseMaster() {
                 ) : (
                   filteredWarehouses.map((wh) => (
                     <tr key={wh.id} style={{
-                      borderBottom: '1px solid rgba(255,255,255,0.05)',
+                      borderBottom: '1px solid var(--border-color)',
                       transition: 'background 0.2s',
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
@@ -281,15 +281,15 @@ export default function WarehouseMaster() {
                       <td style={{ padding: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                         {wh.id}
                       </td>
-                      <td style={{ padding: '1rem', fontWeight: 600, color: '#ffffff' }}>
+                      <td style={{ padding: '1rem', fontWeight: 600, color: 'var(--text-main)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <WarehouseIcon size={14} color="#ffb703" />
                           {wh.name}
                         </div>
                       </td>
-                      <td style={{ padding: '1rem', color: '#cbd5e1' }}>
+                      <td style={{ padding: '1rem', color: 'var(--text-main)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <MapPin size={12} color="#64748B" />
+                          <MapPin size={12} color='var(--text-muted)' />
                           {wh.location_address}
                         </div>
                       </td>
@@ -321,7 +321,7 @@ export default function WarehouseMaster() {
         <div style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.6)',
+          backgroundColor: 'rgba(0,0,0,0.4)',
           backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
@@ -331,7 +331,7 @@ export default function WarehouseMaster() {
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #141b2e 0%, #0c1224 100%)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             width: '100%',
             maxWidth: '500px',
@@ -346,16 +346,16 @@ export default function WarehouseMaster() {
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: '1.25rem 1.5rem',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
-              background: 'rgba(255,255,255,0.01)'
+              borderBottom: '1px solid var(--border-color)',
+              background: 'var(--bg-card-hover)'
             }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
                 Register New Warehouse Location
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
               >
                 <X size={18} />
@@ -428,7 +428,7 @@ export default function WarehouseMaster() {
                 display: 'flex',
                 justifyContent: 'flex-end',
                 gap: '0.75rem',
-                borderTop: '1px solid rgba(255,255,255,0.08)',
+                borderTop: '1px solid var(--border-color)',
                 paddingTop: '1.25rem',
                 marginTop: '0.5rem'
               }}>

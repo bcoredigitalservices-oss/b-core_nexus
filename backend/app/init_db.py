@@ -69,8 +69,189 @@ async def init_db():
             else:
                 await session.commit()
                 print("Admin user already exists in the system.")
+
+            # Seed standard Workspaces based on functional sub-modules
+            standard_workspaces = [
+                # Finance Workspaces
+                {"name": "Accounting", "identifier": "accounting"},
+                {"name": "Banking", "identifier": "banking"},
+                {"name": "Taxes", "identifier": "taxes"},
+                
+                # Inventory Workspaces
+                {"name": "Assets", "identifier": "assets"},
+                {"name": "Products", "identifier": "products"},
+                {"name": "Items", "identifier": "items"},
+                {"name": "Warehouse", "identifier": "warehouse"},
+                {"name": "Stock", "identifier": "stock"},
+                {"name": "Buying", "identifier": "buying"},
+                
+                # CRM & Sales Workspaces
+                {"name": "POS", "identifier": "pos"},
+                {"name": "CRM", "identifier": "crm"},
+                {"name": "Sales", "identifier": "sales"},
+                {"name": "Support", "identifier": "support"},
+                
+                # Operations & Management Workspaces
+                {"name": "Field Operations", "identifier": "field_ops"},
+                {"name": "Maintenance", "identifier": "maintenance"},
+                {"name": "Manufacturing", "identifier": "manufacturing"},
+                {"name": "Projects", "identifier": "projects"},
+                {"name": "QA", "identifier": "qa"},
+                {"name": "QT", "identifier": "qt"},
+                {"name": "Logistics", "identifier": "logistics"},
+                
+                # HR & Company Workspaces
+                {"name": "Expenses", "identifier": "expenses"},
+                {"name": "HR", "identifier": "hr"},
+                {"name": "Payroll", "identifier": "payroll"},
+                {"name": "Attendance", "identifier": "attendance"},
+                {"name": "Recruitment", "identifier": "recruitment"},
+                {"name": "Performance & Tenure", "identifier": "performance"},
+                {"name": "Leaves", "identifier": "leaves"},
+                
+                # Communications Workspaces
+                {"name": "Chats", "identifier": "chats"},
+                {"name": "Employee Groups", "identifier": "employee_groups"},
+                {"name": "Email", "identifier": "email"},
+                {"name": "Message", "identifier": "message"},
+                
+                # Utilities Workspaces
+                {"name": "Marketing", "identifier": "marketing"},
+                {"name": "Campaigns", "identifier": "campaigns"},
+                {"name": "Website", "identifier": "website"},
+                
+                # Internals
+                {"name": "System Internals", "identifier": "internals"}
+            ]
+            for ws_data in standard_workspaces:
+                res = await session.execute(select(Workspace).where(Workspace.identifier == ws_data["identifier"]))
+                if not res.scalars().first():
+                    ws = Workspace(
+                        name=ws_data["name"],
+                        identifier=ws_data["identifier"],
+                        organization_id=org.id if org else None
+                    )
+                    session.add(ws)
+            
+            # Seed standard Departments based on the 8 core areas
+            standard_departments = [
+                "Finance",
+                "Inventory",
+                "CRM & Sales",
+                "Operations & Management",
+                "HR & Company",
+                "Communications",
+                "Utilities",
+                "Internals"
+            ]
+            for dept_name in standard_departments:
+                res = await session.execute(select(Department).where(Department.name == dept_name))
+                if not res.scalars().first():
+                    dept = Department(
+                        name=dept_name,
+                        organization_id=org.id if org else None
+                    )
+                    session.add(dept)
+
+            # Seed default CRM Customers/Leads/Opportunities if empty
+            cust_res = await session.execute(select(Customer))
+            if not cust_res.scalars().first():
+                print("Seeding default CRM Customers/Leads/Opportunities...")
+                from datetime import datetime, timedelta, timezone
+                from app.workspaces.crm.models import CustomerLifecycleStatus
+                now_utc = datetime.now(timezone.utc)
+                
+                customers_to_seed = [
+                    Customer(
+                        company_name="Acme Corp",
+                        contact_name="John Doe",
+                        email="john@acme.com",
+                        phone="+15550192",
+                        lifecycle_status=CustomerLifecycleStatus.LEAD,
+                        created_at=now_utc - timedelta(days=25)
+                    ),
+                    Customer(
+                        company_name="Stark Industries",
+                        contact_name="Tony Stark",
+                        email="tony@stark.com",
+                        phone="+15550193",
+                        lifecycle_status=CustomerLifecycleStatus.LEAD,
+                        created_at=now_utc - timedelta(days=20)
+                    ),
+                    Customer(
+                        company_name="Wayne Enterprises",
+                        contact_name="Bruce Wayne",
+                        email="bruce@wayne.com",
+                        phone="+15550194",
+                        lifecycle_status=CustomerLifecycleStatus.LEAD,
+                        created_at=now_utc - timedelta(days=15)
+                    ),
+                    Customer(
+                        company_name="Oscorp",
+                        contact_name="Norman Osborn",
+                        email="norman@oscorp.com",
+                        phone="+15550195",
+                        lifecycle_status=CustomerLifecycleStatus.LEAD,
+                        created_at=now_utc - timedelta(days=10)
+                    ),
+                    Customer(
+                        company_name="LexCorp",
+                        contact_name="Lex Luthor",
+                        email="lex@lexcorp.com",
+                        phone="+15550196",
+                        lifecycle_status=CustomerLifecycleStatus.LEAD,
+                        created_at=now_utc - timedelta(days=5)
+                    ),
+                    Customer(
+                        company_name="Cyberdyne Systems",
+                        contact_name="Sarah Connor",
+                        email="sarah@cyberdyne.com",
+                        phone="+15550197",
+                        lifecycle_status=CustomerLifecycleStatus.OPPORTUNITY,
+                        created_at=now_utc - timedelta(days=12)
+                    ),
+                    Customer(
+                        company_name="Umbrella Corp",
+                        contact_name="Albert Wesker",
+                        email="albert@umbrella.com",
+                        phone="+15550198",
+                        lifecycle_status=CustomerLifecycleStatus.OPPORTUNITY,
+                        created_at=now_utc - timedelta(days=8)
+                    ),
+                    Customer(
+                        company_name="Tyrell Corp",
+                        contact_name="Eldon Tyrell",
+                        email="eldon@tyrell.com",
+                        phone="+15550199",
+                        lifecycle_status=CustomerLifecycleStatus.OPPORTUNITY,
+                        created_at=now_utc - timedelta(days=3)
+                    ),
+                    Customer(
+                        company_name="Soylent Corp",
+                        contact_name="Robert Thorn",
+                        email="robert@soylent.com",
+                        phone="+15550200",
+                        lifecycle_status=CustomerLifecycleStatus.ACTIVE_CUSTOMER,
+                        created_at=now_utc - timedelta(days=18)
+                    ),
+                    Customer(
+                        company_name="Initech",
+                        contact_name="Peter Gibbons",
+                        email="peter@initech.com",
+                        phone="+15550201",
+                        lifecycle_status=CustomerLifecycleStatus.ACTIVE_CUSTOMER,
+                        created_at=now_utc - timedelta(days=4)
+                    ),
+                ]
+                for c in customers_to_seed:
+                    session.add(c)
+                await session.flush()
+                print("Default CRM Customers seeded successfully.")
+
+            await session.commit()
+            print("Standard Workspaces and Departments seeded successfully.")
         except Exception as e:
-            print(f"Failed to seed administrator.\nError: {e}", file=sys.stderr)
+            print(f"Failed to seed administrator/modules.\nError: {e}", file=sys.stderr)
 
 if __name__ == "__main__":
     asyncio.run(init_db())

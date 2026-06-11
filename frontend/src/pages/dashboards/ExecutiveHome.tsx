@@ -6,382 +6,306 @@ import {
   Package,
   Cog,
   UserCheck,
-  Lock,
-  ArrowRight,
   ShieldCheck,
   Compass,
-  Zap,
-  LayoutGrid,
+  MessageSquare,
+  Wrench,
+  Cpu,
+  Factory,
+  ClipboardList,
+  BadgeCheck,
+  CalendarDays,
+  UserPlus,
+  TrendingUp,
+  ShoppingCart,
+  Headphones,
+  Landmark,
+  PiggyBank,
+  FileText,
+  BarChart2,
+  Box,
+  Boxes,
+  Building2,
+  Truck,
+  CreditCard,
+  Mail,
+  MessagesSquare,
+  Globe,
+  Megaphone,
+  Layers,
+  Lock,
+  Clock,
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Department → Workspace Map ───────────────────────────────────────────────
 
-interface WorkspaceDefinition {
-  key: string;           // must match workspace_string in backend
-  title: string;
-  subtitle: string;
-  description: string;
+interface WorkspaceModule {
+  key: string;
+  label: string;
   icon: React.ReactNode;
-  accentColor: string;
-  glowColor: string;
-  features: string[];
   route: string;
+  color: string;
 }
 
-// ─── Master Workspace Registry ────────────────────────────────────────────────
+interface DepartmentDefinition {
+  id: string;
+  name: string;
+  description: string;
+  accentColor: string;
+  glowColor: string;
+  workspaces: WorkspaceModule[];
+}
 
-const WORKSPACE_DEFINITIONS: WorkspaceDefinition[] = [
+const DEPARTMENTS: DepartmentDefinition[] = [
   {
-    key: 'finance',
-    title: 'Finance',
-    subtitle: 'Financial Management',
-    description:
-      'Ledger management, budgeting forecasts, expense tracking, tax compliance, and multi-currency accounting.',
-    icon: <DollarSign size={26} />,
+    id: 'finance',
+    name: 'Finance',
+    description: 'Accounting, banking operations, tax compliance and financial reporting.',
     accentColor: '#00f5a0',
-    glowColor: 'rgba(0, 245, 160, 0.18)',
-    features: ['Financial Management', 'Accounting', 'Budgeting & Forecasting', 'Expense Tracking', 'Tax Compliance'],
-    route: '/workspaces/finance',
+    glowColor: 'rgba(0,245,160,0.14)',
+    workspaces: [
+      { key: 'accounting', label: 'Accounting', icon: <Landmark size={20} />, route: '/workspaces/finance/accounting', color: '#00f5a0' },
+      { key: 'banking', label: 'Banking', icon: <PiggyBank size={20} />, route: '/workspaces/finance/banking', color: '#00f5a0' },
+      { key: 'taxes', label: 'Taxes', icon: <FileText size={20} />, route: '/workspaces/finance/taxes', color: '#00f5a0' },
+    ],
   },
   {
-    key: 'crm',
-    title: 'CRM & Sales',
-    subtitle: 'Customer Relationships',
-    description:
-      'Lead management, sales pipeline tracking, contact registry, and customer support coordination.',
-    icon: <Users size={26} />,
-    accentColor: '#00f2fe',
-    glowColor: 'rgba(0, 242, 254, 0.18)',
-    features: ['Customer Relationship Management', 'Lead Management', 'Sales Pipeline', 'Contact Management', 'Customer Support'],
-    route: '/workspaces/crm',
-  },
-  {
-    key: 'inventory',
-    title: 'Inventory',
-    subtitle: 'Stock & Warehouse',
-    description:
-      'Real-time stock tracking, warehouse management, purchase orders, and supplier relationship management.',
-    icon: <Package size={26} />,
+    id: 'inventory',
+    name: 'Inventory',
+    description: 'Assets, products, stock control, warehouse operations and procurement.',
     accentColor: '#ffb703',
-    glowColor: 'rgba(255, 183, 3, 0.18)',
-    features: ['Inventory Management', 'Stock Tracking', 'Warehouse Management', 'Purchase Orders', 'Supplier Management'],
-    route: '/workspaces/inventory',
+    glowColor: 'rgba(255,183,3,0.14)',
+    workspaces: [
+      { key: 'assets', label: 'Assets', icon: <BarChart2 size={20} />, route: '/workspaces/inventory/assets', color: '#ffb703' },
+      { key: 'products', label: 'Products', icon: <Package size={20} />, route: '/workspaces/inventory/products', color: '#ffb703' },
+      { key: 'items', label: 'Items', icon: <Box size={20} />, route: '/workspaces/inventory/items', color: '#ffb703' },
+      { key: 'warehouse', label: 'Warehouse', icon: <Boxes size={20} />, route: '/workspaces/inventory/warehouse', color: '#ffb703' },
+      { key: 'stock', label: 'Stock', icon: <Building2 size={20} />, route: '/workspaces/inventory/stock', color: '#ffb703' },
+      { key: 'buying', label: 'Buying', icon: <ShoppingCart size={20} />, route: '/workspaces/inventory/buying', color: '#ffb703' },
+    ],
   },
   {
-    key: 'operations',
-    title: 'Operations',
-    subtitle: 'Production & Assets',
-    description:
-      'Production planning, quality control workflows, asset lifecycle management, and maintenance scheduling.',
-    icon: <Cog size={26} />,
+    id: 'crm',
+    name: 'CRM & Sales',
+    description: 'POS, lead management, sales pipeline and customer support.',
+    accentColor: '#00f2fe',
+    glowColor: 'rgba(0,242,254,0.14)',
+    workspaces: [
+      { key: 'pos', label: 'POS', icon: <CreditCard size={20} />, route: '/workspaces/crm/pos', color: '#00f2fe' },
+      { key: 'crm', label: 'CRM', icon: <Users size={20} />, route: '/workspaces/crm', color: '#00f2fe' },
+      { key: 'sales', label: 'Sales', icon: <TrendingUp size={20} />, route: '/workspaces/crm/sales', color: '#00f2fe' },
+      { key: 'support', label: 'Support', icon: <Headphones size={20} />, route: '/workspaces/crm/support', color: '#00f2fe' },
+    ],
+  },
+  {
+    id: 'operations',
+    name: 'Operations & Management',
+    description: 'Field ops, maintenance, manufacturing, projects, QA and logistics.',
     accentColor: '#c084fc',
-    glowColor: 'rgba(192, 132, 252, 0.18)',
-    features: ['Operations Management', 'Production Planning', 'Quality Control', 'Asset Management', 'Maintenance Scheduling'],
-    route: '/workspaces/operations',
+    glowColor: 'rgba(192,132,252,0.14)',
+    workspaces: [
+      { key: 'field_ops', label: 'Field Ops', icon: <Compass size={20} />, route: '/workspaces/operations/field', color: '#c084fc' },
+      { key: 'maintenance', label: 'Maintenance', icon: <Wrench size={20} />, route: '/workspaces/operations/maintenance', color: '#c084fc' },
+      { key: 'manufacturing', label: 'Manufacturing', icon: <Factory size={20} />, route: '/workspaces/operations/manufacturing', color: '#c084fc' },
+      { key: 'projects', label: 'Projects', icon: <ClipboardList size={20} />, route: '/workspaces/operations/projects', color: '#c084fc' },
+      { key: 'qa', label: 'QA', icon: <BadgeCheck size={20} />, route: '/workspaces/operations/qa', color: '#c084fc' },
+      { key: 'qt', label: 'QT', icon: <Layers size={20} />, route: '/workspaces/operations/qt', color: '#c084fc' },
+      { key: 'logistics', label: 'Logistics', icon: <Truck size={20} />, route: '/workspaces/operations/logistics', color: '#c084fc' },
+    ],
   },
   {
-    key: 'hr',
-    title: 'HR',
-    subtitle: 'Human Resources',
-    description:
-      'Employee lifecycle management, payroll processing, attendance and leave tracking, and performance reviews.',
-    icon: <UserCheck size={26} />,
+    id: 'hr',
+    name: 'HR & Company',
+    description: 'Payroll, attendance, recruitment, performance, leaves and expenses.',
     accentColor: '#f472b6',
-    glowColor: 'rgba(244, 114, 182, 0.18)',
-    features: ['Human Resources', 'Payroll Management', 'Attendance & Leave', 'Recruitment', 'Performance Management'],
-    route: '/workspaces/hr',
+    glowColor: 'rgba(244,114,182,0.14)',
+    workspaces: [
+      { key: 'expenses', label: 'Expenses', icon: <DollarSign size={20} />, route: '/workspaces/hr/expenses', color: '#f472b6' },
+      { key: 'hr', label: 'HR', icon: <UserCheck size={20} />, route: '/workspaces/hr', color: '#f472b6' },
+      { key: 'payroll', label: 'Payroll', icon: <CreditCard size={20} />, route: '/workspaces/hr/payroll', color: '#f472b6' },
+      { key: 'attendance', label: 'Attendance', icon: <CalendarDays size={20} />, route: '/workspaces/hr/attendance', color: '#f472b6' },
+      { key: 'recruitment', label: 'Recruitment', icon: <UserPlus size={20} />, route: '/workspaces/hr/recruitment', color: '#f472b6' },
+      { key: 'performance', label: 'Performance', icon: <TrendingUp size={20} />, route: '/workspaces/hr/performance', color: '#f472b6' },
+      { key: 'leaves', label: 'Leaves', icon: <CalendarDays size={20} />, route: '/workspaces/hr/leaves', color: '#f472b6' },
+    ],
+  },
+  {
+    id: 'communications',
+    name: 'Communications',
+    description: 'Internal chats, employee groups, email and team messaging.',
+    accentColor: '#38bdf8',
+    glowColor: 'rgba(56,189,248,0.14)',
+    workspaces: [
+      { key: 'chats', label: 'Chats', icon: <MessageSquare size={20} />, route: '/workspaces/comms/chats', color: '#38bdf8' },
+      { key: 'employee_groups', label: 'Groups', icon: <MessagesSquare size={20} />, route: '/workspaces/comms/groups', color: '#38bdf8' },
+      { key: 'email', label: 'Email', icon: <Mail size={20} />, route: '/workspaces/comms/email', color: '#38bdf8' },
+      { key: 'message', label: 'Message', icon: <MessagesSquare size={20} />, route: '/workspaces/comms/message', color: '#38bdf8' },
+    ],
+  },
+  {
+    id: 'utilities',
+    name: 'Utilities',
+    description: 'Marketing campaigns, website management and brand operations.',
+    accentColor: '#fb923c',
+    glowColor: 'rgba(251,146,60,0.14)',
+    workspaces: [
+      { key: 'marketing', label: 'Marketing', icon: <Megaphone size={20} />, route: '/workspaces/utilities/marketing', color: '#fb923c' },
+      { key: 'campaigns', label: 'Campaigns', icon: <BarChart2 size={20} />, route: '/workspaces/utilities/campaigns', color: '#fb923c' },
+      { key: 'website', label: 'Website', icon: <Globe size={20} />, route: '/workspaces/utilities/website', color: '#fb923c' },
+    ],
+  },
+  {
+    id: 'internals',
+    name: 'Internals',
+    description: 'System administration, IT controls, audit logs and platform configuration.',
+    accentColor: '#a3a3a3',
+    glowColor: 'rgba(163,163,163,0.14)',
+    workspaces: [
+      { key: 'internals', label: 'System Internals', icon: <Cpu size={20} />, route: '/workspaces/internals', color: '#a3a3a3' },
+      { key: 'cog', label: 'Configurations', icon: <Cog size={20} />, route: '/settings/config', color: '#a3a3a3' },
+    ],
   },
 ];
 
-// ─── WorkspaceCard ────────────────────────────────────────────────────────────
+// ─── Live Clock Component ─────────────────────────────────────────────────────
 
-interface WorkspaceCardProps {
-  workspace: WorkspaceDefinition;
-  permitted: boolean;
-  onClick: () => void;
+function LiveClock() {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const hh = String(time.getHours()).padStart(2, '0');
+  const mm = String(time.getMinutes()).padStart(2, '0');
+  const ss = String(time.getSeconds()).padStart(2, '0');
+  const day = time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          fontFamily: 'var(--font-mono, monospace)',
+          fontSize: '1.5rem',
+          fontWeight: 700,
+          color: 'var(--text-main)',
+          letterSpacing: '0.04em',
+        }}
+      >
+        <Clock size={16} color="var(--text-muted)" />
+        {hh}<span style={{ opacity: 0.5, animation: 'blink 1s step-end infinite' }}>:</span>{mm}<span style={{ opacity: 0.5, animation: 'blink 1s step-end infinite' }}>:</span><span style={{ color: '#00f5a0' }}>{ss}</span>
+      </div>
+      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', letterSpacing: '0.03em' }}>{day}</span>
+    </div>
+  );
 }
 
-function WorkspaceCard({ workspace, permitted, onClick }: WorkspaceCardProps) {
+// ─── Department Card ──────────────────────────────────────────────────────────
+
+interface DeptCardProps {
+  dept: DepartmentDefinition;
+  permittedWorkspaceKeys: string[];
+  onLaunch: (route: string, wsKey: string) => void;
+  isSuperUser: boolean;
+}
+
+function DepartmentCard({ dept, permittedWorkspaceKeys, onLaunch, isSuperUser }: DeptCardProps) {
   const [hovered, setHovered] = useState(false);
-  const { accentColor, glowColor } = workspace;
+  const [hoveredWs, setHoveredWs] = useState<string | null>(null);
 
   return (
     <div
-      id={`ws-card-${workspace.key}`}
-      role={permitted ? 'button' : 'presentation'}
-      tabIndex={permitted ? 0 : -1}
-      aria-label={permitted ? `Open ${workspace.title} workspace` : `${workspace.title} workspace — access restricted`}
-      onClick={permitted ? onClick : undefined}
-      onKeyDown={(e) => permitted && e.key === 'Enter' && onClick()}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
         position: 'relative',
         overflow: 'hidden',
-        background: permitted
-          ? hovered
-            ? `linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)`
-            : `linear-gradient(135deg, rgba(20, 30, 48, 0.85) 0%, rgba(12, 18, 36, 0.92) 100%)`
-          : 'rgba(12, 18, 36, 0.45)',
-        border: permitted
-          ? hovered
-            ? `1px solid ${accentColor}60`
-            : '1px solid rgba(255,255,255,0.08)'
-          : '1px solid rgba(255,255,255,0.04)',
+        background: 'var(--bg-card)',
+        border: hovered ? `1px solid ${dept.accentColor}50` : '1px solid rgba(255,255,255,0.07)',
         borderRadius: '18px',
-        padding: '1.75rem',
-        cursor: permitted ? 'pointer' : 'not-allowed',
-        opacity: permitted ? 1 : 0.45,
-        transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-        transform: permitted && hovered ? 'translateY(-6px)' : 'translateY(0)',
-        boxShadow: permitted && hovered
-          ? `0 16px 40px rgba(0,0,0,0.3), 0 0 30px ${glowColor}`
-          : permitted
-            ? '0 4px 20px rgba(0,0,0,0.2)'
-            : 'none',
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '260px',
+        padding: '1.5rem',
+        transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
+        boxShadow: hovered
+          ? `0 12px 40px rgba(0,0,0,0.25), 0 0 30px ${dept.glowColor}`
+          : '0 4px 20px rgba(0,0,0,0.15)',
       }}
     >
-      {/* Corner accent glow */}
-      {permitted && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '-30px',
-            right: '-30px',
-            width: '120px',
-            height: '120px',
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`,
-            filter: 'blur(12px)',
-            pointerEvents: 'none',
-            transition: 'opacity 0.3s',
-            opacity: hovered ? 1 : 0.5,
-          }}
-        />
-      )}
+      {/* Corner glow */}
+      <div style={{
+        position: 'absolute', top: '-40px', right: '-40px', width: '120px', height: '120px',
+        borderRadius: '50%', background: `radial-gradient(circle, ${dept.glowColor} 0%, transparent 70%)`,
+        filter: 'blur(10px)', pointerEvents: 'none', opacity: hovered ? 1 : 0.5, transition: 'opacity 0.3s',
+      }} />
 
       {/* Bottom accent bar */}
-      {permitted && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: '2px',
-            background: `linear-gradient(90deg, transparent, ${accentColor}80, transparent)`,
-            opacity: hovered ? 1 : 0,
-            transition: 'opacity 0.3s',
-          }}
-        />
-      )}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px',
+        background: `linear-gradient(90deg, transparent, ${dept.accentColor}70, transparent)`,
+        opacity: hovered ? 1 : 0, transition: 'opacity 0.3s',
+      }} />
 
-      {/* Header: Icon & Status Badge */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-        {/* Icon container */}
-        <div
-          style={{
-            width: '52px',
-            height: '52px',
-            borderRadius: '14px',
-            background: permitted
-              ? `linear-gradient(135deg, ${accentColor}20 0%, ${accentColor}08 100%)`
-              : 'rgba(255,255,255,0.03)',
-            border: permitted
-              ? `1px solid ${accentColor}30`
-              : '1px solid rgba(255,255,255,0.04)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: permitted ? accentColor : 'rgba(255,255,255,0.2)',
-            transition: 'all 0.3s',
-            transform: permitted && hovered ? 'scale(1.08)' : 'scale(1)',
-          }}
-        >
-          {workspace.icon}
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+        <div>
+          <h3 style={{
+            fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)',
+            fontFamily: 'var(--font-display)', marginBottom: '0.3rem', letterSpacing: '-0.02em',
+          }}>
+            {dept.name}
+          </h3>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.45, maxWidth: '240px' }}>
+            {dept.description}
+          </p>
         </div>
-
-        {/* Status Badge */}
-        {permitted ? (
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-              fontSize: '0.68rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              padding: '4px 10px',
-              borderRadius: '20px',
-              backgroundColor: 'rgba(0, 245, 160, 0.1)',
-              color: '#00f5a0',
-              border: '1px solid rgba(0, 245, 160, 0.2)',
-            }}
-          >
-            <span
-              style={{
-                width: '5px',
-                height: '5px',
-                borderRadius: '50%',
-                backgroundColor: '#00f5a0',
-                boxShadow: '0 0 6px #00f5a0',
-                animation: 'pulse-dot 2s infinite',
-              }}
-            />
-            Active
-          </span>
-        ) : (
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-              fontSize: '0.68rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              padding: '4px 10px',
-              borderRadius: '20px',
-              backgroundColor: 'rgba(255,255,255,0.04)',
-              color: 'rgba(255,255,255,0.25)',
-              border: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            <Lock size={9} />
-            Restricted
-          </span>
-        )}
-      </div>
-
-      {/* Content */}
-      <div style={{ flex: 1 }}>
-        <p
-          style={{
-            fontSize: '0.72rem',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            color: permitted ? accentColor : 'rgba(255,255,255,0.2)',
-            marginBottom: '0.35rem',
-          }}
-        >
-          {workspace.subtitle}
-        </p>
-        <h3
-          style={{
-            fontSize: '1.25rem',
-            fontWeight: 800,
-            color: permitted ? '#ffffff' : 'rgba(255,255,255,0.3)',
-            fontFamily: 'var(--font-display)',
-            marginBottom: '0.65rem',
-            letterSpacing: '-0.02em',
-          }}
-        >
-          {workspace.title}
-        </h3>
-        <p
-          style={{
-            fontSize: '0.82rem',
-            color: permitted ? 'var(--text-muted)' : 'rgba(255,255,255,0.2)',
-            lineHeight: '1.55',
-          }}
-        >
-          {permitted ? workspace.description : 'Contact your system administrator to request access to this workspace.'}
-        </p>
-      </div>
-
-      {/* Feature Pills (only shown when permitted) */}
-      {permitted && (
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '6px',
-            marginTop: '1.1rem',
-            marginBottom: '1.1rem',
-          }}
-        >
-          {workspace.features.slice(0, 3).map((f) => (
-            <span
-              key={f}
-              style={{
-                fontSize: '0.68rem',
-                padding: '3px 8px',
-                borderRadius: '6px',
-                background: `${accentColor}12`,
-                color: accentColor,
-                border: `1px solid ${accentColor}25`,
-                fontWeight: 600,
-              }}
-            >
-              {f}
-            </span>
-          ))}
-          {workspace.features.length > 3 && (
-            <span
-              style={{
-                fontSize: '0.68rem',
-                padding: '3px 8px',
-                borderRadius: '6px',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-muted)',
-                border: '1px solid rgba(255,255,255,0.08)',
-              }}
-            >
-              +{workspace.features.length - 3} more
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Footer CTA */}
-      <div
-        style={{
-          borderTop: permitted ? '1px solid rgba(255,255,255,0.06)' : 'none',
-          paddingTop: permitted ? '0.9rem' : '0',
-          marginTop: permitted ? '0' : '1rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <span
-          style={{
-            fontSize: '0.78rem',
-            fontWeight: 700,
-            color: permitted ? accentColor : 'rgba(255,255,255,0.15)',
-            transition: 'color 0.2s',
-          }}
-        >
-          {permitted ? 'Launch Application' : 'License Restricted'}
+        <span style={{
+          fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+          padding: '3px 9px', borderRadius: '20px',
+          backgroundColor: `${dept.accentColor}14`, color: dept.accentColor,
+          border: `1px solid ${dept.accentColor}30`, whiteSpace: 'nowrap',
+        }}>
+          {dept.workspaces.length} modules
         </span>
-        {permitted && (
-          <div
-            style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              background: `${accentColor}15`,
-              border: `1px solid ${accentColor}30`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: accentColor,
-              transform: hovered ? 'translateX(4px)' : 'translateX(0)',
-              transition: 'transform 0.25s',
-            }}
-          >
-            <ArrowRight size={13} />
-          </div>
-        )}
-        {!permitted && (
-          <Lock size={14} color="rgba(255,255,255,0.15)" />
-        )}
+      </div>
+
+      {/* Workspace icon grid */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+        {dept.workspaces.map((ws) => {
+          const permitted = isSuperUser || permittedWorkspaceKeys.includes(ws.key);
+          const isHov = hoveredWs === ws.key;
+
+          return (
+            <button
+              key={ws.key}
+              title={ws.label}
+              disabled={!permitted}
+              onClick={() => permitted && onLaunch(ws.route, ws.key)}
+              onMouseEnter={() => setHoveredWs(ws.key)}
+              onMouseLeave={() => setHoveredWs(null)}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px',
+                padding: '10px 12px', borderRadius: '12px', cursor: permitted ? 'pointer' : 'not-allowed',
+                background: isHov && permitted ? `${ws.color}18` : 'rgba(255,255,255,0.03)',
+                border: isHov && permitted ? `1px solid ${ws.color}50` : '1px solid rgba(255,255,255,0.06)',
+                color: permitted ? (isHov ? ws.color : 'var(--text-muted)') : 'rgba(255,255,255,0.18)',
+                transition: 'all 0.2s',
+                transform: isHov && permitted ? 'translateY(-2px)' : 'translateY(0)',
+                opacity: permitted ? 1 : 0.4,
+                minWidth: '64px',
+              }}
+            >
+              <span style={{ color: 'inherit' }}>{ws.icon}</span>
+              <span style={{ fontSize: '0.62rem', fontWeight: 600, textAlign: 'center', letterSpacing: '0.01em', whiteSpace: 'nowrap' }}>
+                {ws.label}
+              </span>
+              {!permitted && <Lock size={8} style={{ position: 'absolute', bottom: '6px', right: '6px', opacity: 0.4 }} />}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -390,376 +314,168 @@ function WorkspaceCard({ workspace, permitted, onClick }: WorkspaceCardProps) {
 // ─── Main ExecutiveHome Component ─────────────────────────────────────────────
 
 export default function ExecutiveHome() {
-  const { currentUser, activeWorkspace, token } = useAppContext();
+  const { currentUser, activeWorkspace } = useAppContext();
   const navigate = useNavigate();
 
-  const [revenueMtd, setRevenueMtd] = useState<number | null>(null);
-  const [conversionRate, setConversionRate] = useState<number | null>(null);
-  const [activeCustomers, setActiveCustomers] = useState<number | null>(null);
-  const [leadsCount, setLeadsCount] = useState<number | null>(null);
-  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
-
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        const [revRes, convRes] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_URL}/api/v1/workspaces/finance/analytics/revenue-mtd`, { headers }),
-          fetch(`${import.meta.env.VITE_API_URL}/api/v1/workspaces/crm/analytics/conversion-rate`, { headers }),
-        ]);
-
-        if (revRes.ok) {
-          const revData = await revRes.json();
-          setRevenueMtd(revData.revenue_mtd);
-        }
-        if (convRes.ok) {
-          const convData = await convRes.json();
-          setConversionRate(convData.conversion_rate);
-          setActiveCustomers(convData.active_customers);
-          setLeadsCount(convData.leads);
-        }
-      } catch (err) {
-        console.error('Error fetching executive analytics:', err);
-      } finally {
-        setLoadingAnalytics(false);
-      }
-    };
-
-    fetchAnalytics();
-  }, [token]);
-
-  // Normalize permitted workspaces from auth session.
-  // Tier 0 / Tier 1 → global access (all workspaces unlocked).
   const roleTier: number = currentUser?.role_tier ?? 99;
   const isSuperUser = roleTier <= 1;
 
-  const permittedWorkspaces: string[] = isSuperUser
-    ? WORKSPACE_DEFINITIONS.map((w) => w.key)
-    : (currentUser?.workspaces as string[] | undefined) ?? [];
+  const permittedWorkspaceKeys: string[] = isSuperUser
+    ? DEPARTMENTS.flatMap((d) => d.workspaces.map((w) => w.key))
+    : ((currentUser as any)?.workspaces as string[] | undefined) ?? [];
 
-  const vertical = activeWorkspace?.industry_vertical || 'GENERAL_TRADING';
-  const orgName = activeWorkspace?.organization_name || currentUser?.full_name || 'B-Core Nexus';
+  const orgName = (activeWorkspace as any)?.organization_name || 'B-Core Nexus';
+  const userName = currentUser?.first_name && (currentUser as any)?.last_name
+    ? `${currentUser.first_name} ${(currentUser as any).last_name}`
+    : currentUser?.email?.split('@')[0] || 'Operator';
 
-  const permittedCount = WORKSPACE_DEFINITIONS.filter((w) =>
-    permittedWorkspaces.includes(w.key)
-  ).length;
+  const roleTierLabel: Record<number, string> = {
+    0: 'Tier 0 — Genesis Admin',
+    1: 'Tier 1 — Executive',
+    2: 'Tier 2 — Manager',
+    3: 'Tier 3 — Operator',
+    4: 'Tier 4 — Viewer',
+  };
+
+  const handleLaunch = (route: string) => {
+    navigate(route);
+  };
 
   return (
     <>
-      {/* Keyframe injection */}
       <style>{`
-        @keyframes pulse-dot {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
-        }
+        @keyframes blink { 50% { opacity: 0.15; } }
         @keyframes float-in {
-          from { opacity: 0; transform: translateY(12px); }
+          from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        .ws-launcher-grid > * {
+        .dept-grid > * {
           animation: float-in 0.4s ease both;
         }
-        .ws-launcher-grid > *:nth-child(1) { animation-delay: 0.05s; }
-        .ws-launcher-grid > *:nth-child(2) { animation-delay: 0.10s; }
-        .ws-launcher-grid > *:nth-child(3) { animation-delay: 0.15s; }
-        .ws-launcher-grid > *:nth-child(4) { animation-delay: 0.20s; }
-        .ws-launcher-grid > *:nth-child(5) { animation-delay: 0.25s; }
+        .dept-grid > *:nth-child(1) { animation-delay: 0.04s; }
+        .dept-grid > *:nth-child(2) { animation-delay: 0.08s; }
+        .dept-grid > *:nth-child(3) { animation-delay: 0.12s; }
+        .dept-grid > *:nth-child(4) { animation-delay: 0.16s; }
+        .dept-grid > *:nth-child(5) { animation-delay: 0.20s; }
+        .dept-grid > *:nth-child(6) { animation-delay: 0.24s; }
+        .dept-grid > *:nth-child(7) { animation-delay: 0.28s; }
+        .dept-grid > *:nth-child(8) { animation-delay: 0.32s; }
       `}</style>
 
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '2.5rem',
-          width: '100%',
-          maxWidth: '1240px',
-          margin: '0 auto',
-        }}
-      >
-        {/* ── Hero Banner ── */}
-        <div
-          style={{
-            position: 'relative',
-            overflow: 'hidden',
-            background:
-              'linear-gradient(135deg, rgba(157,78,221,0.1) 0%, rgba(0,242,254,0.04) 60%, rgba(0,245,160,0.04) 100%)',
-            border: '1px solid rgba(255,255,255,0.09)',
-            borderRadius: '20px',
-            padding: '2.25rem 2.5rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '1.5rem',
-          }}
-        >
-          {/* BG radial glow */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '-60px',
-              right: '-60px',
-              width: '280px',
-              height: '280px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(157,78,221,0.18) 0%, transparent 65%)',
-              pointerEvents: 'none',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '-40px',
-              left: '10%',
-              width: '200px',
-              height: '200px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(0,242,254,0.08) 0%, transparent 65%)',
-              pointerEvents: 'none',
-            }}
-          />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1240px', margin: '0 auto' }}>
 
-          {/* Left: Icon + Title */}
+        {/* ── Workspace Launcher Identity Banner ── */}
+        <div style={{
+          position: 'relative', overflow: 'hidden',
+          background: 'linear-gradient(135deg, rgba(157,78,221,0.1) 0%, rgba(0,242,254,0.04) 60%, rgba(0,245,160,0.04) 100%)',
+          border: '1px solid var(--border-color)', borderRadius: '20px',
+          padding: '2rem 2.5rem',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem',
+        }}>
+          {/* BG glows */}
+          <div style={{ position: 'absolute', top: '-60px', right: '-60px', width: '260px', height: '260px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(157,78,221,0.18) 0%, transparent 65%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: '-40px', left: '8%', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,242,254,0.07) 0%, transparent 65%)', pointerEvents: 'none' }} />
+
+          {/* Left: Icon + User Identity */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', zIndex: 1 }}>
-            <div
-              style={{
-                width: '58px',
-                height: '58px',
-                borderRadius: '16px',
-                background: 'rgba(157,78,221,0.18)',
-                border: '1px solid rgba(157,78,221,0.35)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 0 24px rgba(157,78,221,0.25)',
-              }}
-            >
-              <LayoutGrid size={28} color="#9d4edd" />
+            <div style={{
+              width: '58px', height: '58px', borderRadius: '16px',
+              background: 'rgba(157,78,221,0.18)', border: '1px solid rgba(157,78,221,0.35)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 24px rgba(157,78,221,0.25)',
+              fontSize: '1.5rem', fontWeight: 800, color: '#9d4edd', fontFamily: 'var(--font-display)',
+            }}>
+              {userName.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h1
-                style={{
-                  fontSize: '1.75rem',
-                  fontWeight: 800,
-                  color: '#ffffff',
-                  fontFamily: 'var(--font-display)',
-                  letterSpacing: '-0.03em',
-                  marginBottom: '0.3rem',
-                }}
-              >
+              <p style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '0.15rem' }}>
                 Workspace Launcher
-              </h1>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.5, maxWidth: '480px' }}>
-                Your enterprise application hub for{' '}
-                <span style={{ color: '#c8b6ff', fontWeight: 600 }}>{orgName}</span>. Select a workspace to begin.
               </p>
+              <h1 style={{
+                fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)',
+                fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', marginBottom: '0.2rem',
+              }}>
+                {userName}
+              </h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{
+                  fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
+                  backgroundColor: 'rgba(157,78,221,0.12)', color: 'var(--accent-primary)',
+                  border: '1px solid rgba(157,78,221,0.25)',
+                }}>
+                  {roleTierLabel[roleTier] || `Tier ${roleTier}`}
+                </span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  · {orgName}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Right: Stats + Vertical Badge */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.65rem', zIndex: 1 }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                backgroundColor: 'rgba(0,245,160,0.08)',
-                border: '1px solid rgba(0,245,160,0.2)',
-                padding: '6px 14px',
-                borderRadius: '20px',
-                fontSize: '0.8rem',
-                color: '#00f5a0',
-                fontWeight: 700,
-              }}
-            >
-              <Zap size={13} />
-              <span>
-                {permittedCount} / {WORKSPACE_DEFINITIONS.length} Workspaces Unlocked
-              </span>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                backgroundColor: 'rgba(157,78,221,0.1)',
-                border: '1px solid rgba(157,78,221,0.25)',
-                padding: '6px 14px',
-                borderRadius: '20px',
-                fontSize: '0.8rem',
-                color: '#c8b6ff',
-                fontWeight: 600,
-              }}
-            >
-              <ShieldCheck size={13} color="#00f5a0" />
-              <span>Vertical: {vertical.replace(/_/g, ' ')}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Analytics KPI Row ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-          {/* Revenue MTD Card */}
-          <div 
-            className="glass-panel"
-            style={{
-              background: 'linear-gradient(135deg, rgba(20, 30, 48, 0.7) 0%, rgba(12, 18, 36, 0.8) 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '16px',
-              padding: '1.5rem',
-              position: 'relative',
-              overflow: 'hidden',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 700 }}>
-                Revenue (Month-to-Date)
-              </span>
-              <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(0, 245, 160, 0.1)', color: '#00f5a0', border: '1px solid rgba(0, 245, 160, 0.2)' }}>
-                <DollarSign size={20} />
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-display)', lineHeight: '1.2' }}>
-                {loadingAnalytics ? '...' : revenueMtd !== null ? `$${revenueMtd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A'}
-              </div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: '0.5rem' }}>
-                Real-time general ledger aggregate revenue balance
-              </span>
-            </div>
-          </div>
-
-          {/* Conversion Rate Card */}
-          <div 
-            className="glass-panel"
-            style={{
-              background: 'linear-gradient(135deg, rgba(20, 30, 48, 0.7) 0%, rgba(12, 18, 36, 0.8) 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '16px',
-              padding: '1.5rem',
-              position: 'relative',
-              overflow: 'hidden',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 700 }}>
-                CRM Conversion Rate
-              </span>
-              <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(0, 242, 254, 0.1)', color: '#00f2fe', border: '1px solid rgba(0, 242, 254, 0.2)' }}>
-                <Users size={20} />
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-display)', lineHeight: '1.2' }}>
-                {loadingAnalytics ? '...' : conversionRate !== null ? `${(conversionRate * 100).toFixed(1)}%` : 'N/A'}
-              </div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: '0.5rem' }}>
-                {leadsCount !== null && activeCustomers !== null ? `${activeCustomers} Active Customers / ${leadsCount} Leads` : 'Ratio of active customers to leads'}
-              </span>
-            </div>
+          {/* Right: Live clock */}
+          <div style={{ zIndex: 1 }}>
+            <LiveClock />
           </div>
         </div>
 
         {/* ── Section Header ── */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '4px',
-                height: '22px',
-                background: 'linear-gradient(180deg, #9d4edd, #00f2fe)',
-                borderRadius: '2px',
-              }}
-            />
-            <h2
-              style={{
-                fontSize: '1.15rem',
-                fontWeight: 700,
-                color: '#ffffff',
-                fontFamily: 'var(--font-display)',
-              }}
-            >
-              Core Operational Workspaces
+            <div style={{ width: '4px', height: '22px', background: 'linear-gradient(180deg, #9d4edd, #00f2fe)', borderRadius: '2px' }} />
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
+              Departmental Workspaces
             </h2>
           </div>
           {isSuperUser && (
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                padding: '4px 12px',
-                borderRadius: '20px',
-                backgroundColor: 'rgba(157,78,221,0.12)',
-                color: '#c8b6ff',
-                border: '1px solid rgba(157,78,221,0.25)',
-              }}
-            >
-              <Compass size={11} />
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+              padding: '4px 12px', borderRadius: '20px',
+              backgroundColor: 'rgba(157,78,221,0.12)', color: 'var(--accent-primary)',
+              border: '1px solid rgba(157,78,221,0.25)',
+            }}>
+              <ShieldCheck size={11} />
               Global Access — Tier {roleTier}
             </span>
           )}
         </div>
 
-        {/* ── Workspace Grid ── */}
+        {/* ── Department Cards Grid ── */}
         <div
-          className="ws-launcher-grid"
+          className="dept-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
             gap: '1.5rem',
           }}
         >
-          {WORKSPACE_DEFINITIONS.map((ws) => {
-            const permitted = permittedWorkspaces.includes(ws.key);
-            return (
-              <WorkspaceCard
-                key={ws.key}
-                workspace={ws}
-                permitted={permitted}
-                onClick={() => navigate(ws.route)}
-              />
-            );
-          })}
+          {DEPARTMENTS.map((dept) => (
+            <DepartmentCard
+              key={dept.id}
+              dept={dept}
+              permittedWorkspaceKeys={permittedWorkspaceKeys}
+              onLaunch={handleLaunch}
+              isSuperUser={isSuperUser}
+            />
+          ))}
         </div>
 
-        {/* ── Footer: Access Hint ── */}
-        {!isSuperUser && permittedCount < WORKSPACE_DEFINITIONS.length && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '1rem 1.5rem',
-              borderRadius: '12px',
-              background: 'rgba(255,183,3,0.06)',
-              border: '1px solid rgba(255,183,3,0.15)',
-              fontSize: '0.82rem',
-              color: 'var(--text-muted)',
-            }}
-          >
+        {/* ── Access Hint Footer ── */}
+        {!isSuperUser && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px',
+            padding: '1rem 1.5rem', borderRadius: '12px',
+            background: 'rgba(255,183,3,0.06)', border: '1px solid rgba(255,183,3,0.15)',
+            fontSize: '0.82rem', color: 'var(--text-muted)',
+          }}>
             <Lock size={14} color="#ffb703" />
             <span>
-              <strong style={{ color: '#ffb703' }}>
-                {WORKSPACE_DEFINITIONS.length - permittedCount} workspace
-                {WORKSPACE_DEFINITIONS.length - permittedCount > 1 ? 's' : ''} restricted.
-              </strong>{' '}
-              Contact your Tier 1 Executive Administrator to request additional workspace access.
+              <strong style={{ color: '#ffb703' }}>Limited access.</strong>{' '}
+              Some workspace modules may be restricted. Contact your Tier 1 Executive Administrator to request additional access.
             </span>
           </div>
         )}
+
       </div>
     </>
   );

@@ -209,7 +209,7 @@ export default function ActiveProjects() {
         {/* Header Block */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
               Active Projects
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
@@ -231,7 +231,7 @@ export default function ActiveProjects() {
               className="btn btn-primary"
               style={{
                 background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
-                color: '#0a0f1d',
+                color: 'var(--text-main)',
                 fontWeight: 700,
                 boxShadow: '0 4px 12px rgba(6,182,212,0.2)',
               }}
@@ -262,9 +262,9 @@ export default function ActiveProjects() {
 
         {/* Data Grid Table */}
         <div style={{
-          background: 'rgba(20,30,50,0.4)',
+          background: 'var(--bg-card)',
           borderRadius: '12px',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: '1px solid var(--border-color)',
           overflow: 'hidden'
         }}>
           <div style={{ overflowX: 'auto' }}>
@@ -273,7 +273,7 @@ export default function ActiveProjects() {
                 <tr style={{
                   borderBottom: '2px solid rgba(255,255,255,0.08)',
                   color: 'var(--text-muted)',
-                  background: 'rgba(12,18,36,0.6)',
+                  background: 'var(--bg-card)',
                   fontWeight: 600
                 }}>
                   <th style={{ padding: '1rem' }}>Project Name</th>
@@ -299,7 +299,7 @@ export default function ActiveProjects() {
                   </tr>
                 ) : (
                   projects.map((proj) => {
-                    let pillColor = '#94a3b8';
+                    let pillColor = 'var(--text-muted)';
                     let pillBg = 'rgba(148, 163, 184, 0.12)';
                     if (proj.status === 'ACTIVE') {
                       pillColor = '#06b6d4';
@@ -314,19 +314,19 @@ export default function ActiveProjects() {
 
                     return (
                       <tr key={proj.id} style={{
-                        borderBottom: '1px solid rgba(255,255,255,0.05)',
+                        borderBottom: '1px solid var(--border-color)',
                         transition: 'background 0.2s',
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                       >
-                        <td style={{ padding: '1rem', fontWeight: 700, color: '#ffffff' }}>
+                        <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <FolderOpen size={14} color="#06b6d4" />
                             {proj.project_name}
                           </div>
                         </td>
-                        <td style={{ padding: '1rem', color: '#e2e8f0' }}>
+                        <td style={{ padding: '1rem', color: 'var(--text-main)' }}>
                           {customerMap[proj.customer_id] || proj.customer_id}
                         </td>
                         <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>
@@ -364,8 +364,8 @@ export default function ActiveProjects() {
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: '1rem',
-              borderTop: '1px solid rgba(255,255,255,0.06)',
-              background: 'rgba(12,18,36,0.4)'
+              borderTop: '1px solid var(--border-color)',
+              background: 'var(--bg-card)'
             }}>
               <button
                 disabled={page === 1}
@@ -396,7 +396,7 @@ export default function ActiveProjects() {
         <div style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.6)',
+          backgroundColor: 'rgba(0,0,0,0.4)',
           backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
@@ -406,7 +406,7 @@ export default function ActiveProjects() {
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #141b2e 0%, #0c1224 100%)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             width: '100%',
             maxWidth: '550px',
@@ -421,17 +421,17 @@ export default function ActiveProjects() {
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: '1.25rem 1.5rem',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
-              background: 'rgba(255,255,255,0.01)'
+              borderBottom: '1px solid var(--border-color)',
+              background: 'var(--bg-card-hover)'
             }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <FolderOpen size={18} color="#06b6d4" />
                 Initialize New Project
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
               >
                 <X size={18} />
@@ -561,7 +561,7 @@ export default function ActiveProjects() {
                   className="btn btn-primary"
                   style={{
                     background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
-                    color: '#0a0f1d',
+                    color: 'var(--text-main)',
                     fontWeight: 700,
                     height: '38px',
                     padding: '0 1.5rem',

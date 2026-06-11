@@ -4,30 +4,13 @@ import {
   MessageSquare, Plus, X, AlertCircle, CheckCircle2, RefreshCw,
   Phone, Mail, Users, TrendingUp, Target, FileText
 } from 'lucide-react';
-import WorkspaceLayout, { WorkspaceLayoutConfig } from '../../../layouts/WorkspaceLayout';
-import { useAppContext } from '../../../context/AppContext';
-
-const CRM_SIDEBAR: WorkspaceLayoutConfig = {
-  workspaceKey: 'crm',
-  workspaceName: 'CRM',
-  accentColor: '#00f2fe',
-  icon: <Users size={18} />,
-  navItems: [
-    { label: 'Dashboard',           subPath: '',                icon: <TrendingUp size={15} /> },
-    { label: 'Pipeline & Leads',    subPath: 'pipeline',        icon: <Target size={15} /> },
-    { label: 'Customer Accounts',   subPath: 'accounts',        icon: <Users size={15} /> },
-    { label: 'Sales Orders',        subPath: 'sales-orders',    icon: <TrendingUp size={15} /> },
-    { label: 'Quotations',          subPath: 'quotations',      icon: <FileText size={15} /> },
-    { label: 'Contacts',            subPath: 'contacts',        icon: <Phone size={15} /> },
-    { label: 'Tasks & ToDo',        subPath: 'tasks',           icon: <Target size={15} /> },
-    { label: 'Interaction History', subPath: 'interactions',    icon: <MessageSquare size={15} /> },
-  ],
-};
+import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
+import { CRM_SIDEBAR } from './crmSidebarConfig';
 
 const INTERACTION_TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; bg: string }> = {
   CALL:    { icon: <Phone size={14} />,        color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
   EMAIL:   { icon: <Mail size={14} />,         color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
-  MEETING: { icon: <Users size={14} />,        color: '#9d4edd', bg: 'rgba(157,78,221,0.12)' },
+  MEETING: { icon: <Users size={14} />,        color: 'var(--accent-primary)', bg: 'rgba(157,78,221,0.12)' },
   NOTE:    { icon: <MessageSquare size={14} />, color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
 };
 
@@ -131,7 +114,7 @@ export default function InteractionHistory() {
         {loading ? (
           <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}><RefreshCw size={22} style={{ animation: 'spin 1.5s linear infinite', margin: '0 auto 0.75rem' }} /><br />Loading...</div>
         ) : interactions.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem', background: 'rgba(20,30,50,0.4)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
             No interactions logged yet. Start by logging your first touchpoint.
           </div>
         ) : (
@@ -149,7 +132,7 @@ export default function InteractionHistory() {
                     {tc.icon}
                   </div>
                   {/* Content */}
-                  <div style={{ flex: 1, background: 'rgba(20,30,50,0.5)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '0.9rem 1.1rem' }}>
+                  <div style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '0.9rem 1.1rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, background: tc.bg, color: tc.color, border: `1px solid ${tc.color}30` }}>{interaction.interaction_type}</span>
@@ -159,7 +142,7 @@ export default function InteractionHistory() {
                       </div>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{formatTime(interaction.timestamp)}</span>
                     </div>
-                    <p style={{ color: '#e2e8f0', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>{interaction.summary}</p>
+                    <p style={{ color: 'var(--text-main)', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>{interaction.summary}</p>
                   </div>
                 </div>
               );
@@ -171,8 +154,8 @@ export default function InteractionHistory() {
       {/* Log Interaction Modal */}
       {isModalOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1.5rem' }}>
-          <div style={{ background: 'linear-gradient(135deg,#141b2e,#0c1224)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', width: '100%', maxWidth: '480px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', width: '100%', maxWidth: '480px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)' }}>
               <h3 style={{ fontWeight: 700, color: '#fff', fontSize: '1.1rem' }}>Log Interaction</h3>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}><X size={18} /></button>
             </div>
@@ -201,7 +184,7 @@ export default function InteractionHistory() {
                 <textarea rows={4} placeholder="Describe what happened..." {...register('summary', { required: 'Summary required' })} />
                 {errors.summary && <p style={{ color: '#ff3366', fontSize: '0.72rem', marginTop: '4px' }}>{errors.summary.message}</p>}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
                 <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary" style={{ height: '38px' }}>Cancel</button>
                 <button type="submit" disabled={submitting} className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#00f2fe,#0080c6)', color: '#fff', fontWeight: 700, height: '38px' }}>
                   {submitting ? 'Logging...' : 'Log Interaction'}

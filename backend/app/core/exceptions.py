@@ -32,3 +32,21 @@ class ResourceNotFoundError(CoreERPException):
             error_code="RESOURCE_NOT_FOUND",
             status_code=404
         )
+
+class DomainValidationError(CoreERPException):
+    """Raised when a business rule or invariant is violated within a domain."""
+    def __init__(self, message: str = "Domain validation failed."):
+        super().__init__(
+            message=message,
+            error_code="DOMAIN_VALIDATION_ERROR",
+            status_code=400
+        )
+
+class DataIntegrityError(CoreERPException):
+    """Raised when a repository encounters a database integrity conflict (e.g., duplicates)."""
+    def __init__(self, message: str = "Data integrity conflict detected."):
+        super().__init__(
+            message=message,
+            error_code="DATA_INTEGRITY_CONFLICT",
+            status_code=409
+        )

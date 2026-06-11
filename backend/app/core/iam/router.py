@@ -63,6 +63,8 @@ class AccessUpdate(BaseModel):
     clearance_level: Optional[int] = Field(None, ge=2, le=4)
     workspace_ids: Optional[List[uuid.UUID]] = None
     role_tier: Optional[int] = Field(None, ge=2, le=4)
+    department_id: Optional[uuid.UUID] = None
+    functional_roles: Optional[List[str]] = None
 
 # ── Routes ───────────────────────────────────────────────────────────────────
 
@@ -240,6 +242,10 @@ async def update_user_access(
         user.clearance_level = payload.clearance_level
     if payload.role_tier is not None:
         user.role_tier = payload.role_tier
+    if payload.department_id is not None:
+        user.department_id = payload.department_id
+    if payload.functional_roles is not None:
+        user.functional_roles = payload.functional_roles
         
     # Update many-to-many workspace assignments
     if payload.workspace_ids is not None:
@@ -274,7 +280,9 @@ async def update_user_access(
         "user_id": user.id,
         "clearance_level": user.clearance_level,
         "role_tier": user.role_tier,
-        "workspace_ids": ws_ids
+        "workspace_ids": ws_ids,
+        "department_id": user.department_id,
+        "functional_roles": user.functional_roles
     }
 
 @router.get("/departments", response_model=List[DepartmentOut])

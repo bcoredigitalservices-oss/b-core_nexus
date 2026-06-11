@@ -4,31 +4,15 @@ import {
   TrendingUp, Plus, RefreshCw, X, AlertCircle, CheckCircle2,
   Search, Filter, ArrowUpRight, Users, Target, Zap, Phone, Mail
 } from 'lucide-react';
-import WorkspaceLayout, { WorkspaceLayoutConfig } from '../../../layouts/WorkspaceLayout';
+import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { useAppContext } from '../../../context/AppContext';
-
-const CRM_SIDEBAR: WorkspaceLayoutConfig = {
-  workspaceKey: 'crm',
-  workspaceName: 'CRM',
-  accentColor: '#00f2fe',
-  icon: <Users size={18} />,
-  navItems: [
-    { label: 'Dashboard',          subPath: '',                icon: <TrendingUp size={15} /> },
-    { label: 'Pipeline & Leads',   subPath: 'pipeline',        icon: <Target size={15} /> },
-    { label: 'Customer Accounts',  subPath: 'accounts',        icon: <Users size={15} /> },
-    { label: 'Sales Orders',       subPath: 'sales-orders',    icon: <TrendingUp size={15} /> },
-    { label: 'Quotations',         subPath: 'quotations',      icon: <TrendingUp size={15} /> },
-    { label: 'Contacts',           subPath: 'contacts',        icon: <Phone size={15} /> },
-    { label: 'Tasks & ToDo',       subPath: 'tasks',           icon: <Target size={15} /> },
-    { label: 'Interaction History', subPath: 'interactions',   icon: <TrendingUp size={15} /> },
-  ],
-};
+import { CRM_SIDEBAR } from './crmSidebarConfig';
 
 const LIFECYCLE_STAGES = [
   { key: 'LEAD',            label: 'Lead',            color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
   { key: 'OPPORTUNITY',     label: 'Opportunity',     color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
   { key: 'ACTIVE_CUSTOMER', label: 'Active Customer', color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
-  { key: 'INACTIVE',        label: 'Inactive',        color: '#6b7280', bg: 'rgba(107,114,128,0.12)' },
+  { key: 'INACTIVE',        label: 'Inactive',        color: 'var(--text-muted)', bg: 'rgba(107,114,128,0.12)' },
 ];
 
 function StatusPill({ status }: { status: string }) {
@@ -145,7 +129,7 @@ export default function PipelineLeads() {
         </div>
 
         {/* Search + Filter */}
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', background: 'rgba(20,30,50,0.5)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', background: 'var(--bg-card)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
             <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input type="text" placeholder="Search companies..." value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: '2.2rem', height: '38px' }} />
@@ -166,7 +150,7 @@ export default function PipelineLeads() {
         {/* Kanban Board */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px,1fr))', gap: '1rem', alignItems: 'start' }}>
           {LIFECYCLE_STAGES.map(stage => (
-            <div key={stage.key} style={{ background: 'rgba(20,30,50,0.45)', borderRadius: '14px', border: `1px solid ${stage.color}22`, overflow: 'hidden' }}>
+            <div key={stage.key} style={{ background: 'var(--bg-card)', borderRadius: '14px', border: `1px solid ${stage.color}22`, overflow: 'hidden' }}>
               {/* Stage Header */}
               <div style={{ padding: '0.85rem 1rem', borderBottom: `2px solid ${stage.color}30`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: `${stage.color}08` }}>
                 <span style={{ fontWeight: 700, color: stage.color, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{stage.label}</span>
@@ -180,10 +164,10 @@ export default function PipelineLeads() {
                   <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.78rem', opacity: 0.6 }}>No records</div>
                 ) : (
                   grouped[stage.key].map(c => (
-                    <div key={c.id} style={{ background: 'rgba(12,18,36,0.7)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '0.85rem' }}>
+                    <div key={c.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '0.85rem' }}>
                       <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.88rem', marginBottom: '0.25rem' }}>{c.company_name}</div>
                       <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.5rem' }}>{c.contact_name}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: '#94a3b8', marginBottom: '0.6rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
                         <Mail size={11} />{c.email}
                       </div>
                       {/* Stage Advance */}
@@ -209,7 +193,7 @@ export default function PipelineLeads() {
         {/* Summary Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px,1fr))', gap: '1rem', marginTop: '0.5rem' }}>
           {LIFECYCLE_STAGES.map(s => (
-            <div key={s.key} style={{ background: 'rgba(20,30,50,0.45)', borderRadius: '12px', border: `1px solid ${s.color}20`, padding: '1rem' }}>
+            <div key={s.key} style={{ background: 'var(--bg-card)', borderRadius: '12px', border: `1px solid ${s.color}20`, padding: '1rem' }}>
               <div style={{ fontSize: '0.72rem', fontWeight: 700, color: s.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>{s.label}</div>
               <div style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', fontFamily: 'var(--font-display)' }}>{grouped[s.key]?.length ?? 0}</div>
             </div>
@@ -220,8 +204,8 @@ export default function PipelineLeads() {
       {/* Modal */}
       {isModalOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1.5rem' }}>
-          <div style={{ background: 'linear-gradient(135deg,#141b2e,#0c1224)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', width: '100%', maxWidth: '480px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', width: '100%', maxWidth: '480px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)' }}>
               <h3 style={{ fontWeight: 700, color: '#fff', fontSize: '1.1rem' }}>Register New Lead</h3>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}><X size={18} /></button>
             </div>
@@ -257,7 +241,7 @@ export default function PipelineLeads() {
                   </select>
                 </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '0.5rem' }}>
                 <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary" style={{ height: '38px' }}>Cancel</button>
                 <button type="submit" disabled={submitting} className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#00f2fe,#0080c6)', color: '#fff', fontWeight: 700, height: '38px' }}>
                   {submitting ? 'Saving...' : 'Register Lead'}

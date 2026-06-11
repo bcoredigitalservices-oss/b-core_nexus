@@ -131,7 +131,7 @@ export default function OrganisationSetup() {
     <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%' }}>
       {/* Page Header */}
       <div>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.5rem', fontFamily: 'var(--font-display)' }}>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem', fontFamily: 'var(--font-display)' }}>
           Organisation Setup
         </h1>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
@@ -165,15 +165,15 @@ export default function OrganisationSetup() {
             className="glass-panel" 
             style={{ 
               padding: '2rem', 
-              backgroundColor: '#1E293B', 
-              border: '1px solid rgba(255, 255, 255, 0.08)', 
+              backgroundColor: 'var(--bg-main)', 
+              border: '1px solid var(--border-color)', 
               borderRadius: '16px',
               display: 'flex',
               flexDirection: 'column',
               gap: '1.25rem'
             }}
           >
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Building2 size={18} color="#9d4edd" />
               Legal Identity
             </h3>
@@ -238,15 +238,15 @@ export default function OrganisationSetup() {
             className="glass-panel" 
             style={{ 
               padding: '2rem', 
-              backgroundColor: '#1E293B', 
-              border: '1px solid rgba(255, 255, 255, 0.08)', 
+              backgroundColor: 'var(--bg-main)', 
+              border: '1px solid var(--border-color)', 
               borderRadius: '16px',
               display: 'flex',
               flexDirection: 'column',
               gap: '1.25rem'
             }}
           >
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Globe2 size={18} color="#00f2fe" />
               Contact & Branding
             </h3>
@@ -283,7 +283,7 @@ export default function OrganisationSetup() {
               <div 
                 style={{
                   border: '1px dashed rgba(255, 255, 255, 0.15)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                  backgroundColor: 'var(--bg-card-hover)',
                   borderRadius: '10px',
                   padding: '1.25rem',
                   display: 'flex',
@@ -298,7 +298,7 @@ export default function OrganisationSetup() {
                 onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)'}
               >
                 <Upload size={20} color="var(--text-muted)" />
-                <span style={{ fontSize: '0.8rem', color: '#c8b6ff', fontWeight: 600 }}>Upload Logo File</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', fontWeight: 600 }}>Upload Logo File</span>
                 <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>PNG, SVG, or JPG (max 2MB)</span>
               </div>
             </div>
@@ -311,15 +311,15 @@ export default function OrganisationSetup() {
           className="glass-panel" 
           style={{ 
             padding: '2rem', 
-            backgroundColor: '#1E293B', 
-            border: '1px solid rgba(255, 255, 255, 0.08)', 
+            backgroundColor: 'var(--bg-main)', 
+            border: '1px solid var(--border-color)', 
             borderRadius: '16px',
             display: 'flex',
             flexDirection: 'column',
             gap: '1rem'
           }}
         >
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <AlertTriangle size={18} color="#ffb703" />
             Core Routing & Vertical Alignment
           </h3>

@@ -187,7 +187,7 @@ export default function ExecutiveDashboard() {
       <div 
         style={{
           background: 'linear-gradient(135deg, rgba(157, 78, 221, 0.08) 0%, rgba(0, 242, 254, 0.03) 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          border: '1px solid var(--border-color)',
           borderRadius: '16px',
           padding: '2rem',
           display: 'flex',
@@ -229,7 +229,7 @@ export default function ExecutiveDashboard() {
             <Package size={32} color="#9d4edd" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-display)', marginBottom: '0.4rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+            <h1 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-display)', marginBottom: '0.4rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
               Business Overview & Reports
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: '600px', lineHeight: '1.5' }}>
@@ -244,7 +244,7 @@ export default function ExecutiveDashboard() {
             display: 'flex',
             alignItems: 'center',
             gap: '0.6rem',
-            background: 'rgba(15, 23, 42, 0.6)',
+            background: 'var(--bg-card)',
             padding: '0.6rem 1.2rem',
             borderRadius: '24px',
             border: '1px solid rgba(157, 78, 221, 0.3)',
@@ -279,8 +279,8 @@ export default function ExecutiveDashboard() {
               minHeight: '140px',
               position: 'relative',
               overflow: 'hidden',
-              backgroundColor: '#1E293B',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              backgroundColor: 'var(--bg-main)',
+              border: '1px solid var(--border-color)',
               borderRadius: '14px'
             }}
           >
@@ -302,13 +302,13 @@ export default function ExecutiveDashboard() {
               <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 700 }}>
                 {kpi.label}
               </span>
-              <span style={{ color: kpi.color, background: 'rgba(255, 255, 255, 0.03)', padding: '6px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+              <span style={{ color: kpi.color, background: 'var(--bg-card-hover)', padding: '6px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                 {kpi.icon}
               </span>
             </div>
             
             <div style={{ marginTop: '1.5rem' }}>
-              <div style={{ fontSize: '2.2rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: '#FFFFFF', lineHeight: 1.1 }}>
+              <div style={{ fontSize: '2.2rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-main)', lineHeight: 1.1 }}>
                 {kpi.value}
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
@@ -326,11 +326,11 @@ export default function ExecutiveDashboard() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
           {/* Global Business Entities Directory */}
-          <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: '#1E293B', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '14px' }}>
+          <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
             <div 
               style={{ 
                 padding: '1.25rem 1.75rem', 
-                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between'
@@ -338,9 +338,9 @@ export default function ExecutiveDashboard() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <Building size={20} color="#00f2fe" />
-                <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#ffffff' }}>Global Business Entities</h2>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)' }}>Global Business Entities</h2>
               </div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'rgba(255, 255, 255, 0.05)', padding: '4px 10px', borderRadius: '12px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--bg-card-hover)', padding: '4px 10px', borderRadius: '12px' }}>
                 Ledger Verified
               </span>
             </div>
@@ -348,7 +348,7 @@ export default function ExecutiveDashboard() {
             <div style={{ padding: '1.25rem 1.75rem' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', color: 'var(--text-muted)' }}>
+                  <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
                     <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Entity Legal Name</th>
                     <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</th>
                     <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Jurisdiction</th>
@@ -357,8 +357,8 @@ export default function ExecutiveDashboard() {
                 </thead>
                 <tbody>
                   {REGISTERED_ENTITIES.map((ent) => (
-                    <tr key={ent.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                      <td style={{ padding: '1rem 0.5rem', fontWeight: 600, color: '#F8FAFC' }}>{ent.name}</td>
+                    <tr key={ent.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '1rem 0.5rem', fontWeight: 600, color: 'var(--text-main)' }}>{ent.name}</td>
                       <td style={{ padding: '1rem 0.5rem' }}>
                         <span 
                           style={{ 
@@ -373,7 +373,7 @@ export default function ExecutiveDashboard() {
                           {ent.type}
                         </span>
                       </td>
-                      <td style={{ padding: '1rem 0.5rem', color: '#94A3B8' }}>{ent.country}</td>
+                      <td style={{ padding: '1rem 0.5rem', color: 'var(--text-muted)' }}>{ent.country}</td>
                       <td style={{ padding: '1rem 0.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{ent.code}</td>
                     </tr>
                   ))}
@@ -383,21 +383,21 @@ export default function ExecutiveDashboard() {
           </div>
 
           {/* Interactive Reports Hub */}
-          <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: '#1E293B', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '14px' }}>
+          <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
             <div 
               style={{ 
                 padding: '1.25rem 1.75rem', 
-                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.75rem'
               }}
             >
               <FileText size={20} color="#9d4edd" />
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#ffffff' }}>Executive Reports Hub</h2>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)' }}>Executive Reports Hub</h2>
             </div>
             
-            <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', background: 'rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.1)' }}>
               <button 
                 onClick={() => setActiveReportTab('financials')}
                 style={{
@@ -406,7 +406,7 @@ export default function ExecutiveDashboard() {
                   background: 'transparent',
                   border: 'none',
                   borderBottom: activeReportTab === 'financials' ? '2px solid #9d4edd' : '2px solid transparent',
-                  color: activeReportTab === 'financials' ? '#ffffff' : '#64748B',
+                  color: activeReportTab === 'financials' ? 'var(--text-main)' : 'var(--text-muted)',
                   fontWeight: 600,
                   fontSize: '0.85rem',
                   cursor: 'pointer',
@@ -423,7 +423,7 @@ export default function ExecutiveDashboard() {
                   background: 'transparent',
                   border: 'none',
                   borderBottom: activeReportTab === 'operations' ? '2px solid #9d4edd' : '2px solid transparent',
-                  color: activeReportTab === 'operations' ? '#ffffff' : '#64748B',
+                  color: activeReportTab === 'operations' ? 'var(--text-main)' : 'var(--text-muted)',
                   fontWeight: 600,
                   fontSize: '0.85rem',
                   cursor: 'pointer',
@@ -440,7 +440,7 @@ export default function ExecutiveDashboard() {
                   background: 'transparent',
                   border: 'none',
                   borderBottom: activeReportTab === 'compliance' ? '2px solid #9d4edd' : '2px solid transparent',
-                  color: activeReportTab === 'compliance' ? '#ffffff' : '#64748B',
+                  color: activeReportTab === 'compliance' ? 'var(--text-main)' : 'var(--text-muted)',
                   fontWeight: 600,
                   fontSize: '0.85rem',
                   cursor: 'pointer',
@@ -454,18 +454,18 @@ export default function ExecutiveDashboard() {
             <div style={{ padding: '1.5rem 1.75rem' }}>
               {activeReportTab === 'financials' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card-hover)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                     <div>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#FFFFFF' }}>Q2 Consolidated Profit & Loss</h4>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>Q2 Consolidated Profit & Loss</h4>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Generated: June 2026 • Format: PDF</p>
                     </div>
                     <button className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Download size={14} /> Download
                     </button>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card-hover)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                     <div>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#FFFFFF' }}>Global Ledger Balance Statement</h4>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>Global Ledger Balance Statement</h4>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Generated: May 2026 • Format: XLSX</p>
                     </div>
                     <button className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -477,18 +477,18 @@ export default function ExecutiveDashboard() {
 
               {activeReportTab === 'operations' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card-hover)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                     <div>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#FFFFFF' }}>Terminal Warehouse Capacity Report</h4>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>Terminal Warehouse Capacity Report</h4>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Weekly log • Stock movements and locks</p>
                     </div>
                     <button className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <ExternalLink size={14} /> View
                     </button>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card-hover)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                     <div>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#FFFFFF' }}>Catalog SKU Integrity Log</h4>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>Catalog SKU Integrity Log</h4>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Validation scan across all active catalog listings</p>
                     </div>
                     <button className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -500,18 +500,18 @@ export default function ExecutiveDashboard() {
 
               {activeReportTab === 'compliance' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card-hover)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                     <div>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#FFFFFF' }}>Multi-Jurisdiction Tax Compliance Checklist</h4>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>Multi-Jurisdiction Tax Compliance Checklist</h4>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Ledger audit status • Standard EU & US codes</p>
                     </div>
                     <span style={{ fontSize: '0.75rem', color: '#00f5a0', background: 'rgba(0, 245, 160, 0.1)', padding: '4px 10px', borderRadius: '12px', border: '1px solid rgba(0, 245, 160, 0.2)' }}>
                       Passed
                     </span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card-hover)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                     <div>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#FFFFFF' }}>System Access Governance Log</h4>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>System Access Governance Log</h4>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Audit log of Tier 2, 3, 4 privilege checks</p>
                     </div>
                     <button className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -529,18 +529,18 @@ export default function ExecutiveDashboard() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
           {/* Tax Regulation Overview */}
-          <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: '#1E293B', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '14px' }}>
+          <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
             <div 
               style={{ 
                 padding: '1.25rem 1.5rem', 
-                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.75rem'
               }}
             >
               <Percent size={18} color="#ffb703" />
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff' }}>Regional Tax Rules</h3>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>Regional Tax Rules</h3>
             </div>
             
             <div style={{ padding: '1.25rem 1.5rem' }}>
@@ -548,7 +548,7 @@ export default function ExecutiveDashboard() {
                 {TAX_REGULATIONS.map((tax, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: i < TAX_REGULATIONS.length - 1 ? '1px solid rgba(255, 255, 255, 0.04)' : 'none' }}>
                     <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff' }}>{tax.region}</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>{tax.region}</div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>{tax.category}</div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -562,8 +562,8 @@ export default function ExecutiveDashboard() {
           </div>
 
           {/* Quick Actions Panel */}
-          <div className="glass-panel" style={{ backgroundColor: '#1E293B', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '14px' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="glass-panel" style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Package size={18} color="#00f2fe" />
               Quick Operations
             </h3>
@@ -635,7 +635,7 @@ export default function ExecutiveDashboard() {
             style={{ 
               width: '100%', 
               maxWidth: '520px', 
-              backgroundColor: '#1E293B', 
+              backgroundColor: 'var(--bg-main)', 
               border: '1px solid rgba(157, 78, 221, 0.3)',
               borderRadius: '16px',
               padding: '2rem',
@@ -648,7 +648,7 @@ export default function ExecutiveDashboard() {
             {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)' }}>
                   {vertical === 'HEALTHCARE_LOGISTICS' ? 'Register Pharmaceutical Item' : 
                    vertical === 'HEAVY_MACHINERY' ? 'Register Fleet Asset' : 'Register Product & Item'}
                 </h3>
@@ -659,7 +659,7 @@ export default function ExecutiveDashboard() {
               <button 
                 onClick={() => setCreatorOpen(false)}
                 style={{
-                  background: 'rgba(255,255,255,0.05)',
+                  background: 'var(--bg-card-hover)',
                   border: 'none',
                   color: 'var(--text-muted)',
                   cursor: 'pointer',
@@ -669,7 +669,7 @@ export default function ExecutiveDashboard() {
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
               >
                 <X size={16} />
@@ -739,7 +739,7 @@ export default function ExecutiveDashboard() {
                     <option key={choice} value={choice}>{choice}</option>
                   ))}
                 </select>
-                <p style={{ fontSize: '0.7rem', color: '#9d4edd', marginTop: '4px', fontWeight: 600 }}>
+                <p style={{ fontSize: '0.7rem', color: 'var(--accent-primary)', marginTop: '4px', fontWeight: 600 }}>
                   Locked to active industry vertical: {vertical.replace('_', ' ')}
                 </p>
               </div>

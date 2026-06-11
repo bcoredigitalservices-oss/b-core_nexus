@@ -10,7 +10,8 @@ import {
   RefreshCw,
   Lock,
   Unlock,
-  Loader2
+  Loader2,
+  Palette
 } from 'lucide-react';
 // @ts-ignore: UniversalDataGrid is a JSX component, TypeScript might complain about the missing type definitions.
 import UniversalDataGrid from '../../components/ui/UniversalDataGrid';
@@ -35,7 +36,7 @@ interface ModuleState {
 }
 
 export default function SystemAdminDashboard() {
-  const { authFetch } = useAppContext();
+  const { authFetch, theme, setTheme } = useAppContext();
   const [health, setHealth] = useState<HealthData | null>(null);
   const [healthLoading, setHealthLoading] = useState(true);
   const [healthError, setHealthError] = useState<string | null>(null);
@@ -584,6 +585,38 @@ export default function SystemAdminDashboard() {
 
           {/* Command Center */}
           <CommandCenter />
+
+          {/* Theme Configuration */}
+          <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', margin: 0 }}>
+            <div 
+              style={{ 
+                padding: '1.25rem 1.5rem', 
+                borderBottom: '1px solid var(--border-color)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}
+            >
+              <Palette size={20} color="var(--accent-primary)" />
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Theme Configuration</h2>
+            </div>
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Select an enterprise color palette. This preference will be saved across all sessions.
+              </p>
+              <select 
+                value={theme}
+                onChange={(e) => setTheme(e.target.value)}
+                style={{ width: '100%', maxWidth: '300px' }}
+              >
+                <option value="Stripe Blurple">Stripe Blurple</option>
+                <option value="Vercel Crisp">Vercel Crisp</option>
+                <option value="Azure Cloud">Azure Cloud</option>
+                <option value="Linear Cool">Linear Cool</option>
+                <option value="Tech Teal">Tech Teal</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 

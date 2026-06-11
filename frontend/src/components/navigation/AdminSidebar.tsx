@@ -65,8 +65,8 @@ export default function AdminSidebar() {
     <aside 
       style={{
         width: '260px',
-        backgroundColor: '#0B1120',
-        borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+        backgroundColor: 'var(--bg-main)',
+        borderRight: '1px solid var(--border-color)',
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
@@ -113,7 +113,7 @@ export default function AdminSidebar() {
       <div 
         style={{ 
           padding: '1.5rem 1.25rem', 
-          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+          borderBottom: '1px solid var(--border-color)',
           display: 'flex',
           alignItems: 'center',
           gap: '12px'
@@ -133,10 +133,10 @@ export default function AdminSidebar() {
           <Cpu size={20} color="#00A0DF" />
         </div>
         <div>
-          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.05em', display: 'block' }}>
+          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '0.05em', display: 'block' }}>
             B-CORE NEXUS
           </span>
-          <span style={{ fontSize: '0.7rem', color: '#9CA3AF', display: 'block' }}>
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>
             {systemSettings?.organization_name || 'Tier 0 Root Admin'}
           </span>
         </div>
@@ -190,7 +190,7 @@ export default function AdminSidebar() {
                 )}
               </div>
               {item.subtext && (
-                <span style={{ fontSize: '0.68rem', color: '#6B7280', marginTop: '1px' }}>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '1px' }}>
                   {item.subtext}
                 </span>
               )}
@@ -203,7 +203,7 @@ export default function AdminSidebar() {
       <div 
         style={{ 
           padding: '1rem 1.25rem', 
-          borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+          borderTop: '1px solid var(--border-color)',
           display: 'flex',
           flexDirection: 'column',
           gap: '10px'
@@ -228,10 +228,10 @@ export default function AdminSidebar() {
               {currentUser.email?.[0]?.toUpperCase() ?? 'A'}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#ffffff', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                 {currentUser.full_name || currentUser.email}
               </span>
-              <span style={{ fontSize: '0.68rem', color: '#9CA3AF' }}>
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
                 Tier {currentUser.role_tier ?? 0} Root
               </span>
             </div>

@@ -44,19 +44,19 @@ export default function TierZeroLayout() {
           alignItems: 'center',
           justifyContent: 'center',
           height: '100vh',
-          backgroundColor: '#0F172A',
-          color: '#ffffff',
+          backgroundColor: 'var(--bg-card)',
+          color: 'var(--text-main)',
           gap: '1.5rem'
         }}
       >
         <div className="appshell-boot__spinner" style={{ borderTopColor: '#00A0DF', width: '40px', height: '40px' }} />
-        <p style={{ fontSize: '0.95rem', letterSpacing: '0.05em', color: '#9CA3AF' }}>Initialising Tier 0 Admin Workspace…</p>
+        <p style={{ fontSize: '0.95rem', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>Initialising Tier 0 Admin Workspace…</p>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', backgroundColor: '#090D1A', color: '#F3F4F6' }}>
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)' }}>
       
       {/* Mobile sidebar overlay */}
       {isMobile && mobileSidebarOpen && (
@@ -65,7 +65,7 @@ export default function TierZeroLayout() {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            backgroundColor: 'rgba(0,0,0,0.4)',
             backdropFilter: 'blur(4px)',
             zIndex: 40
           }}
@@ -95,8 +95,8 @@ export default function TierZeroLayout() {
         <header 
           style={{
             height: '64px',
-            backgroundColor: '#0B1120',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+            backgroundColor: 'var(--bg-main)',
+            borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -112,7 +112,7 @@ export default function TierZeroLayout() {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#9CA3AF',
+                  color: 'var(--text-muted)',
                   cursor: 'pointer',
                   padding: '6px',
                   display: 'flex',
@@ -131,7 +131,7 @@ export default function TierZeroLayout() {
                 gap: '6px',
                 fontSize: '0.75rem',
                 fontWeight: 600,
-                color: isApiLive ? 'var(--accent-green)' : '#9CA3AF',
+                color: isApiLive ? 'var(--accent-green)' : 'var(--text-muted)',
                 background: isApiLive ? 'rgba(0, 245, 160, 0.05)' : 'rgba(255, 255, 255, 0.03)',
                 padding: '4px 10px',
                 borderRadius: '12px',
@@ -145,7 +145,7 @@ export default function TierZeroLayout() {
 
           {/* Center Title */}
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.02em' }}>
+            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
               STRUCTURAL ENGINE CONTROL
             </span>
           </div>
@@ -157,7 +157,7 @@ export default function TierZeroLayout() {
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: '#9CA3AF',
+                color: 'var(--text-muted)',
                 cursor: 'pointer',
                 padding: '6px',
                 position: 'relative'
@@ -188,7 +188,7 @@ export default function TierZeroLayout() {
                   alignItems: 'center',
                   gap: '8px',
                   cursor: 'pointer',
-                  color: '#ffffff',
+                  color: 'var(--text-main)',
                   textAlign: 'left'
                 }}
               >
@@ -213,11 +213,11 @@ export default function TierZeroLayout() {
                   <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
                     {currentUser?.full_name || currentUser?.email?.split('@')[0]}
                   </span>
-                  <span style={{ fontSize: '0.65rem', color: '#9CA3AF' }}>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
                     Tier 0 Root
                   </span>
                 </div>
-                <ChevronDown size={14} style={{ color: '#9CA3AF' }} />
+                <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
               </button>
 
               {dropdownOpen && (
@@ -227,8 +227,8 @@ export default function TierZeroLayout() {
                     right: 0,
                     marginTop: '8px',
                     width: '180px',
-                    backgroundColor: '#0F172A',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '8px',
                     boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
                     padding: '4px 0',
@@ -245,18 +245,18 @@ export default function TierZeroLayout() {
                       padding: '8px 12px',
                       background: 'transparent',
                       border: 'none',
-                      color: '#9CA3AF',
+                      color: 'var(--text-muted)',
                       fontSize: '0.8rem',
                       cursor: 'pointer',
                       textAlign: 'left'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
                   >
                     <Settings size={14} />
                     <span>System Settings</span>
                   </button>
-                  <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.05)', margin: '4px 0' }} />
+                  <div style={{ borderTop: '1px solid var(--border-color)', margin: '4px 0' }} />
                   <button
                     onClick={handleLogout}
                     style={{
@@ -290,7 +290,7 @@ export default function TierZeroLayout() {
             flex: 1, 
             overflowY: 'auto', 
             padding: '2rem',
-            background: '#090D1A'
+            background: 'var(--bg-main)'
           }}
         >
           <Outlet />

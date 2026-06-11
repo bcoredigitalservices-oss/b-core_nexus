@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: securepassword
       POSTGRES_DB: nexus_db
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - nexus_pg_data:/var/lib/postgresql/data
     networks:
@@ -57,7 +57,7 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://45.88.191.254:8005}
+        VITE_API_URL: "http://localhost:8005"
     container_name: nexus_frontend
     ports:
       - "3005:80"

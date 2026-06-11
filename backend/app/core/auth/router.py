@@ -273,29 +273,46 @@ async def login(
         
     # MFA Intercept Modification
     if not user.mfa_enabled:
-        if not user.totp_secret:
-            user.totp_secret = generate_totp_secret()
-            db.add(user)
-            await db.commit()
-            await db.refresh(user)
+        if user.role_tier == 0:
+            # Mandatory MFA for Tier 0
+            if not user.totp_secret:
+                user.totp_secret = generate_totp_secret()
+                db.add(user)
+                await db.commit()
+                await db.refresh(user)
 
-        if totp_code:
-            # Verify setup code
-            if not user.totp_secret or not verify_totp_code(user.totp_secret, totp_code):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid verification code"
+            if totp_code:
+                if not user.totp_secret or not verify_totp_code(user.totp_secret, totp_code):
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Invalid verification code"
+                    )
+                user.mfa_enabled = True
+                db.add(user)
+                await db.commit()
+            else:
+                setup_uri = get_provisioning_uri(user.email, user.totp_secret)
+                return JSONResponse(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    content={"detail": "MFA_SETUP_REQUIRED", "setup_uri": setup_uri}
                 )
-            user.mfa_enabled = True
-            db.add(user)
-            await db.commit()
         else:
-            # Return specialized 403 response
-            setup_uri = get_provisioning_uri(user.email, user.totp_secret)
-            return JSONResponse(
-                status_code=status.HTTP_403_FORBIDDEN,
-                content={"detail": "MFA_SETUP_REQUIRED", "setup_uri": setup_uri}
-            )
+            # Optional MFA for other Tiers
+            if totp_code:
+                if not user.totp_secret:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="TOTP not initialized"
+                    )
+                if not verify_totp_code(user.totp_secret, totp_code):
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Invalid verification code"
+                    )
+                user.mfa_enabled = True
+                db.add(user)
+                await db.commit()
+            # If no totp_code, proceed to login
     else:
         # mfa_enabled == True
         if not totp_code:
@@ -308,7 +325,7 @@ async def login(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid verification code"
             )
-        
+    
     access_token = create_access_token(data={"sub": str(user.id), "role_tier": user.role_tier})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
     
@@ -400,29 +417,46 @@ async def login_for_access_token(
     
     # MFA Intercept Modification
     if not user.mfa_enabled:
-        if not user.totp_secret:
-            user.totp_secret = generate_totp_secret()
-            db.add(user)
-            await db.commit()
-            await db.refresh(user)
+        if user.role_tier == 0:
+            # Mandatory MFA for Tier 0
+            if not user.totp_secret:
+                user.totp_secret = generate_totp_secret()
+                db.add(user)
+                await db.commit()
+                await db.refresh(user)
 
-        if totp_code:
-            # Verify setup code
-            if not user.totp_secret or not verify_totp_code(user.totp_secret, totp_code):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid verification code"
+            if totp_code:
+                if not user.totp_secret or not verify_totp_code(user.totp_secret, totp_code):
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Invalid verification code"
+                    )
+                user.mfa_enabled = True
+                db.add(user)
+                await db.commit()
+            else:
+                setup_uri = get_provisioning_uri(user.email, user.totp_secret)
+                return JSONResponse(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    content={"detail": "MFA_SETUP_REQUIRED", "setup_uri": setup_uri}
                 )
-            user.mfa_enabled = True
-            db.add(user)
-            await db.commit()
         else:
-            # Return specialized 403 response
-            setup_uri = get_provisioning_uri(user.email, user.totp_secret)
-            return JSONResponse(
-                status_code=status.HTTP_403_FORBIDDEN,
-                content={"detail": "MFA_SETUP_REQUIRED", "setup_uri": setup_uri}
-            )
+            # Optional MFA for other Tiers
+            if totp_code:
+                if not user.totp_secret:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="TOTP not initialized"
+                    )
+                if not verify_totp_code(user.totp_secret, totp_code):
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Invalid verification code"
+                    )
+                user.mfa_enabled = True
+                db.add(user)
+                await db.commit()
+            # If no totp_code, proceed to login
     else:
         # mfa_enabled == True
         if not totp_code:
@@ -435,7 +469,7 @@ async def login_for_access_token(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid verification code"
             )
-    
+            
     access_token = create_access_token(
         data={"sub": str(user.id), "role_tier": user.role_tier}
     )

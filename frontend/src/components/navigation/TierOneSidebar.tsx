@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   Home, 
@@ -14,11 +14,14 @@ import {
   LogOut,
   Cpu,
   Truck,
-  Wrench
+  Wrench,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 
 export default function TierOneSidebar() {
+  const [isExpanded, setIsExpanded] = useState(false);
   const { currentUser, logout, activeWorkspace } = useAppContext();
   const navigate = useNavigate();
 
@@ -73,190 +76,202 @@ export default function TierOneSidebar() {
   return (
     <aside 
       style={{
-        width: '270px',
-        backgroundColor: '#0F172A',
-        borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+        width: isExpanded ? '250px' : '76px',
+        backgroundColor: 'var(--bg-card)',
+        borderRight: '1px solid var(--border-color)',
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
         height: '100vh',
         position: 'sticky',
         top: 0,
         overflowY: 'auto',
-        zIndex: 50
+        zIndex: 50,
+        boxShadow: '1px 0 10px rgba(0, 0, 0, 0.02)',
+        transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
       }}
     >
       <style>{`
         .tierone-sidebar-link {
           display: flex;
-          align-items: center;
-          padding: 0.75rem 1.25rem;
-          color: #94A3B8;
+          alignItems: center;
+          width: ${isExpanded ? 'calc(100% - 1.5rem)' : '48px'};
+          height: 48px;
+          margin: 0.3rem auto;
+          padding: ${isExpanded ? '0 1rem' : '0'};
+          justify-content: ${isExpanded ? 'flex-start' : 'center'};
+          color: var(--text-muted);
           text-decoration: none;
-          font-size: 0.875rem;
-          font-weight: 500;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          border-left: 3px solid transparent;
-          gap: 12px;
+          border-radius: 12px;
+          transition: all 0.2s ease;
+          position: relative;
         }
         .tierone-sidebar-link:hover {
-          color: #F8FAFC;
-          background-color: rgba(255, 255, 255, 0.03);
+          color: var(--accent-primary);
+          background-color: var(--bg-card-hover);
         }
         .tierone-sidebar-link.active {
-          border-left-color: #9d4edd;
-          background: linear-gradient(90deg, rgba(157, 78, 221, 0.1) 0%, rgba(157, 78, 221, 0.02) 100%);
-          color: #F8FAFC;
+          background-color: var(--bg-card-hover);
+          color: var(--accent-primary);
+        }
+        .tierone-sidebar-link.active::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          height: 24px;
+          width: 4px;
+          background-color: var(--accent-primary);
+          border-radius: 0 4px 4px 0;
         }
         .tierone-sidebar-icon {
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: transform 0.2s ease;
-          color: #64748B;
-        }
-        .tierone-sidebar-link:hover .tierone-sidebar-icon {
-          transform: scale(1.05);
-          color: #9d4edd;
-        }
-        .tierone-sidebar-link.active .tierone-sidebar-icon {
-          color: #9d4edd;
+          min-width: 24px;
         }
         .tierone-sidebar-label {
-          display: flex;
+          display: ${isExpanded ? 'flex' : 'none'};
           flex-direction: column;
-          flex: 1;
-        }
-        .tierone-sidebar-subtext {
-          font-size: 0.7rem;
-          color: #64748B;
-          margin-top: 2px;
+          margin-left: 1rem;
           white-space: nowrap;
           overflow: hidden;
-          text-overflow: ellipsis;
+        }
+        .tierone-sidebar-label-title {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: inherit;
+        }
+        .tierone-sidebar-label-subtext {
+          font-size: 0.65rem;
+          font-weight: 500;
+          color: var(--text-muted);
+          opacity: 0.8;
+          margin-top: 2px;
         }
       `}</style>
 
       {/* Brand Header */}
       <div 
         style={{ 
-          padding: '1.5rem 1.25rem', 
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          padding: '1.5rem 0', 
+          borderBottom: '1px solid var(--border-color)',
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
-          background: 'linear-gradient(180deg, rgba(157, 78, 221, 0.05) 0%, rgba(0, 0, 0, 0) 100%)'
+          justifyContent: isExpanded ? 'flex-start' : 'center',
+          width: '100%',
+          marginBottom: '1rem',
+          paddingLeft: isExpanded ? '1.5rem' : '0',
+          position: 'relative'
         }}
       >
         <div 
           style={{
-            background: 'rgba(157, 78, 221, 0.15)',
-            border: '1px solid rgba(157, 78, 221, 0.3)',
-            borderRadius: '8px',
-            padding: '6px',
+            background: 'var(--accent-primary)',
+            borderRadius: '12px',
+            padding: '8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 15px rgba(157, 78, 221, 0.2)'
+            color: '#fff',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
           }}
         >
-          <Cpu size={20} color="#9d4edd" />
+          <Cpu size={22} />
         </div>
-        <div>
-          <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.05em', display: 'block', fontFamily: 'var(--font-display)' }}>
-            B-CORE NEXUS
-          </span>
-          <span style={{ fontSize: '0.7rem', color: '#9d4edd', fontWeight: 600, display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {vertical.replace('_', ' ')}
-          </span>
-        </div>
+        
+        {isExpanded && (
+          <div style={{ marginLeft: '1rem', display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9rem', color: 'var(--text-main)', letterSpacing: '0.05em' }}>NEXUS OS</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Enterprise</span>
+          </div>
+        )}
       </div>
 
       {/* Navigation Links */}
-      <nav style={{ flex: 1, padding: '1rem 0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <nav style={{ flex: 1, padding: '0', display: 'flex', flexDirection: 'column', width: '100%', overflowX: 'hidden' }}>
         {navItems.map((item, index) => (
           <NavLink 
             key={index} 
             to={item.path} 
             className="tierone-sidebar-link"
+            title={!isExpanded ? item.label : undefined}
           >
             <span className="tierone-sidebar-icon">{item.icon}</span>
             <div className="tierone-sidebar-label">
-              <span>{item.label}</span>
-              <span className="tierone-sidebar-subtext">{item.subtext}</span>
+              <span className="tierone-sidebar-label-title">{item.label}</span>
+              <span className="tierone-sidebar-label-subtext">{item.subtext}</span>
             </div>
           </NavLink>
         ))}
       </nav>
 
-      {/* Footer / User Profile */}
+      {/* Footer / User Profile & Toggle */}
       <div 
         style={{ 
-          padding: '1.25rem', 
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          padding: '1rem 0', 
+          borderTop: '1px solid var(--border-color)',
           display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          background: 'rgba(0, 0, 0, 0.2)'
+          flexDirection: isExpanded ? 'row' : 'column',
+          alignItems: 'center',
+          justifyContent: isExpanded ? 'space-around' : 'center',
+          gap: isExpanded ? '0' : '0.5rem',
+          width: '100%'
         }}
       >
-        {currentUser && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div 
-              style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '50%',
-                backgroundColor: 'rgba(157, 78, 221, 0.2)',
-                border: '1px solid rgba(157, 78, 221, 0.4)',
-                color: '#c8b6ff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '0.85rem'
-              }}
-            >
-              {currentUser.email?.[0]?.toUpperCase() ?? 'E'}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#ffffff', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {currentUser.full_name || currentUser.email}
-              </span>
-              <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>
-                Executive Board
-              </span>
-            </div>
-          </div>
-        )}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '40px',
+            height: '40px',
+            backgroundColor: 'transparent',
+            border: 'none',
+            borderRadius: '10px',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--bg-card-hover)';
+            e.currentTarget.style.color = 'var(--text-main)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = 'var(--text-muted)';
+          }}
+          title={isExpanded ? "Collapse Sidebar" : "Expand Sidebar"}
+        >
+          {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+        </button>
+
         <button
           onClick={handleLogout}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            backgroundColor: 'rgba(239, 68, 68, 0.08)',
-            border: '1px solid rgba(239, 68, 68, 0.2)',
-            borderRadius: '6px',
-            color: '#EF4444',
-            fontSize: '0.8rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            padding: '8px 12px',
-            textAlign: 'center',
             justifyContent: 'center',
+            width: '40px',
+            height: '40px',
+            backgroundColor: 'transparent',
+            border: 'none',
+            borderRadius: '10px',
+            color: 'var(--accent-danger)',
+            cursor: 'pointer',
             transition: 'all 0.2s ease'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
-            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
-            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+            e.currentTarget.style.backgroundColor = 'transparent';
           }}
+          title="Logout"
         >
-          <LogOut size={14} />
-          <span>Terminate Session</span>
+          <LogOut size={20} />
         </button>
       </div>
     </aside>

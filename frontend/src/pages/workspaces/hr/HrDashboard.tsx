@@ -96,7 +96,7 @@ export default function HrDashboard() {
         {/* Header Block */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
               Human Capital Management
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
@@ -140,8 +140,8 @@ export default function HrDashboard() {
         }}>
           {/* Card 1: Total Active Headcount */}
           <div style={{
-            background: 'rgba(20,30,50,0.4)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             padding: '1.5rem',
             position: 'relative',
@@ -158,7 +158,7 @@ export default function HrDashboard() {
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Total Active Headcount
                 </p>
-                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#ffffff', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
+                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
                   {loading ? '...' : activeCount || 12}
                 </h3>
               </div>
@@ -180,8 +180,8 @@ export default function HrDashboard() {
 
           {/* Card 2: Pending Leave Approvals */}
           <div style={{
-            background: 'rgba(20,30,50,0.4)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             padding: '1.5rem',
             position: 'relative',
@@ -198,7 +198,7 @@ export default function HrDashboard() {
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Pending Leave Approvals
                 </p>
-                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#ffffff', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
+                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
                   {loading ? '...' : 3}
                 </h3>
               </div>
@@ -219,8 +219,8 @@ export default function HrDashboard() {
 
           {/* Card 3: New Hires This Month */}
           <div style={{
-            background: 'rgba(20,30,50,0.4)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             padding: '1.5rem',
             position: 'relative',
@@ -237,7 +237,7 @@ export default function HrDashboard() {
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   New Hires This Month
                 </p>
-                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#ffffff', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
+                <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem', fontFamily: 'var(--font-display)' }}>
                   {loading ? '...' : 5}
                 </h3>
               </div>
@@ -263,13 +263,13 @@ export default function HrDashboard() {
           display: 'flex',
           flexDirection: 'column',
           gap: '1rem',
-          background: 'rgba(20,30,50,0.3)',
-          border: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
           borderRadius: '16px',
           padding: '1.5rem'
         }}>
           <div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
               Recent Onboardings
             </h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.1rem' }}>
@@ -277,13 +277,13 @@ export default function HrDashboard() {
             </p>
           </div>
 
-          <div style={{ overflowX: 'auto', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+          <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
               <thead>
                 <tr style={{
-                  borderBottom: '1px solid rgba(255,255,255,0.08)',
+                  borderBottom: '1px solid var(--border-color)',
                   color: 'var(--text-muted)',
-                  background: 'rgba(12,18,36,0.6)',
+                  background: 'var(--bg-card)',
                   fontWeight: 600
                 }}>
                   <th style={{ padding: '0.85rem' }}>Full Name</th>
@@ -307,7 +307,7 @@ export default function HrDashboard() {
                   </tr>
                 ) : (
                   employees.slice(0, 5).map((emp) => {
-                    let statusColor = '#cbd5e1';
+                    let statusColor = 'var(--text-main)';
                     let statusBg = 'rgba(203, 213, 225, 0.12)';
                     if (emp.employment_status === 'ACTIVE') {
                       statusColor = '#10b981';
@@ -322,16 +322,16 @@ export default function HrDashboard() {
 
                     return (
                       <tr key={emp.id} style={{
-                        borderBottom: '1px solid rgba(255,255,255,0.04)',
+                        borderBottom: '1px solid var(--border-color)',
                         transition: 'background 0.2s',
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.01)'}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                       >
-                        <td style={{ padding: '0.85rem', fontWeight: 700, color: '#ffffff' }}>
+                        <td style={{ padding: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>
                           {emp.first_name} {emp.last_name}
                         </td>
-                        <td style={{ padding: '0.85rem', color: '#e2e8f0' }}>
+                        <td style={{ padding: '0.85rem', color: 'var(--text-main)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <Briefcase size={12} color="#10b981" />
                             {emp.job_title}

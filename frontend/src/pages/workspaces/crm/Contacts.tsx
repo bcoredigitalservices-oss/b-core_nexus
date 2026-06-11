@@ -4,25 +4,8 @@ import {
   Phone, Plus, RefreshCw, X, AlertCircle, CheckCircle2,
   Search, Mail, Briefcase, Star, Users, TrendingUp, Target, Trash2
 } from 'lucide-react';
-import WorkspaceLayout, { WorkspaceLayoutConfig } from '../../../layouts/WorkspaceLayout';
-import { useAppContext } from '../../../context/AppContext';
-
-const CRM_SIDEBAR: WorkspaceLayoutConfig = {
-  workspaceKey: 'crm',
-  workspaceName: 'CRM',
-  accentColor: '#00f2fe',
-  icon: <Users size={18} />,
-  navItems: [
-    { label: 'Dashboard',           subPath: '',                icon: <TrendingUp size={15} /> },
-    { label: 'Pipeline & Leads',    subPath: 'pipeline',        icon: <Target size={15} /> },
-    { label: 'Customer Accounts',   subPath: 'accounts',        icon: <Users size={15} /> },
-    { label: 'Sales Orders',        subPath: 'sales-orders',    icon: <TrendingUp size={15} /> },
-    { label: 'Quotations',          subPath: 'quotations',      icon: <TrendingUp size={15} /> },
-    { label: 'Contacts',            subPath: 'contacts',        icon: <Phone size={15} /> },
-    { label: 'Tasks & ToDo',        subPath: 'tasks',           icon: <Target size={15} /> },
-    { label: 'Interaction History', subPath: 'interactions',    icon: <TrendingUp size={15} /> },
-  ],
-};
+import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
+import { CRM_SIDEBAR } from './crmSidebarConfig';
 
 interface Contact {
   id: string; customer_id: string; first_name: string; last_name: string;
@@ -116,7 +99,7 @@ export default function Contacts() {
         </div>
 
         {/* Search */}
-        <div style={{ display: 'flex', gap: '0.75rem', background: 'rgba(20,30,50,0.5)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', background: 'var(--bg-card)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input type="text" placeholder="Search contacts by name..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchAll()} style={{ paddingLeft: '2.2rem', height: '38px' }} />
@@ -130,11 +113,11 @@ export default function Contacts() {
         {loading ? (
           <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}><RefreshCw size={24} style={{ animation: 'spin 1.5s linear infinite', margin: '0 auto 1rem' }} /><br />Loading contacts...</div>
         ) : contacts.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem', background: 'rgba(20,30,50,0.4)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>No contacts found. Add your first contact.</div>
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>No contacts found. Add your first contact.</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px,1fr))', gap: '1rem' }}>
             {contacts.map(c => (
-              <div key={c.id} style={{ background: 'rgba(20,30,50,0.5)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '14px', padding: '1.25rem', position: 'relative', overflow: 'hidden' }}>
+              <div key={c.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '1.25rem', position: 'relative', overflow: 'hidden' }}>
                 {c.is_primary && (
                   <span style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid #f59e0b30', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 700, padding: '2px 7px', display: 'flex', alignItems: 'center', gap: '3px' }}>
                     <Star size={10} /> Primary
@@ -149,7 +132,7 @@ export default function Contacts() {
                     {c.job_title && <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{c.job_title}</div>}
                   </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', fontSize: '0.78rem', color: '#94a3b8' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                   {c.email && <span style={{ display: 'flex', gap: '6px', alignItems: 'center' }}><Mail size={12} />{c.email}</span>}
                   {c.phone && <span style={{ display: 'flex', gap: '6px', alignItems: 'center' }}><Phone size={12} />{c.phone}</span>}
                   {custMap[c.customer_id] && <span style={{ display: 'flex', gap: '6px', alignItems: 'center' }}><Briefcase size={12} />{custMap[c.customer_id]}</span>}
@@ -166,8 +149,8 @@ export default function Contacts() {
       {/* Modal */}
       {isModalOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1.5rem' }}>
-          <div style={{ background: 'linear-gradient(135deg,#141b2e,#0c1224)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', width: '100%', maxWidth: '500px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', width: '100%', maxWidth: '500px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)' }}>
               <h3 style={{ fontWeight: 700, color: '#fff', fontSize: '1.1rem' }}>Add Contact</h3>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}><X size={18} /></button>
             </div>
@@ -203,7 +186,7 @@ export default function Contacts() {
                 <input type="checkbox" {...register('is_primary')} style={{ width: 'auto' }} />
                 Mark as Primary Contact
               </label>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '0.5rem' }}>
                 <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary" style={{ height: '38px' }}>Cancel</button>
                 <button type="submit" disabled={submitting} className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#00f2fe,#0080c6)', color: '#fff', fontWeight: 700, height: '38px' }}>
                   {submitting ? 'Saving...' : 'Add Contact'}

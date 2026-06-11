@@ -128,7 +128,7 @@ export default function Onboarding() {
         justifyContent: 'center',
         padding: '2rem 1rem',
         minHeight: '100vh',
-        background: '#0B1120'
+        background: 'var(--bg-main)'
       }}
     >
       {/* Twinkling stars particle background */}
@@ -312,7 +312,7 @@ export default function Onboarding() {
               </div>
 
               <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1rem', fontWeight: 700, color: '#ffffff' }}>Account Registered</span>
+                <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>Account Registered</span>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
                   Your password has been set. Redirecting you to sign in...
                 </span>
@@ -347,7 +347,7 @@ export default function Onboarding() {
               </div>
 
               <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1rem', fontWeight: 700, color: '#ffffff' }}>Activation Link Invalid</span>
+                <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>Activation Link Invalid</span>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
                   {errorMsg || 'The token signature is invalid, or the invitation has expired.'}
                 </span>
@@ -359,9 +359,9 @@ export default function Onboarding() {
                 style={{ 
                   width: '100%', 
                   marginTop: '0.5rem',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  color: '#ffffff',
+                  background: 'var(--bg-card-hover)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-main)',
                   boxShadow: 'none'
                 }}
               >
@@ -373,7 +373,7 @@ export default function Onboarding() {
         </div>
 
         {/* Footer info tag */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
           <Shield size={10} />
           <span>AES-256 SESSION ORCHESTRATION SHIELD</span>
         </div>

@@ -476,3 +476,7 @@ async def get_conversion_rate(db: AsyncSession = Depends(get_db)):
     )).scalar() or 0
     rate = float(active_count) / float(lead_count) if lead_count > 0 else 0.0
     return {"active_customers": active_count, "leads": lead_count, "conversion_rate": rate}
+
+# ─── Register EDA Event Subscribers ───────────────────────────────────────────
+from app.workspaces.crm.events import register_crm_events
+register_crm_events()

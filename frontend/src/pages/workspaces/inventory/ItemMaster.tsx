@@ -216,7 +216,7 @@ export default function ItemMaster() {
         {/* Header Block */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
               Item Master Catalog
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
@@ -245,10 +245,10 @@ export default function ItemMaster() {
           gap: '1rem',
           alignItems: 'center',
           flexWrap: 'wrap',
-          background: 'rgba(20,30,50,0.5)',
+          background: 'var(--bg-card)',
           padding: '1rem',
           borderRadius: '12px',
-          border: '1px solid rgba(255,255,255,0.06)'
+          border: '1px solid var(--border-color)'
         }}>
           <form onSubmit={handleSearchSubmit} style={{ flex: 1, display: 'flex', gap: '0.75rem', minWidth: '280px' }}>
             <div style={{ position: 'relative', flex: 1 }}>
@@ -296,9 +296,9 @@ export default function ItemMaster() {
 
         {/* Data Grid / Table */}
         <div style={{
-          background: 'rgba(20,30,50,0.4)',
+          background: 'var(--bg-card)',
           borderRadius: '12px',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: '1px solid var(--border-color)',
           overflow: 'hidden'
         }}>
           <div style={{ overflowX: 'auto' }}>
@@ -307,7 +307,7 @@ export default function ItemMaster() {
                 <tr style={{
                   borderBottom: '2px solid rgba(255,255,255,0.08)',
                   color: 'var(--text-muted)',
-                  background: 'rgba(12,18,36,0.6)',
+                  background: 'var(--bg-card)',
                   fontWeight: 600
                 }}>
                   <th style={{ padding: '1rem' }}>SKU</th>
@@ -335,7 +335,7 @@ export default function ItemMaster() {
                 ) : (
                   items.map((item) => (
                     <tr key={item.id} style={{
-                      borderBottom: '1px solid rgba(255,255,255,0.05)',
+                      borderBottom: '1px solid var(--border-color)',
                       transition: 'background 0.2s',
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
@@ -345,7 +345,7 @@ export default function ItemMaster() {
                         {item.sku}
                       </td>
                       <td style={{ padding: '1rem' }}>
-                        <div style={{ fontWeight: 600, color: '#ffffff' }}>{item.name}</div>
+                        <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{item.name}</div>
                         {item.description && (
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {item.description}
@@ -354,17 +354,17 @@ export default function ItemMaster() {
                       </td>
                       <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>
                         <span style={{
-                          background: 'rgba(255,255,255,0.05)',
+                          background: 'var(--bg-card-hover)',
                           padding: '2px 8px',
                           borderRadius: '6px',
                           fontSize: '0.75rem',
-                          border: '1px solid rgba(255,255,255,0.08)'
+                          border: '1px solid var(--border-color)'
                         }}>
                           {item.item_group}
                         </span>
                       </td>
                       <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{item.uom}</td>
-                      <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, color: '#ffffff' }}>
+                      <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, color: 'var(--text-main)' }}>
                         ${parseFloat(item.base_price.toString()).toFixed(2)}
                       </td>
                       <td style={{ padding: '1rem', textAlign: 'center' }}>
@@ -395,8 +395,8 @@ export default function ItemMaster() {
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: '1rem',
-              borderTop: '1px solid rgba(255,255,255,0.06)',
-              background: 'rgba(12,18,36,0.4)',
+              borderTop: '1px solid var(--border-color)',
+              background: 'var(--bg-card)',
               flexWrap: 'wrap',
               gap: '1rem'
             }}>
@@ -431,7 +431,7 @@ export default function ItemMaster() {
         <div style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.6)',
+          backgroundColor: 'rgba(0,0,0,0.4)',
           backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
@@ -441,7 +441,7 @@ export default function ItemMaster() {
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #141b2e 0%, #0c1224 100%)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid var(--border-color)',
             borderRadius: '16px',
             width: '100%',
             maxWidth: '540px',
@@ -456,16 +456,16 @@ export default function ItemMaster() {
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: '1.25rem 1.5rem',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
-              background: 'rgba(255,255,255,0.01)'
+              borderBottom: '1px solid var(--border-color)',
+              background: 'var(--bg-card-hover)'
             }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', fontFamily: 'var(--font-display)' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
                 Register New Inventory Item
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
               >
                 <X size={18} />
@@ -589,7 +589,7 @@ export default function ItemMaster() {
                 display: 'flex',
                 justifyContent: 'flex-end',
                 gap: '0.75rem',
-                borderTop: '1px solid rgba(255,255,255,0.08)',
+                borderTop: '1px solid var(--border-color)',
                 paddingTop: '1.25rem',
                 marginTop: '0.5rem'
               }}>

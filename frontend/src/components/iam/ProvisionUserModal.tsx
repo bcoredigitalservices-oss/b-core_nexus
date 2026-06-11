@@ -165,7 +165,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
           maxWidth: '540px', 
           maxHeight: '90vh',
           overflowY: 'auto',
-          backgroundColor: '#1E293B', 
+          backgroundColor: 'var(--bg-main)', 
           border: '1px solid rgba(157, 78, 221, 0.3)',
           borderRadius: '16px',
           padding: '2rem',
@@ -176,15 +176,15 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
         }}
       >
         {/* Modal Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '1rem' }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-display)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-display)' }}>
             <UserIcon size={20} color="#9d4edd" />
             Provision Operator User
           </h3>
           <button 
             onClick={onClose}
             style={{
-              background: 'rgba(255,255,255,0.05)',
+              background: 'var(--bg-card-hover)',
               border: 'none',
               color: 'var(--text-muted)',
               cursor: 'pointer',
@@ -218,7 +218,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
               <CheckCircle2 size={48} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
                 User Provisioned Successfully!
               </h3>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
@@ -228,14 +228,14 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
 
             <div 
               style={{
-                background: 'rgba(15, 23, 42, 0.6)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
                 padding: '1rem',
                 borderRadius: '10px',
                 fontSize: '0.8rem',
                 fontFamily: 'var(--font-mono)',
                 wordBreak: 'break-all',
-                color: '#c8b6ff',
+                color: 'var(--accent-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -247,9 +247,9 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
                 type="button" 
                 onClick={handleCopy}
                 style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  color: '#ffffff',
+                  background: 'var(--bg-card-hover)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-main)',
                   padding: '6px',
                   borderRadius: '6px',
                   cursor: 'pointer',
@@ -278,7 +278,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
             
             {/* SECTION 1: Identity */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.25rem' }}>
               <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#00f2fe', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
                 <UserIcon size={14} />
                 Section 1: Identity
@@ -286,7 +286,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600, marginBottom: '6px' }}>First Name</label>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>First Name</label>
                   <div style={{ position: 'relative' }}>
                     <UserIcon size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                     <input 
@@ -299,7 +299,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
                   </div>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600, marginBottom: '6px' }}>Last Name</label>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Last Name</label>
                   <div style={{ position: 'relative' }}>
                     <UserIcon size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                     <input 
@@ -314,7 +314,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600, marginBottom: '6px' }}>Email Address *</label>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Email Address *</label>
                 <div style={{ position: 'relative' }}>
                   <Mail size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input 
@@ -329,7 +329,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600, marginBottom: '6px' }}>Clearance Level *</label>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Clearance Level *</label>
                 <div style={{ position: 'relative' }}>
                   <ShieldCheck size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <select 
@@ -355,14 +355,14 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
             </div>
 
             {/* SECTION 2: Placement */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '1.25rem' }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#9d4edd', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.25rem' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
                 <Briefcase size={14} />
                 Section 2: Placement (The Human Org Chart)
               </h4>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600, marginBottom: '6px' }}>Department Assignment</label>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Department Assignment</label>
                 <div style={{ position: 'relative' }}>
                   <Network size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <select 
@@ -392,13 +392,13 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
 
             {/* SECTION 3: Access */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingBottom: '0.5rem' }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#c8b6ff', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
                 <Layers size={14} />
                 Section 3: Access (The Software Modules)
               </h4>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600, marginBottom: '10px' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '10px' }}>
                   Authorized Workspaces
                 </label>
                 {activeWorkspaces.length === 0 ? (
@@ -444,7 +444,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
                             onChange={() => handleToggleWorkspace(ws.identifier)}
                             style={{ cursor: 'pointer' }}
                           />
-                          <span style={{ color: isChecked ? '#ffffff' : 'var(--text-muted)' }}>
+                          <span style={{ color: isChecked ? 'var(--text-main)' : 'var(--text-muted)' }}>
                             {ws.name}
                           </span>
                         </label>
@@ -456,7 +456,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
             </div>
 
             {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.25rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
               <button 
                 type="button" 
                 className="btn btn-secondary" 

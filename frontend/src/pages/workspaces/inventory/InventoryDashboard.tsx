@@ -135,7 +135,7 @@ function MetricCard({ id, label, value, subtext, icon, accentColor, glowColor, t
           fontSize: '2.1rem',
           fontWeight: 800,
           fontFamily: 'var(--font-display)',
-          color: '#ffffff',
+          color: 'var(--text-main)',
           lineHeight: 1,
           marginBottom: '0.5rem',
           letterSpacing: '-0.03em',
@@ -175,7 +175,7 @@ function MetricCard({ id, label, value, subtext, icon, accentColor, glowColor, t
         <div
           style={{
             marginTop: '1rem',
-            borderTop: '1px solid rgba(255,255,255,0.06)',
+            borderTop: '1px solid var(--border-color)',
             paddingTop: '0.75rem',
             display: 'flex',
             alignItems: 'center',
@@ -309,7 +309,7 @@ export default function InventoryDashboard() {
                 style={{
                   fontSize: '1.6rem',
                   fontWeight: 800,
-                  color: '#ffffff',
+                  color: 'var(--text-main)',
                   fontFamily: 'var(--font-display)',
                   letterSpacing: '-0.03em',
                   marginBottom: '0.3rem',
@@ -334,10 +334,10 @@ export default function InventoryDashboard() {
                 alignItems: 'center',
                 gap: '6px',
                 padding: '8px 14px',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'var(--bg-card-hover)',
+                border: '1px solid var(--border-color)',
                 borderRadius: '8px',
-                color: loading ? '#64748B' : '#94A3B8',
+                color: loading ? 'var(--text-muted)' : 'var(--text-muted)',
                 fontSize: '0.8rem',
                 fontWeight: 600,
                 cursor: loading ? 'not-allowed' : 'pointer',
@@ -392,14 +392,14 @@ export default function InventoryDashboard() {
               style={{
                 fontSize: '1rem',
                 fontWeight: 700,
-                color: '#ffffff',
+                color: 'var(--text-main)',
                 fontFamily: 'var(--font-display)',
               }}
             >
               Operations Overview
             </h2>
             {lastRefreshed && (
-              <span style={{ fontSize: '0.7rem', color: '#64748B', marginLeft: 'auto' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
                 Updated {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             )}
@@ -461,7 +461,7 @@ export default function InventoryDashboard() {
               style={{
                 fontSize: '1rem',
                 fontWeight: 700,
-                color: '#ffffff',
+                color: 'var(--text-main)',
                 fontFamily: 'var(--font-display)',
               }}
             >
@@ -486,10 +486,10 @@ export default function InventoryDashboard() {
                   alignItems: 'center',
                   gap: '12px',
                   padding: '1rem 1.25rem',
-                  background: 'rgba(20,30,50,0.7)',
-                  border: '1px solid rgba(255,255,255,0.07)',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '12px',
-                  color: '#94A3B8',
+                  color: 'var(--text-muted)',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -498,13 +498,13 @@ export default function InventoryDashboard() {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = 'rgba(255,183,3,0.3)';
-                  e.currentTarget.style.color = '#ffffff';
+                  e.currentTarget.style.color = 'var(--text-main)';
                   e.currentTarget.style.background = 'rgba(255,183,3,0.06)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)';
-                  e.currentTarget.style.color = '#94A3B8';
-                  e.currentTarget.style.background = 'rgba(20,30,50,0.7)';
+                  e.currentTarget.style.color = 'var(--text-muted)';
+                  e.currentTarget.style.background = 'var(--bg-card)';
                 }}
               >
                 <span style={{ color: '#ffb703', display: 'flex' }}>{item.icon}</span>

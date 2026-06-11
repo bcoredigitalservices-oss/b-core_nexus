@@ -4,34 +4,18 @@ import {
   CheckSquare, Plus, X, AlertCircle, CheckCircle2, RefreshCw,
   Calendar, Flag, Trash2, Users, TrendingUp, Target, Phone, Edit3
 } from 'lucide-react';
-import WorkspaceLayout, { WorkspaceLayoutConfig } from '../../../layouts/WorkspaceLayout';
-
-const CRM_SIDEBAR: WorkspaceLayoutConfig = {
-  workspaceKey: 'crm',
-  workspaceName: 'CRM',
-  accentColor: '#00f2fe',
-  icon: <Users size={18} />,
-  navItems: [
-    { label: 'Dashboard',           subPath: '',                icon: <TrendingUp size={15} /> },
-    { label: 'Pipeline & Leads',    subPath: 'pipeline',        icon: <Target size={15} /> },
-    { label: 'Customer Accounts',   subPath: 'accounts',        icon: <Users size={15} /> },
-    { label: 'Sales Orders',        subPath: 'sales-orders',    icon: <TrendingUp size={15} /> },
-    { label: 'Quotations',          subPath: 'quotations',      icon: <TrendingUp size={15} /> },
-    { label: 'Contacts',            subPath: 'contacts',        icon: <Phone size={15} /> },
-    { label: 'Tasks & ToDo',        subPath: 'tasks',           icon: <CheckSquare size={15} /> },
-    { label: 'Interaction History', subPath: 'interactions',    icon: <TrendingUp size={15} /> },
-  ],
-};
+import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
+import { CRM_SIDEBAR } from './crmSidebarConfig';
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string; dot: string }> = {
-  LOW:    { label: 'Low',    color: '#6b7280', bg: 'rgba(107,114,128,0.12)', dot: '#6b7280' },
+  LOW:    { label: 'Low',    color: 'var(--text-muted)', bg: 'rgba(107,114,128,0.12)', dot: 'var(--text-muted)' },
   MEDIUM: { label: 'Medium', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  dot: '#3b82f6' },
   HIGH:   { label: 'High',   color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', dot: '#f59e0b' },
   URGENT: { label: 'Urgent', color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   dot: '#ef4444' },
 };
 
 const STATUS_COLUMNS = [
-  { key: 'TODO',        label: 'To Do',       color: '#6b7280' },
+  { key: 'TODO',        label: 'To Do',       color: 'var(--text-muted)' },
   { key: 'IN_PROGRESS', label: 'In Progress', color: '#3b82f6' },
   { key: 'DONE',        label: 'Done',        color: '#10b981' },
 ];
@@ -146,7 +130,7 @@ export default function TasksToDo() {
         {/* Kanban Columns */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
           {STATUS_COLUMNS.map(col => (
-            <div key={col.key} style={{ background: 'rgba(20,30,50,0.4)', borderRadius: '14px', border: `1px solid ${col.color}22`, overflow: 'hidden' }}>
+            <div key={col.key} style={{ background: 'var(--bg-card)', borderRadius: '14px', border: `1px solid ${col.color}22`, overflow: 'hidden' }}>
               {/* Column Header */}
               <div style={{ padding: '0.85rem 1rem', borderBottom: `2px solid ${col.color}30`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: `${col.color}08` }}>
                 <span style={{ fontWeight: 700, color: col.color, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{col.label}</span>
@@ -163,17 +147,17 @@ export default function TasksToDo() {
                     const pc = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.MEDIUM;
                     const isOverdue = task.due_date && task.due_date < todayStr && task.status !== 'DONE';
                     return (
-                      <div key={task.id} style={{ background: 'rgba(12,18,36,0.7)', border: `1px solid ${isOverdue ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.07)'}`, borderRadius: '10px', padding: '0.85rem' }}>
+                      <div key={task.id} style={{ background: 'var(--bg-card)', border: `1px solid ${isOverdue ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.07)'}`, borderRadius: '10px', padding: '0.85rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
                           <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.85rem', flex: 1, lineHeight: 1.3 }}>{task.title}</div>
                           <span style={{ marginLeft: '6px', padding: '2px 6px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 700, background: pc.bg, color: pc.color, flexShrink: 0 }}>{pc.label}</span>
                         </div>
                         {task.description && <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.5rem', lineHeight: 1.4 }}>{task.description}</div>}
                         {task.customer_id && custMap[task.customer_id] && (
-                          <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: '0.4rem' }}>📋 {custMap[task.customer_id]}</div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>📋 {custMap[task.customer_id]}</div>
                         )}
                         {task.due_date && (
-                          <div style={{ fontSize: '0.7rem', color: isOverdue ? '#ef4444' : '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.6rem' }}>
+                          <div style={{ fontSize: '0.7rem', color: isOverdue ? '#ef4444' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.6rem' }}>
                             <Calendar size={10} />{task.due_date}{isOverdue ? ' ⚠ Overdue' : ''}
                           </div>
                         )}
@@ -186,7 +170,7 @@ export default function TasksToDo() {
                             <button onClick={() => updateTaskStatus(task.id, 'DONE')} style={{ fontSize: '0.68rem', padding: '2px 7px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '5px', color: '#10b981', cursor: 'pointer' }}>✓ Done</button>
                           )}
                           {col.key === 'DONE' && (
-                            <button onClick={() => updateTaskStatus(task.id, 'TODO')} style={{ fontSize: '0.68rem', padding: '2px 7px', background: 'rgba(107,114,128,0.12)', border: '1px solid rgba(107,114,128,0.3)', borderRadius: '5px', color: '#6b7280', cursor: 'pointer' }}>Reopen</button>
+                            <button onClick={() => updateTaskStatus(task.id, 'TODO')} style={{ fontSize: '0.68rem', padding: '2px 7px', background: 'rgba(107,114,128,0.12)', border: '1px solid rgba(107,114,128,0.3)', borderRadius: '5px', color: 'var(--text-muted)', cursor: 'pointer' }}>Reopen</button>
                           )}
                           <button onClick={() => deleteTask(task.id)} style={{ padding: '2px 5px', background: 'rgba(255,51,102,0.08)', border: '1px solid rgba(255,51,102,0.2)', borderRadius: '5px', color: '#ff3366', cursor: 'pointer' }}><Trash2 size={10} /></button>
                         </div>
@@ -203,8 +187,8 @@ export default function TasksToDo() {
       {/* Create Task Modal */}
       {isModalOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1.5rem' }}>
-          <div style={{ background: 'linear-gradient(135deg,#141b2e,#0c1224)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', width: '100%', maxWidth: '500px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', width: '100%', maxWidth: '500px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)' }}>
               <h3 style={{ fontWeight: 700, color: '#fff', fontSize: '1.1rem' }}>Create Task</h3>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}><X size={18} /></button>
             </div>
@@ -246,7 +230,7 @@ export default function TasksToDo() {
                   </select>
                 </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '0.5rem' }}>
                 <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary" style={{ height: '38px' }}>Cancel</button>
                 <button type="submit" disabled={submitting} className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#00f2fe,#0080c6)', color: '#fff', fontWeight: 700, height: '38px' }}>
                   {submitting ? 'Creating...' : 'Create Task'}

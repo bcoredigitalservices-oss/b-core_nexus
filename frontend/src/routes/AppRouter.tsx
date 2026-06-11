@@ -33,6 +33,8 @@ import Quotations from '../pages/workspaces/crm/Quotations';
 import Contacts from '../pages/workspaces/crm/Contacts';
 import TasksToDo from '../pages/workspaces/crm/TasksToDo';
 import InteractionHistory from '../pages/workspaces/crm/InteractionHistory';
+import Deals from '../pages/workspaces/crm/Deals';
+import CallLog from '../pages/workspaces/crm/CallLog';
 import FinanceDashboard from '../pages/workspaces/finance/FinanceDashboard';
 import ChartOfAccounts from '../pages/workspaces/finance/ChartOfAccounts';
 import HrDashboard from '../pages/workspaces/hr/HrDashboard';
@@ -221,6 +223,8 @@ export default function AppRouter() {
         <Route path="workspaces/crm/sales-orders" element={<SalesOrders />} />
         <Route path="workspaces/crm/quotations" element={<Quotations />} />
         <Route path="workspaces/crm/contacts" element={<Contacts />} />
+        <Route path="workspaces/crm/deals" element={<Deals />} />
+        <Route path="workspaces/crm/call-log" element={<CallLog />} />
         <Route path="workspaces/crm/tasks" element={<TasksToDo />} />
         <Route path="workspaces/crm/interactions" element={<InteractionHistory />} />
         <Route path="workspaces/finance" element={<FinanceDashboard />} />

@@ -17,12 +17,13 @@ from app.core.organization.router import router as organization_router
 from app.core.iam.router import router as iam_router
 from app.core.workspace.registry import init_workspaces
 
-# ─── Eagerly import all models so SQLAlchemy mapper relationships configure
-# correctly before the first request (prevents 'Department not found' errors)
+# ─── Eagerly import core models
 from app.models.organization import Department, Organization  # noqa: F401
 from app.models.user import User, UserWorkspace  # noqa: F401
-from app.workspaces.crm.models import Customer, Contact, Quotation, QuotationLine, CrmTask, SalesOrder, SalesOrderLine  # noqa: F401
-from app.workspaces.crm.models import TaskStatus, TaskPriority, QuotationStatus  # noqa: F401
+
+# ─── Dynamically import workspace models to ensure mapper relationships configure
+from app.core.workspace.loader import load_workspace_models
+load_workspace_models()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -59,21 +60,7 @@ async def core_erp_exception_handler(request: Request, exc: CoreERPException):
         content=error_payload.model_dump(mode="json")
     )
 
-@app.exception_handler(SQLAlchemyError)
-async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
-    import traceback, logging
-    logging.error("SQLAlchemy 500 on %s: %s", request.url.path, str(exc)[:300])
-    logging.error("Full traceback:\n%s", traceback.format_exc())
-    error_payload = ErrorResponse(
-        error_code="DATABASE_ERROR",
-        message="Database Integrity Error",
-        timestamp=datetime.now(timezone.utc),
-        path=request.url.path
-    )
-    return JSONResponse(
-        status_code=500,
-        content=error_payload.model_dump(mode="json")
-    )
+
 
 # Enable CORS for frontend requests
 allowed_origins_str = os.getenv("ALLOWED_ORIGINS")

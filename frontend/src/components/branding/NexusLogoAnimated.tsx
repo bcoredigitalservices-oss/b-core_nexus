@@ -1,7 +1,7 @@
 import React, { useId } from 'react';
 
 /* ─── Color tokens ──────────────────────────────────────────────────────────── */
-const WHITE = '#ffffff';
+const WHITE = 'var(--text-main)';
 
 /* ─── Animation keyframes (injected once into <style>) ─────────────────────── */
 const KEYFRAMES = `
@@ -145,14 +145,14 @@ export default function NexusLogoAnimated({
           {/* Subtitle */}
           <text
             x="145"
-            y="332"
+            y="336"
             textAnchor="middle"
-            fontFamily="'Inter', -apple-system, sans-serif"
-            fontWeight="600"
-            fontSize="12"
-            letterSpacing="1.8"
-            fill="#00A0DF"
-            opacity="0.95"
+            fontFamily="'Outfit', 'Inter', -apple-system, sans-serif"
+            fontWeight="800"
+            fontSize="15"
+            letterSpacing="2.5"
+            fill="var(--accent-primary)"
+            opacity="1"
           >
             by B-Core Digital
           </text>

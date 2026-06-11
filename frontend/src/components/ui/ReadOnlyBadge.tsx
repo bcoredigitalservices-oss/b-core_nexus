@@ -8,7 +8,7 @@ export default function ReadOnlyBadge() {
         textTransform: 'uppercase',
         letterSpacing: '0.08em',
         backgroundColor: '#1F2937',
-        color: '#9CA3AF',
+        color: 'var(--text-muted)',
         padding: '2px 6px',
         borderRadius: '4px',
         marginLeft: '8px',

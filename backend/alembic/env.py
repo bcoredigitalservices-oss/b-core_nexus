@@ -40,12 +40,9 @@ from app.core.sequencing.models import DocumentSequence
 from app.models.organization import Organization, Department
 from app.models.workspace import Workspace, user_workspaces
 
-# Workspace models
-from app.workspaces.inventory.models import InventoryItem, Warehouse, StockLedger
-from app.workspaces.crm.models import Customer, InteractionLog, SalesOrder, SalesOrderLine
-from app.workspaces.finance.models import Account, JournalEntry, JournalEntryLine
-from app.workspaces.hr.models import EmployeeRecord, LeaveRequest
-from app.workspaces.operations.models import Project, Task
+# Workspace models loaded dynamically
+from app.core.workspace.loader import load_workspace_models
+load_workspace_models()
 
 target_metadata = Base.metadata
 

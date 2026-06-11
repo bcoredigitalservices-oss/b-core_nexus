@@ -88,7 +88,7 @@ export default function Dashboard() {
                 padding: '0.75rem 1rem',
                 borderRadius: '10px',
                 border: '1px solid var(--border-color)',
-                background: 'rgba(255,255,255,0.02)',
+                background: 'var(--bg-card-hover)',
                 color: 'var(--text-muted)',
                 textDecoration: 'none',
                 fontSize: '0.875rem',

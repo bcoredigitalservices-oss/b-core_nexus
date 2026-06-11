@@ -126,7 +126,7 @@ export default function Workspaces() {
       <div 
         style={{
           background: 'linear-gradient(135deg, rgba(157, 78, 221, 0.08) 0%, rgba(0, 242, 254, 0.03) 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          border: '1px solid var(--border-color)',
           borderRadius: '16px',
           padding: '1.75rem 2rem',
           display: 'flex',
@@ -151,7 +151,7 @@ export default function Workspaces() {
             <Building2 size={24} color="#00f2fe" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.2rem', fontFamily: 'var(--font-display)' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.2rem', fontFamily: 'var(--font-display)' }}>
               Corporate Workspace Registry
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
@@ -178,7 +178,7 @@ export default function Workspaces() {
 
       {/* Grid of Workspaces */}
       <div>
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', marginBottom: '1.25rem' }}>
+        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem' }}>
           Workspace Application Modules
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
@@ -193,7 +193,7 @@ export default function Workspaces() {
                 key={app.identifier}
                 className="glass-panel"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%)',
+                  background: 'var(--bg-card)',
                   border: isAligned 
                     ? `1px solid ${app.accentColor}40` 
                     : '1px solid rgba(255, 255, 255, 0.08)',
@@ -232,8 +232,8 @@ export default function Workspaces() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                     <div 
                       style={{
-                        background: 'rgba(255, 255, 255, 0.03)',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        background: 'var(--bg-card-hover)',
+                        border: '1px solid var(--border-color)',
                         padding: '10px',
                         borderRadius: '10px',
                         color: app.accentColor
@@ -242,7 +242,7 @@ export default function Workspaces() {
                       {app.icon}
                     </div>
                     <div>
-                      <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff' }}>
+                      <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
                         {app.name}
                       </h4>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
@@ -259,7 +259,7 @@ export default function Workspaces() {
                 {/* Activation Control Footer */}
                 <div 
                   style={{
-                    borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                    borderTop: '1px solid var(--border-color)',
                     paddingTop: '1rem',
                     display: 'flex',
                     alignItems: 'center',

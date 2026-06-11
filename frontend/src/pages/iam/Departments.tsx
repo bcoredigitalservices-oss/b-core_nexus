@@ -151,7 +151,7 @@ export default function Departments() {
       <div 
         style={{
           background: 'linear-gradient(135deg, rgba(157, 78, 221, 0.12) 0%, rgba(0, 242, 254, 0.04) 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          border: '1px solid var(--border-color)',
           borderRadius: '16px',
           padding: '1.75rem 2rem',
           display: 'flex',
@@ -175,10 +175,10 @@ export default function Departments() {
               boxShadow: '0 4px 20px rgba(157, 78, 221, 0.3)'
             }}
           >
-            <Network size={26} color="#ffffff" />
+            <Network size={26} color='var(--text-main)' />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.3rem', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
+            <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.3rem', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
               Hierarchical Departments
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: '1.4' }}>
@@ -201,19 +201,19 @@ export default function Departments() {
       )}
 
       {/* Departments Tree Table */}
-      <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '14px', boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)' }}>
+      <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '14px', boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)' }}>
         <div 
           style={{ 
             padding: '1.25rem 2rem', 
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'rgba(255, 255, 255, 0.01)'
+            background: 'var(--bg-card-hover)'
           }}
         >
-          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#ffffff', letterSpacing: '0.02em' }}>Active Organizational Hierarchy</span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', backgroundColor: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '100px', fontWeight: 600 }}>{departments.length} Nodes</span>
+          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '0.02em' }}>Active Organizational Hierarchy</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', backgroundColor: 'var(--bg-card-hover)', padding: '4px 10px', borderRadius: '100px', fontWeight: 600 }}>{departments.length} Nodes</span>
         </div>
 
         <div style={{ padding: '1.5rem 2rem', overflowX: 'auto' }}>
@@ -224,7 +224,7 @@ export default function Departments() {
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   <th style={{ padding: '1rem 0.75rem' }}>Department Name</th>
                   <th style={{ padding: '1rem 0.75rem' }}>Parent Department</th>
                   <th style={{ padding: '1rem 0.75rem', textAlign: 'center' }}>Status</th>
@@ -235,7 +235,7 @@ export default function Departments() {
                   <tr 
                     key={dept.id} 
                     style={{ 
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                      borderBottom: '1px solid var(--border-color)',
                       transition: 'background-color 0.2s',
                     }}
                     className="hover-row"
@@ -243,16 +243,16 @@ export default function Departments() {
                     <td style={{ 
                       padding: '1.1rem 0.75rem', 
                       fontWeight: 600, 
-                      color: '#F8FAFC',
+                      color: 'var(--text-main)',
                       paddingLeft: `${dept.depth * 24 + 12}px`,
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px'
                     }}>
-                      {dept.depth > 0 && <CornerDownRight size={14} color="#94A3B8" style={{ minWidth: '14px' }} />}
-                      <span style={{ color: dept.depth === 0 ? '#ffffff' : '#e2e8f0' }}>{dept.name}</span>
+                      {dept.depth > 0 && <CornerDownRight size={14} color='var(--text-muted)' style={{ minWidth: '14px' }} />}
+                      <span style={{ color: dept.depth === 0 ? 'var(--text-main)' : 'var(--text-main)' }}>{dept.name}</span>
                     </td>
-                    <td style={{ padding: '1.1rem 0.75rem', color: '#94A3B8' }}>
+                    <td style={{ padding: '1.1rem 0.75rem', color: 'var(--text-muted)' }}>
                       {dept.parent_name ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
                           <ChevronRight size={12} color="#00f2fe" />
@@ -307,7 +307,7 @@ export default function Departments() {
             style={{ 
               width: '100%', 
               maxWidth: '480px', 
-              backgroundColor: '#1E293B', 
+              backgroundColor: 'var(--bg-main)', 
               border: '1px solid rgba(157, 78, 221, 0.3)',
               borderRadius: '16px',
               padding: '2rem',
@@ -320,14 +320,14 @@ export default function Departments() {
           >
             {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-display)' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-display)' }}>
                 <Network size={20} color="#9d4edd" />
                 New Department
               </h3>
               <button 
                 onClick={() => setModalOpen(false)}
                 style={{
-                  background: 'rgba(255,255,255,0.05)',
+                  background: 'var(--bg-card-hover)',
                   border: 'none',
                   color: 'var(--text-muted)',
                   cursor: 'pointer',
@@ -362,7 +362,7 @@ export default function Departments() {
               
               {/* Name */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Name *</label>
+                <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Name *</label>
                 <div style={{ position: 'relative' }}>
                   <Network size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input 
@@ -378,7 +378,7 @@ export default function Departments() {
 
               {/* Description */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Description</label>
+                <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Description</label>
                 <div style={{ position: 'relative' }}>
                   <FileText size={16} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-muted)' }} />
                   <textarea 
@@ -392,7 +392,7 @@ export default function Departments() {
 
               {/* Parent Department Selector */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Parent Department</label>
+                <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Parent Department</label>
                 <div style={{ position: 'relative' }}>
                   <Network size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <select 

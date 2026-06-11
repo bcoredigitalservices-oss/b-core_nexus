@@ -32,7 +32,13 @@ interface UserItem {
   clearance_level: number;
   is_active: boolean;
   department_id: string | null;
+  functional_roles?: string[];
   workspaces?: { id: string }[];
+}
+
+interface DepartmentItem {
+  id: string;
+  name: string;
 }
 
 export default function Users() {
@@ -40,7 +46,11 @@ export default function Users() {
   
   const [users, setUsers] = useState<UserItem[]>([]);
   const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([]);
+  const [departments, setDepartments] = useState<DepartmentItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Standard roles from ERPNext style
+  const standardRoles = ["System Manager", "Accounts Manager", "Sales Manager", "HR Manager", "Inventory Manager", "Project Manager"];
 
   // Modal & Drawer State
   const [provisionModalOpen, setProvisionModalOpen] = useState(false);
@@ -50,6 +60,8 @@ export default function Users() {
   // Edit states inside Drawer
   const [editClearance, setEditClearance] = useState<number>(4);
   const [editWorkspaces, setEditWorkspaces] = useState<string[]>([]);
+  const [editRoles, setEditRoles] = useState<string[]>([]);
+  const [editDepartmentId, setEditDepartmentId] = useState<string>('');
   const [savingAccess, setSavingAccess] = useState(false);
 
   // Status Alerts
@@ -67,6 +79,11 @@ export default function Users() {
       const workspacesData = await authFetch('/iam/workspaces');
       if (workspacesData) {
         setWorkspaces(workspacesData);
+      }
+
+      const departmentsData = await authFetch('/iam/departments');
+      if (departmentsData) {
+        setDepartments(departmentsData);
       }
     } catch (err) {
       console.error('Failed to load user directory:', err);
@@ -105,6 +122,8 @@ export default function Users() {
       // Let's search if the user workspaces list was returned:
       // Let's assume list returns a workspaces list or we fallback:
       setEditWorkspaces(user.workspaces ? user.workspaces.map(w => w.id) : []);
+      setEditRoles(user.functional_roles || []);
+      setEditDepartmentId(user.department_id || '');
     } catch (err) {
       console.error(err);
     } finally {
@@ -117,6 +136,12 @@ export default function Users() {
   const handleToggleEditWorkspace = (wsId: string) => {
     setEditWorkspaces(prev => 
       prev.includes(wsId) ? prev.filter(id => id !== wsId) : [...prev, wsId]
+    );
+  };
+
+  const handleToggleEditRole = (role: string) => {
+    setEditRoles(prev => 
+      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
     );
   };
 
@@ -137,7 +162,9 @@ export default function Users() {
         body: JSON.stringify({
           clearance_level: editClearance,
           role_tier: editClearance,
-          workspace_ids: editWorkspaces
+          workspace_ids: editWorkspaces,
+          functional_roles: editRoles,
+          department_id: editDepartmentId === '' ? null : editDepartmentId
         })
       });
 
@@ -157,7 +184,9 @@ export default function Users() {
             ...u,
             clearance_level: updatedUserRes.clearance_level,
             role_tier: updatedUserRes.role_tier,
-            workspaces: editWorkspaces.map(id => ({ id }))
+            workspaces: editWorkspaces.map(id => ({ id })),
+            functional_roles: editRoles,
+            department_id: editDepartmentId === '' ? null : editDepartmentId
           };
         }
         return u;
@@ -186,7 +215,7 @@ export default function Users() {
         return { label: 'Tier 3 Operator', color: '#ffb703', bg: 'rgba(255, 183, 3, 0.12)', border: '1px solid rgba(255, 183, 3, 0.2)' };
       case 4:
       default:
-        return { label: 'Tier 4 Viewer', color: '#94A3B8', bg: 'rgba(148, 163, 184, 0.1)', border: '1px solid rgba(148, 163, 184, 0.15)' };
+        return { label: 'Tier 4 Viewer', color: 'var(--text-muted)', bg: 'rgba(148, 163, 184, 0.1)', border: '1px solid rgba(148, 163, 184, 0.15)' };
     }
   };
 
@@ -206,7 +235,7 @@ export default function Users() {
       <div 
         style={{
           background: 'linear-gradient(135deg, rgba(157, 78, 221, 0.08) 0%, rgba(0, 242, 254, 0.03) 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          border: '1px solid var(--border-color)',
           borderRadius: '16px',
           padding: '1.75rem 2rem',
           display: 'flex',
@@ -231,7 +260,7 @@ export default function Users() {
             <UsersIcon size={24} color="#9d4edd" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.2rem', fontFamily: 'var(--font-display)' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.2rem', fontFamily: 'var(--font-display)' }}>
               Operator Directory & RBAC
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
@@ -265,24 +294,24 @@ export default function Users() {
       )}
 
       {/* Operator Directory Ledger */}
-      <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: '#1E293B', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '14px' }}>
+      <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
         <div 
           style={{ 
             padding: '1.25rem 1.75rem', 
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between'
           }}
         >
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>Operator Authority Records</span>
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>Operator Authority Records</span>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{users.length} Active Profiles</span>
         </div>
 
         <div style={{ padding: '1.25rem 1.75rem', overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', color: 'var(--text-muted)' }}>
+              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
                 <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email / Login Identity</th>
                 <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Full Name</th>
                 <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Clearance Level</th>
@@ -295,11 +324,11 @@ export default function Users() {
                 const badge = getClearanceBadge(user.clearance_level || user.role_tier);
                 
                 return (
-                  <tr key={user.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                    <td style={{ padding: '1rem 0.5rem', fontWeight: 600, color: '#F8FAFC' }}>
+                  <tr key={user.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                    <td style={{ padding: '1rem 0.5rem', fontWeight: 600, color: 'var(--text-main)' }}>
                       {user.email}
                     </td>
-                    <td style={{ padding: '1rem 0.5rem', color: '#94A3B8' }}>
+                    <td style={{ padding: '1rem 0.5rem', color: 'var(--text-muted)' }}>
                       {user.first_name ? `${user.first_name} ${user.last_name || ''}` : <em style={{ opacity: 0.5 }}>Unconfigured</em>}
                     </td>
                     <td style={{ padding: '1rem 0.5rem' }}>
@@ -383,8 +412,8 @@ export default function Users() {
               width: '100%',
               maxWidth: '440px',
               height: '100%',
-              backgroundColor: '#1E293B',
-              borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
+              backgroundColor: 'var(--bg-main)',
+              borderLeft: '1px solid var(--border-color)',
               padding: '2.5rem 2rem',
               display: 'flex',
               flexDirection: 'column',
@@ -406,8 +435,8 @@ export default function Users() {
                 position: 'absolute',
                 top: '20px',
                 right: '20px',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'var(--bg-card-hover)',
+                border: '1px solid var(--border-color)',
                 color: 'var(--text-muted)',
                 cursor: 'pointer',
                 padding: '6px',
@@ -429,7 +458,7 @@ export default function Users() {
                   borderRadius: '12px',
                   backgroundColor: 'rgba(157, 78, 221, 0.15)',
                   border: '1px solid rgba(157, 78, 221, 0.3)',
-                  color: '#c8b6ff',
+                  color: 'var(--accent-primary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -441,7 +470,7 @@ export default function Users() {
                 {selectedUser.email[0].toUpperCase()}
               </div>
 
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.25rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
                 {selectedUser.first_name ? `${selectedUser.first_name} ${selectedUser.last_name || ''}` : 'Independent Operator'}
               </h3>
 
@@ -461,7 +490,7 @@ export default function Users() {
 
             {/* Form Section 1: Clearance Level */}
             <div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontWeight: 700, fontSize: '0.85rem', color: '#ffffff' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-main)' }}>
                 <ShieldCheck size={16} color="#9d4edd" />
                 Clearance Level Authorization
               </label>
@@ -484,9 +513,95 @@ export default function Users() {
               </select>
             </div>
 
+            {/* Form Section: Department */}
+            <div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-main)' }}>
+                <UsersIcon size={16} color="#ffb703" />
+                Assigned Department
+              </label>
+              <select 
+                value={editDepartmentId} 
+                onChange={(e) => setEditDepartmentId(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: 'var(--bg-input)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  color: 'var(--text-main)',
+                  fontSize: '0.9rem'
+                }}
+              >
+                <option value="">-- No Department Assigned --</option>
+                {departments.map(dept => (
+                  <option key={dept.id} value={dept.id}>{dept.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Form Section: Functional Roles */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', maxHeight: '200px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-main)' }}>
+                <Cpu size={16} color="#ff3366" />
+                Functional Roles (Permission Profiles)
+              </label>
+              
+              <div 
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  backgroundColor: 'var(--bg-input)'
+                }}
+              >
+                {standardRoles.map((role) => {
+                  const hasAccess = editRoles.includes(role);
+
+                  return (
+                    <div 
+                      key={role}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px',
+                        borderRadius: '6px',
+                        backgroundColor: hasAccess ? 'rgba(255, 51, 102, 0.05)' : 'transparent',
+                        border: hasAccess ? '1px solid rgba(255, 51, 102, 0.15)' : '1px solid transparent',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: hasAccess ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                        {role}
+                      </span>
+                      <button
+                        onClick={() => handleToggleEditRole(role)}
+                        style={{
+                          backgroundColor: hasAccess ? 'rgba(255, 51, 102, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                          border: hasAccess ? '1px solid #ff3366' : '1px solid rgba(255,255,255,0.08)',
+                          color: hasAccess ? '#ff3366' : 'var(--text-muted)',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '0.72rem',
+                          fontWeight: 600
+                        }}
+                      >
+                        {hasAccess ? 'Revoke' : 'Assign'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Form Section 2: Workspace Authorization Toggles */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontWeight: 700, fontSize: '0.85rem', color: '#ffffff' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-main)' }}>
                 <Layers size={16} color="#00f2fe" />
                 Workspace Permissions Access Scope
               </label>
@@ -523,7 +638,7 @@ export default function Users() {
                       }}
                     >
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: hasAccess ? '#ffffff' : 'var(--text-muted)' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: hasAccess ? 'var(--text-main)' : 'var(--text-muted)' }}>
                           {ws.name}
                         </span>
                         <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>

@@ -103,7 +103,7 @@ export default function InviteUserModal() {
             <CheckCircle2 size={18} color="var(--accent-green)" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>Invitation Created</span>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>Invitation Created</span>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{toastMsg}</span>
           </div>
           <button 
@@ -137,8 +137,8 @@ export default function InviteUserModal() {
             style={{
               width: '100%',
               maxWidth: '460px',
-              background: 'linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(11, 17, 32, 0.95) 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
               borderRadius: '16px',
               padding: '2.25rem 2rem',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 160, 223, 0.05)',
@@ -227,7 +227,7 @@ export default function InviteUserModal() {
                 borderRadius: '6px',
                 transition: 'color 0.2s'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
               onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
             >
               <X size={18} />
@@ -237,7 +237,7 @@ export default function InviteUserModal() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Sparkles size={18} color="#00A0DF" />
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', color: '#ffffff' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
                   Invite Executive Boardroom Member
                 </h3>
               </div>
