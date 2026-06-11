@@ -86,7 +86,10 @@ export function AppProvider({ children }) {
         ...(options.headers || {}),
       },
     });
-    if (!res.ok) throw new Error(`API ${path} failed (${res.status})`);
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson.detail || `API Request failed (${res.status})`);
+    }
     return res.json();
   }, [token]);
 
