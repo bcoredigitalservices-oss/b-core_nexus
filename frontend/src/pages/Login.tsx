@@ -12,7 +12,7 @@ type FormState = 'idle' | 'loading' | 'success' | 'error' | 'totp' | 'mfa_setup'
 
 export default function Login() {
   const navigate   = useNavigate();
-  const { login, setToken } = useAppContext();
+  const { setToken } = useAppContext();
 
   /* ── Form fields ──────────────────────────────────────────────────────── */
   const [email,    setEmail]    = useState('');
@@ -34,13 +34,24 @@ export default function Login() {
 
   /* ── Refs ─────────────────────────────────────────────────────────────── */
   const emailRef    = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
   const successAudio = useRef<HTMLAudioElement | null>(null);
 
   /* ── Initialise audio and focus ───────────────────────────────────────── */
   useEffect(() => {
     successAudio.current = new Audio('/assets/sounds/success-chime.mp3');
     successAudio.current.preload = 'auto';
-    emailRef.current?.focus();
+    
+    const savedEmail = localStorage.getItem('bcore_remember_email');
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+      setTimeout(() => {
+        passwordRef.current?.focus();
+      }, 50);
+    } else {
+      emailRef.current?.focus();
+    }
   }, []);
 
   /* ── Caps Lock Detector ───────────────────────────────────────────────── */
@@ -52,6 +63,17 @@ export default function Login() {
   const setError = (msg: string) => {
     setErrorMsg(msg);
     setFormState('error');
+  };
+
+  const saveTokenAndSession = (accessToken: string) => {
+    if (rememberMe) {
+      localStorage.setItem('bcore_remember_email', email.trim());
+      localStorage.setItem('bcore_token', accessToken);
+    } else {
+      localStorage.removeItem('bcore_remember_email');
+      sessionStorage.setItem('bcore_token', accessToken);
+    }
+    setToken(accessToken);
   };
 
   const handleSuccessAndRedirect = () => {
@@ -115,15 +137,14 @@ export default function Login() {
       }
 
       if (data.access_token) {
-        localStorage.setItem('bcore_token', data.access_token);
-        setToken(data.access_token);
+        saveTokenAndSession(data.access_token);
         handleSuccessAndRedirect();
         return;
       }
 
       setError('Unexpected server response.');
     } catch {
-      setError('Unable to reach the server. Is the backend running?');
+      setError('Unable to reach the service. Please try again later.');
     }
   };
 
@@ -156,8 +177,7 @@ export default function Login() {
 
       const data = await res.json();
       if (data.access_token) {
-        localStorage.setItem('bcore_token', data.access_token);
-        setToken(data.access_token);
+        saveTokenAndSession(data.access_token);
         setMfaSetupMode(false);
         handleSuccessAndRedirect();
       }
@@ -197,8 +217,7 @@ export default function Login() {
 
         const data = await res.json();
         if (data.access_token) {
-          localStorage.setItem('bcore_token', data.access_token);
-          setToken(data.access_token);
+          saveTokenAndSession(data.access_token);
           handleSuccessAndRedirect();
         }
       } catch {
@@ -224,8 +243,7 @@ export default function Login() {
 
       const data = await res.json();
       if (data.access_token) {
-        localStorage.setItem('bcore_token', data.access_token);
-        setToken(data.access_token);
+        saveTokenAndSession(data.access_token);
         handleSuccessAndRedirect();
       }
     } catch {
@@ -358,6 +376,7 @@ export default function Login() {
                     <Lock size={16} strokeWidth={1.75} />
                   </span>
                   <input
+                    ref={passwordRef}
                     id="login-password"
                     name="password"
                     type={showPass ? 'text' : 'password'}
@@ -590,7 +609,7 @@ export default function Login() {
 
       {/* Build tag badge - absolute bottom left */}
       <div className="login-build-tag">
-        <span>Build&nbsp;<code>1.0.0</code></span>
+        <span>Build&nbsp;<code>1.2.1 (Alpha)</code></span>
       </div>
 
     </section>

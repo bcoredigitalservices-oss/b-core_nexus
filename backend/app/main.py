@@ -43,7 +43,7 @@ from app.core.schemas import ErrorResponse
 app = FastAPI(
     title="B-Core Headless ERP Core",
     description="Headless, Code-First, Instance-Isolated ERP Core",
-    version="1.0.0",
+    version="1.2.1-alpha",
     lifespan=lifespan
 )
 

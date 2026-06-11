@@ -1,0 +1,54 @@
+=========================================================
+      B-CORE NEXUS: PRODUCTION SERVER GUIDELINES
+=========================================================
+
+To guarantee that your client's data, users, and CRM 
+records are NEVER deleted during updates, strict adherence 
+to the following Do's and Don'ts is required.
+
+✅ WHAT YOU SHOULD DO (SAFE ACTIONS)
+---------------------------------------------------------
+1. APPLYING CODE UPDATES:
+   When you pull new code from GitHub, you must rebuild 
+   the containers so the changes take effect. This is 
+   completely safe and preserves all data:
+   $ docker compose down
+   $ docker compose up --build -d
+
+2. ADDING NEW DATABASE TABLES:
+   When your code includes new Alembic migrations for new 
+   features, apply them safely using:
+   $ docker exec -it nexus_backend alembic upgrade head
+
+3. CREATING YOUR FIRST ADMIN:
+   The genesis script is now non-destructive. To create 
+   a new Tier 0 System Admin safely, run:
+   $ docker exec -it nexus_backend python scripts/genesis_admin.py \
+       --first-name "System" \
+       --last-name "Admin" \
+       --email "admin@company.com" \
+       --password "SuperSecurePassword123!"
+
+
+❌ WHAT YOU MUST NEVER DO (DATA LOSS RISKS)
+---------------------------------------------------------
+1. NEVER DELETE DOCKER VOLUMES:
+   Do NOT run `docker compose down -v` or 
+   `docker compose down --volumes`. The `-v` flag destroys 
+   the PostgreSQL volume (`nexus_pg_data`), permanently 
+   wiping out your entire production database.
+
+2. NEVER RUN ALEMBIC DOWNGRADES:
+   Do NOT run `alembic downgrade` in production. 
+   Downgrades drop columns and tables, resulting in 
+   irreversible data loss.
+
+3. NEVER DROP TABLES MANUALLY:
+   Do not log into the PostgreSQL database directly to 
+   drop tables or purge user data. 
+
+=========================================================
+SUMMARY: Your architecture inherently protects data via 
+Docker Volumes and Alembic additive migrations. As long 
+as you avoid deleting the volumes or downgrading schemas, 
+your client's production data is 100% safe across updates.

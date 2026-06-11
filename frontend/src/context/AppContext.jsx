@@ -28,7 +28,7 @@ const FALLBACK_SYSTEM = {
 export const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  const [token, setToken]                       = useState(() => localStorage.getItem('bcore_token') || '');
+  const [token, setToken]                       = useState(() => localStorage.getItem('bcore_token') || sessionStorage.getItem('bcore_token') || '');
   const [currentUser, setCurrentUser]           = useState(null);
   const [navigationMatrix, setNavigationMatrix] = useState(FALLBACK_NAVIGATION);
   const [systemSettings, setSystemSettings]     = useState(FALLBACK_SYSTEM);
@@ -66,6 +66,7 @@ export function AppProvider({ children }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem('bcore_token');
+    sessionStorage.removeItem('bcore_token');
     // Sentinel: prevents auto-login from firing on next mount/render
     localStorage.setItem('bcore_logged_out', '1');
     setToken('');
