@@ -87,11 +87,15 @@ export function AppProvider({ children }) {
       },
     });
     if (!res.ok) {
+      if (res.status === 401) {
+        logout();
+        throw new Error("Session expired. Please log in again.");
+      }
       const errJson = await res.json().catch(() => ({}));
       throw new Error(errJson.detail || `API Request failed (${res.status})`);
     }
     return res.json();
-  }, [token]);
+  }, [token, logout]);
 
   // ── Bootstrap sequence ────────────────────────────────────────────────────
   const bootstrap = useCallback(async (activeToken) => {
