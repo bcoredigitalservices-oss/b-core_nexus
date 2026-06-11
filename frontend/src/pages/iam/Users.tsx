@@ -33,13 +33,57 @@ interface UserItem {
   is_active: boolean;
   department_id: string | null;
   functional_roles?: string[];
-  workspaces?: { id: string }[];
+  workspaces?: string[];
 }
 
 interface DepartmentItem {
   id: string;
   name: string;
 }
+
+
+const WORKSPACE_CATEGORIES = [
+  {
+    name: 'Finance',
+    color: '#00f5a0',
+    keys: ['accounting', 'banking', 'taxes']
+  },
+  {
+    name: 'Inventory',
+    color: '#ffb703',
+    keys: ['assets', 'products', 'items', 'warehouse', 'stock', 'buying']
+  },
+  {
+    name: 'CRM & Sales',
+    color: '#00f2fe',
+    keys: ['pos', 'crm', 'sales', 'support']
+  },
+  {
+    name: 'Operations & Management',
+    color: '#c084fc',
+    keys: ['field_ops', 'maintenance', 'manufacturing', 'projects', 'qa', 'qt', 'logistics']
+  },
+  {
+    name: 'HR & Company',
+    color: '#f472b6',
+    keys: ['expenses', 'hr', 'payroll', 'attendance', 'recruitment', 'performance', 'leaves']
+  },
+  {
+    name: 'Communications',
+    color: '#38bdf8',
+    keys: ['chats', 'employee_groups', 'email', 'message']
+  },
+  {
+    name: 'Utilities',
+    color: '#fb923c',
+    keys: ['marketing', 'campaigns', 'website']
+  },
+  {
+    name: 'System Internals',
+    color: '#a3a3a3',
+    keys: ['internals', 'cog']
+  }
+];
 
 export default function Users() {
   const { token, authFetch } = useAppContext();
@@ -104,24 +148,22 @@ export default function Users() {
     setSelectedUser(user);
     setEditClearance(user.clearance_level || user.role_tier || 4);
     
-    // Fetch detailed user profile to extract workspace relationship keys
-    // In our backend, User has workspaces relationship loaded. Let's extract their IDs.
-    // If not directly in user, we query /users/{id}/access or use the workspaces field.
-    // Let's call our update/get endpoint or extract from list if returned.
     try {
       setSavingAccess(true);
-      // Let's resolve the assigned workspaces. We can fetch user access via list or GET if exists, 
-      // but let's check: our list_users in auth router might return them. 
-      // In case it doesn't, let's load what workspaces are linked to user.
-      // We can also fetch via updating the workspaces edit state.
-      // Let's extract workspaces if present:
-      const assignedIds = user.workspaces ? user.workspaces.map(w => w.id) : [];
-      
-      // Let's query to make sure we have the latest.
-      // If we don't have a direct get user endpoint, we can use the list items since we update them atomically.
-      // Let's search if the user workspaces list was returned:
-      // Let's assume list returns a workspaces list or we fallback:
-      setEditWorkspaces(user.workspaces ? user.workspaces.map(w => w.id) : []);
+      const assignedIds = (user.workspaces || [])
+        .map((wsStr: any) => {
+          if (typeof wsStr === 'string') {
+            const matched = workspaces.find(w => w.identifier === wsStr);
+            return matched ? matched.id : null;
+          }
+          if (wsStr && typeof wsStr === 'object' && wsStr.id) {
+            return wsStr.id;
+          }
+          return null;
+        })
+        .filter((id): id is string => !!id);
+
+      setEditWorkspaces(assignedIds);
       setEditRoles(user.functional_roles || []);
       setEditDepartmentId(user.department_id || '');
     } catch (err) {
@@ -139,6 +181,23 @@ export default function Users() {
     );
   };
 
+  const handleToggleEditGroup = (groupItems: WorkspaceItem[]) => {
+    const groupIds = groupItems.map(item => item.id);
+    const allSelected = groupIds.every(id => editWorkspaces.includes(id));
+    
+    if (allSelected) {
+      setEditWorkspaces(prev => prev.filter(id => !groupIds.includes(id)));
+    } else {
+      setEditWorkspaces(prev => {
+        const next = [...prev];
+        groupIds.forEach(id => {
+          if (!next.includes(id)) next.push(id);
+        });
+        return next;
+      });
+    }
+  };
+
   const handleToggleEditRole = (role: string) => {
     setEditRoles(prev => 
       prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
@@ -153,12 +212,8 @@ export default function Users() {
     setSuccessMsg('');
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/iam/users/${selectedUser.id}/access`, {
+      const updatedUserRes = await authFetch(`/iam/users/${selectedUser.id}/access`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
         body: JSON.stringify({
           clearance_level: editClearance,
           role_tier: editClearance,
@@ -168,23 +223,19 @@ export default function Users() {
         })
       });
 
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.detail || 'Failed to update user access control.');
-      }
-
       setSuccessMsg(`Access controls updated for ${selectedUser.email}.`);
       await loadDirectoryData();
       
       // Update local state to reflect changes in UI
-      const updatedUserRes = await res.json();
       const updatedList = users.map(u => {
         if (u.id === selectedUser.id) {
           return {
             ...u,
             clearance_level: updatedUserRes.clearance_level,
             role_tier: updatedUserRes.role_tier,
-            workspaces: editWorkspaces.map(id => ({ id })),
+            workspaces: editWorkspaces
+              .map(id => workspaces.find(w => w.id === id)?.identifier)
+              .filter((x): x is string => !!x),
             functional_roles: editRoles,
             department_id: editDepartmentId === '' ? null : editDepartmentId
           };
@@ -600,7 +651,7 @@ export default function Users() {
             </div>
 
             {/* Form Section 2: Workspace Authorization Toggles */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', maxHeight: '320px' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-main)' }}>
                 <Layers size={16} color="#00f2fe" />
                 Workspace Permissions Access Scope
@@ -615,57 +666,103 @@ export default function Users() {
                   padding: '12px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '10px',
+                  gap: '14px',
                   backgroundColor: 'var(--bg-input)'
                 }}
               >
-                {workspaces.map((ws) => {
-                  const hasAccess = editWorkspaces.includes(ws.id);
-                  const isWorkspaceActive = ws.status === 'Active';
+                {(() => {
+                  const groupedWorkspaces = WORKSPACE_CATEGORIES.map(cat => {
+                    const items = workspaces.filter(ws => cat.keys.includes(ws.identifier));
+                    return { ...cat, items };
+                  }).filter(group => group.items.length > 0);
 
-                  return (
-                    <div 
-                      key={ws.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '8px',
-                        borderRadius: '6px',
-                        backgroundColor: hasAccess ? 'rgba(0, 242, 254, 0.05)' : 'transparent',
-                        border: hasAccess ? '1px solid rgba(0, 242, 254, 0.15)' : '1px solid transparent',
-                        opacity: isWorkspaceActive ? 1 : 0.5
-                      }}
-                    >
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: hasAccess ? 'var(--text-main)' : 'var(--text-muted)' }}>
-                          {ws.name}
-                        </span>
-                        <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                          ID: {ws.identifier} ({ws.status})
-                        </span>
+                  const categorizedIdentifiers = new Set(WORKSPACE_CATEGORIES.flatMap(cat => cat.keys));
+                  const otherItems = workspaces.filter(ws => !categorizedIdentifiers.has(ws.identifier));
+                  if (otherItems.length > 0) {
+                    groupedWorkspaces.push({
+                      name: 'Uncategorized Modules',
+                      color: '#a3a3a3',
+                      keys: [],
+                      items: otherItems
+                    });
+                  }
+
+                  return groupedWorkspaces.map((group) => {
+                    const groupIds = group.items.map(item => item.id);
+                    const allSelected = groupIds.every(id => editWorkspaces.includes(id));
+
+                    return (
+                      <div key={group.name} style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: group.color }} />
+                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)' }}>{group.name}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleEditGroup(group.items)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: allSelected ? '#ff3366' : 'var(--accent-primary)',
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              padding: 0
+                            }}
+                          >
+                            {allSelected ? 'Deselect All' : 'Select All'}
+                          </button>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                          {group.items.map((ws) => {
+                            const hasAccess = editWorkspaces.includes(ws.id);
+                            const isWorkspaceActive = ws.status === 'Active';
+
+                            return (
+                              <div 
+                                key={ws.id}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  padding: '6px 8px',
+                                  borderRadius: '6px',
+                                  border: hasAccess ? `1px solid ${group.color}40` : '1px solid var(--border-color)',
+                                  backgroundColor: hasAccess ? `${group.color}0c` : 'rgba(255,255,255,0.01)',
+                                  opacity: isWorkspaceActive ? 1 : 0.5,
+                                  transition: 'all 0.15s ease'
+                                }}
+                              >
+                                <span style={{ fontSize: '0.75rem', fontWeight: hasAccess ? 600 : 400, color: hasAccess ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                                  {ws.name}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleEditWorkspace(ws.id)}
+                                  disabled={!isWorkspaceActive}
+                                  style={{
+                                    backgroundColor: hasAccess ? `${group.color}20` : 'rgba(255, 255, 255, 0.03)',
+                                    border: hasAccess ? `1px solid ${group.color}` : '1px solid rgba(255,255,255,0.08)',
+                                    color: hasAccess ? group.color : 'var(--text-muted)',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    cursor: isWorkspaceActive ? 'pointer' : 'not-allowed',
+                                    fontSize: '0.65rem',
+                                    fontWeight: 700
+                                  }}
+                                >
+                                  {hasAccess ? 'Revoke' : 'Allow'}
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-
-                      {/* Active switch */}
-                      <button
-                        onClick={() => handleToggleEditWorkspace(ws.id)}
-                        disabled={!isWorkspaceActive}
-                        style={{
-                          backgroundColor: hasAccess ? 'rgba(0, 242, 254, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                          border: hasAccess ? '1px solid #00f2fe' : '1px solid rgba(255,255,255,0.08)',
-                          color: hasAccess ? '#00f2fe' : 'var(--text-muted)',
-                          padding: '4px 10px',
-                          borderRadius: '6px',
-                          cursor: isWorkspaceActive ? 'pointer' : 'not-allowed',
-                          fontSize: '0.72rem',
-                          fontWeight: 600
-                        }}
-                      >
-                        {hasAccess ? 'Revoke' : 'Authorize'}
-                      </button>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
             </div>
 

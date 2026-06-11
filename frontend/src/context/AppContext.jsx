@@ -115,6 +115,10 @@ export function AppProvider({ children }) {
       if (meRes.ok) {
         const me = await meRes.json();
         setCurrentUser(me);
+      } else if (meRes.status === 401 || meRes.status === 403) {
+        // Token is invalid or expired
+        logout();
+        return;
       }
 
       // 4. Fetch workspace configuration

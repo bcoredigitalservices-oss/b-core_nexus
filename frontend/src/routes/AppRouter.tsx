@@ -26,7 +26,7 @@ import ItemMaster from '../pages/workspaces/inventory/ItemMaster';
 import WarehouseMaster from '../pages/workspaces/inventory/WarehouseMaster';
 import StockLedgerPage from '../pages/workspaces/inventory/StockLedger';
 import CrmDashboard from '../pages/workspaces/crm/CrmDashboard';
-import CustomerAccounts from '../pages/workspaces/crm/CustomerAccounts';
+import Customers from '../pages/workspaces/crm/Customers';
 import SalesOrders from '../pages/workspaces/crm/SalesOrders';
 import PipelineLeads from '../pages/workspaces/crm/PipelineLeads';
 import Quotations from '../pages/workspaces/crm/Quotations';
@@ -219,7 +219,7 @@ export default function AppRouter() {
         <Route path="workspaces/inventory/stock-ledger" element={<StockLedgerPage />} />
         <Route path="workspaces/crm" element={<CrmDashboard />} />
         <Route path="workspaces/crm/pipeline" element={<PipelineLeads />} />
-        <Route path="workspaces/crm/accounts" element={<CustomerAccounts />} />
+        <Route path="workspaces/crm/customers" element={<Customers />} />
         <Route path="workspaces/crm/sales-orders" element={<SalesOrders />} />
         <Route path="workspaces/crm/quotations" element={<Quotations />} />
         <Route path="workspaces/crm/contacts" element={<Contacts />} />

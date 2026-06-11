@@ -2,7 +2,7 @@ import secrets
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 import pyotp
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Form
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Form, Request
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -91,8 +91,9 @@ router = auth_router
 @auth_router.post("/invite", status_code=status.HTTP_201_CREATED)
 async def invite_user(
     payload: UserInviteRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(min_tier=0))
+    current_user: User = Depends(require_role(min_tier=1))
 ):
     # Check if user exists
     result = await db.execute(select(User).filter(User.email == payload.email))
@@ -121,12 +122,35 @@ async def invite_user(
     await db.commit()
     await db.refresh(new_user)
     
+    # Resolve dynamic frontend URL
     import os
-    frontend_url = os.environ.get("FRONTEND_URL", "http://45.88.191.254:3005")
+    frontend_url = os.environ.get("FRONTEND_URL")
+    if not frontend_url:
+        origin = request.headers.get("origin") or request.headers.get("referer")
+        if origin:
+            from urllib.parse import urlparse
+            parsed = urlparse(origin)
+            frontend_url = f"{parsed.scheme}://{parsed.netloc}"
+        else:
+            frontend_url = str(request.base_url).rstrip("/")
+            if "localhost" in frontend_url or "127.0.0.1" in frontend_url:
+                frontend_url = "http://localhost:5173"
+    else:
+        frontend_url = frontend_url.rstrip("/")
+
     onboarding_url = f"{frontend_url}/onboard?token={token}"
     print(f"\n[DEV MAIL] Send to {payload.email}: {onboarding_url}\n", flush=True)
     
-    return {"status": "success", "message": "Invitation created successfully"}
+    # Send email onboarding dispatch via Resend
+    from app.core.iam.email import send_onboarding_email
+    email_dispatched = send_onboarding_email(payload.email, onboarding_url)
+    
+    return {
+        "status": "success",
+        "message": "Invitation created successfully",
+        "email_sent": email_dispatched,
+        "onboarding_url": onboarding_url
+    }
 
 
 @auth_router.post("/onboard/verify")
@@ -489,7 +513,7 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 @auth_router.get("/users", response_model=list[UserRead])
 async def list_users(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(min_tier=0))
+    current_user: User = Depends(require_role(min_tier=1))
 ):
     result = await db.execute(select(User).order_by(User.email))
     users = result.scalars().all()
@@ -499,7 +523,7 @@ async def list_users(
 async def revoke_user_session(
     user_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(min_tier=0))
+    current_user: User = Depends(require_role(min_tier=1))
 ):
     import uuid
     try:

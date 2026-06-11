@@ -16,13 +16,13 @@ import { WorkspaceLayoutConfig } from '../../../layouts/WorkspaceLayout';
 export const CRM_SIDEBAR: WorkspaceLayoutConfig = {
   workspaceKey: 'crm',
   workspaceName: 'CRM',
-  accentColor: '#00f5a0',
+  accentColor: '#059669',
   icon: <Users size={18} />,
   navItems: [
     { label: 'Dashboard',           subPath: '',             icon: <Layers size={15} /> },
     { label: 'Pipeline & Leads',    subPath: 'pipeline',     icon: <TrendingUp size={15} /> },
     { label: 'Deals',               subPath: 'deals',        icon: <ArrowUpRight size={15} /> },
-    { label: 'Customer Accounts',   subPath: 'accounts',     icon: <Users size={15} /> },
+    { label: 'Customers',           subPath: 'customers',    icon: <Users size={15} /> },
     { label: 'Sales Orders',        subPath: 'sales-orders', icon: <ShoppingBag size={15} /> },
     { label: 'Quotations',          subPath: 'quotations',   icon: <FileText size={15} /> },
     { label: 'Contacts',            subPath: 'contacts',     icon: <PhoneCall size={15} /> },

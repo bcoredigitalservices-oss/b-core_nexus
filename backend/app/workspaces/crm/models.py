@@ -13,6 +13,7 @@ from sqlalchemy import (
     Text,
     UUID as SQLUUID,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import CoreModel
@@ -84,6 +85,12 @@ class Customer(CoreModel):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         index=True,
+    )
+    custom_attributes: Mapped[dict] = mapped_column(
+        JSONB,
+        nullable=False,
+        server_default='{}',
+        default=dict
     )
 
     # Relationships

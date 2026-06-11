@@ -13,6 +13,7 @@ class UserBase(BaseModel):
     custom_attributes: Dict[str, Any] = Field(default_factory=dict)
     functional_roles: list[str] = Field(default_factory=list)
     department_id: Optional[UUID] = None
+    workspaces: list[str] = Field(default_factory=list)
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=12)

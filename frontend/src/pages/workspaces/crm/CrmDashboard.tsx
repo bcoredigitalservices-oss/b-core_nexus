@@ -33,8 +33,21 @@ interface Customer {
 }
 
 export default function CrmDashboard() {
-  const { authFetch } = useAppContext();
+  const { authFetch, currentUser } = useAppContext();
   const navigate = useNavigate();
+
+  // Greeting and Time states
+  const [currentDate, setCurrentDate] = useState('');
+
+  useEffect(() => {
+    const updateDate = () => {
+      const now = new Date();
+      setCurrentDate(now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) + ' | ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+    };
+    updateDate();
+    const interval = setInterval(updateDate, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // State
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -52,29 +65,17 @@ export default function CrmDashboard() {
   // Interactive Hover Tooltip for Charts
   const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; label: string; value: string } | null>(null);
 
-  const API_BASE = `${import.meta.env.VITE_API_URL}/api/v1/workspaces/crm`;
-
   const fetchCrmData = async () => {
     setErrorMsg('');
     try {
-      const token = localStorage.getItem('bcore_token');
-      const response = await fetch(`${API_BASE}/customers?limit=100`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error('Access Denied: You do not have permission to access the CRM workspace.');
-        }
-        throw new Error('Failed to retrieve customer records.');
-      }
-
-      const data = await response.json();
+      const data = await authFetch('/workspaces/crm/customers?limit=100');
       setCustomers(data.customers || []);
     } catch (err: any) {
-      setErrorMsg(err.message || 'An error occurred while fetching CRM dashboard data.');
+      if (err.message && err.message.includes('403')) {
+        setErrorMsg('Access Denied: You do not have permission to access the CRM workspace.');
+      } else {
+        setErrorMsg('Failed to retrieve customer records.');
+      }
     }
   };
 
@@ -241,7 +242,7 @@ export default function CrmDashboard() {
     <WorkspaceLayout config={CRM_SIDEBAR}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
         
-        {/* Breadcrumb Navigation Bar */}
+        {/* Header Navigation Bar */}
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
@@ -251,11 +252,13 @@ export default function CrmDashboard() {
           borderBottom: '1px solid var(--border-color)',
           paddingBottom: '0.75rem'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span>/</span>
-            <span>Dashboard</span>
-            <ChevronRight size={12} />
-            <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>CRM</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '1.2rem', color: 'var(--text-main)', fontWeight: 700 }}>
+              Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}, {currentUser?.first_name || currentUser?.email?.split('@')[0] || 'User'}
+            </span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              {currentDate}
+            </span>
           </div>
           
           <button
@@ -493,7 +496,7 @@ export default function CrmDashboard() {
               <path
                 d={leadsLinePath}
                 fill="none"
-                stroke="#00f5a0"
+                stroke="#059669"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -509,8 +512,8 @@ export default function CrmDashboard() {
               {/* Gradient definitions */}
               <defs>
                 <linearGradient id="green-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#00f5a0" />
-                  <stop offset="100%" stopColor="#00f5a0" stopOpacity="0" />
+                  <stop offset="0%" stopColor="#059669" />
+                  <stop offset="100%" stopColor="#059669" stopOpacity="0" />
                 </linearGradient>
               </defs>
 
@@ -526,7 +529,7 @@ export default function CrmDashboard() {
                       cx={x} 
                       cy={y} 
                       r="4" 
-                      fill="#00f5a0" 
+                      fill="#059669" 
                       stroke="var(--bg-card)" 
                       strokeWidth="1.5" 
                       style={{ transition: 'all 0.2s' }}

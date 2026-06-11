@@ -2,7 +2,7 @@ import secrets
 import uuid
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -12,6 +12,7 @@ from app.core.auth.router import get_current_user
 from app.core.auth.models import User
 from app.models.organization import Organization, Department, DepartmentOut
 from app.models.workspace import Workspace
+from app.core.iam.email import send_onboarding_email
 
 router = APIRouter(prefix="/iam", tags=["Identity & Access Management (IAM)"])
 
@@ -153,6 +154,7 @@ async def create_workspace(
 @router.post("/users/provision", status_code=status.HTTP_201_CREATED)
 async def provision_user(
     payload: UserProvision,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     _ = Depends(require_iam_privilege)
 ):
@@ -209,9 +211,27 @@ async def provision_user(
     await db.commit()
     await db.refresh(user)
     
-    # Print the dev invitation link to the console terminal
-    onboarding_url = f"http://localhost:5173/onboard?token={token}"
+    # Resolve dynamic frontend URL
+    import os
+    frontend_url = os.environ.get("FRONTEND_URL")
+    if not frontend_url:
+        origin = request.headers.get("origin") or request.headers.get("referer")
+        if origin:
+            from urllib.parse import urlparse
+            parsed = urlparse(origin)
+            frontend_url = f"{parsed.scheme}://{parsed.netloc}"
+        else:
+            frontend_url = str(request.base_url).rstrip("/")
+            if "localhost" in frontend_url or "127.0.0.1" in frontend_url:
+                frontend_url = "http://localhost:5173"
+    else:
+        frontend_url = frontend_url.rstrip("/")
+
+    onboarding_url = f"{frontend_url}/onboard?token={token}"
     print(f"\n[DEV MAIL] Provisioned User {payload.email}: {onboarding_url}\n", flush=True)
+    
+    # Send email onboarding dispatch via Resend
+    email_dispatched = send_onboarding_email(payload.email, onboarding_url)
     
     return {
         "status": "success",
@@ -219,7 +239,8 @@ async def provision_user(
         "invite_token": token,
         "onboarding_url": onboarding_url,
         "clearance_level": user.clearance_level,
-        "role_tier": user.role_tier
+        "role_tier": user.role_tier,
+        "email_sent": email_dispatched
     }
 
 @router.put("/users/{user_id}/access")

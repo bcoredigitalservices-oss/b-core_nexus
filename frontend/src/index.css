@@ -199,7 +199,7 @@ label {
 .btn-secondary {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
-  color: #FFFFFF;
+  color: var(--text-main);
 }
 .btn-secondary:hover {
   background-color: var(--bg-card-hover);
@@ -235,7 +235,7 @@ label {
 }
 
 .tab-btn:hover {
-  color: #FFFFFF;
+  color: var(--text-main);
   background-color: var(--bg-card-hover);
 }
 

@@ -35,6 +35,49 @@ interface Workspace {
   status: string;
 }
 
+const WORKSPACE_CATEGORIES = [
+  {
+    name: 'Finance',
+    color: '#00f5a0',
+    keys: ['accounting', 'banking', 'taxes']
+  },
+  {
+    name: 'Inventory',
+    color: '#ffb703',
+    keys: ['assets', 'products', 'items', 'warehouse', 'stock', 'buying']
+  },
+  {
+    name: 'CRM & Sales',
+    color: '#00f2fe',
+    keys: ['pos', 'crm', 'sales', 'support']
+  },
+  {
+    name: 'Operations & Management',
+    color: '#c084fc',
+    keys: ['field_ops', 'maintenance', 'manufacturing', 'projects', 'qa', 'qt', 'logistics']
+  },
+  {
+    name: 'HR & Company',
+    color: '#f472b6',
+    keys: ['expenses', 'hr', 'payroll', 'attendance', 'recruitment', 'performance', 'leaves']
+  },
+  {
+    name: 'Communications',
+    color: '#38bdf8',
+    keys: ['chats', 'employee_groups', 'email', 'message']
+  },
+  {
+    name: 'Utilities',
+    color: '#fb923c',
+    keys: ['marketing', 'campaigns', 'website']
+  },
+  {
+    name: 'System Internals',
+    color: '#a3a3a3',
+    keys: ['internals', 'cog']
+  }
+];
+
 export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: ProvisionUserModalProps) {
   const { token, authFetch } = useAppContext();
 
@@ -55,6 +98,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [inviteLink, setInviteLink] = useState('');
+  const [emailSent, setEmailSent] = useState<boolean | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -65,6 +109,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
         setLoading(true);
         setErrorMsg('');
         setInviteLink('');
+        setEmailSent(null);
         setCopied(false);
         
         const depts = await authFetch('/iam/departments');
@@ -93,6 +138,25 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
     );
   };
 
+  const handleToggleGroup = (groupItems: Workspace[]) => {
+    const groupIdentifiers = groupItems.map(item => item.identifier);
+    const allSelected = groupIdentifiers.every(id => selectedWorkspaces.includes(id));
+    
+    if (allSelected) {
+      // Deselect all
+      setSelectedWorkspaces(prev => prev.filter(id => !groupIdentifiers.includes(id)));
+    } else {
+      // Select all
+      setSelectedWorkspaces(prev => {
+        const next = [...prev];
+        groupIdentifiers.forEach(id => {
+          if (!next.includes(id)) next.push(id);
+        });
+        return next;
+      });
+    }
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(inviteLink);
     setCopied(true);
@@ -104,6 +168,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
     setSubmitting(true);
     setErrorMsg('');
     setInviteLink('');
+    setEmailSent(null);
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/iam/users/provision`, {
@@ -130,6 +195,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
 
       const data = await res.json();
       setInviteLink(data.onboarding_url);
+      setEmailSent(data.email_sent);
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to provision user.');
     } finally {
@@ -143,6 +209,24 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
   const parentIds = new Set(departments.map(d => d.parent_id).filter(Boolean));
   const leafDepartments = departments.filter(d => !parentIds.has(d.id));
   const departmentOptions = leafDepartments.length > 0 ? leafDepartments : departments;
+
+  // Group active workspaces
+  const groupedWorkspaces = WORKSPACE_CATEGORIES.map(cat => {
+    const items = activeWorkspaces.filter(ws => cat.keys.includes(ws.identifier));
+    return { ...cat, items };
+  }).filter(group => group.items.length > 0);
+
+  // Add other ungrouped workspaces if they exist
+  const categorizedIdentifiers = new Set(WORKSPACE_CATEGORIES.flatMap(cat => cat.keys));
+  const otherItems = activeWorkspaces.filter(ws => !categorizedIdentifiers.has(ws.identifier));
+  if (otherItems.length > 0) {
+    groupedWorkspaces.push({
+      name: 'Uncategorized Modules',
+      color: '#a3a3a3',
+      keys: [],
+      items: otherItems
+    });
+  }
 
   return (
     <div 
@@ -162,7 +246,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
         className="glass-panel" 
         style={{ 
           width: '100%', 
-          maxWidth: '540px', 
+          maxWidth: '620px', 
           maxHeight: '90vh',
           overflowY: 'auto',
           backgroundColor: 'var(--bg-main)', 
@@ -221,9 +305,34 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
                 User Provisioned Successfully!
               </h3>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
-                A zero-knowledge invitation token has been generated. Send the secure claim URL below to the user:
-              </p>
+              
+              {emailSent ? (
+                <div style={{
+                  padding: '10px 14px',
+                  backgroundColor: 'rgba(0, 245, 160, 0.08)',
+                  border: '1px solid rgba(0, 245, 160, 0.2)',
+                  borderRadius: '8px',
+                  color: '#00f5a0',
+                  fontSize: '0.82rem',
+                  display: 'inline-block',
+                  margin: '0.5rem 0'
+                }}>
+                  An activation email has been automatically dispatched via Resend to <strong>{email}</strong>
+                </div>
+              ) : (
+                <div style={{
+                  padding: '10px 14px',
+                  backgroundColor: 'rgba(255, 183, 3, 0.08)',
+                  border: '1px solid rgba(255, 183, 3, 0.2)',
+                  borderRadius: '8px',
+                  color: '#ffb703',
+                  fontSize: '0.82rem',
+                  display: 'inline-block',
+                  margin: '0.5rem 0'
+                }}>
+                  Resend integration unconfigured or failed to dispatch. Send this secure onboarding URL manually:
+                </div>
+              )}
             </div>
 
             <div 
@@ -394,7 +503,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingBottom: '0.5rem' }}>
               <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
                 <Layers size={14} />
-                Section 3: Access (The Software Modules)
+                Section 3: Access (Role-Based Workspace Control)
               </h4>
 
               <div>
@@ -409,45 +518,81 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
                 ) : (
                   <div 
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: '10px',
-                      maxHeight: '140px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '14px',
+                      maxHeight: '260px',
                       overflowY: 'auto',
                       border: '1px solid var(--border-color)',
                       borderRadius: '8px',
-                      padding: '12px',
+                      padding: '14px',
                       backgroundColor: 'var(--bg-input)'
                     }}
                   >
-                    {activeWorkspaces.map((ws) => {
-                      const isChecked = selectedWorkspaces.includes(ws.identifier);
+                    {groupedWorkspaces.map((group) => {
+                      const groupIdentifiers = group.items.map(item => item.identifier);
+                      const allSelected = groupIdentifiers.every(id => selectedWorkspaces.includes(id));
+                      const someSelected = groupIdentifiers.some(id => selectedWorkspaces.includes(id)) && !allSelected;
+
                       return (
-                        <label 
-                          key={ws.id} 
-                          style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '8px', 
-                            fontSize: '0.8rem', 
-                            cursor: 'pointer',
-                            padding: '6px 8px',
-                            borderRadius: '6px',
-                            border: isChecked ? '1px solid rgba(157, 78, 221, 0.2)' : '1px solid transparent',
-                            backgroundColor: isChecked ? 'rgba(157, 78, 221, 0.08)' : 'transparent',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          <input 
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => handleToggleWorkspace(ws.identifier)}
-                            style={{ cursor: 'pointer' }}
-                          />
-                          <span style={{ color: isChecked ? 'var(--text-main)' : 'var(--text-muted)' }}>
-                            {ws.name}
-                          </span>
-                        </label>
+                        <div key={group.name} style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '12px', marginBottom: '4px' }}>
+                          {/* Group Header */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: group.color }} />
+                              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)' }}>{group.name}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleGroup(group.items)}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: allSelected ? '#ff3366' : 'var(--accent-primary)',
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                padding: 0
+                              }}
+                            >
+                              {allSelected ? 'Deselect All' : 'Select All'}
+                            </button>
+                          </div>
+
+                          {/* Workspaces Grid inside Category */}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            {group.items.map((ws) => {
+                              const isChecked = selectedWorkspaces.includes(ws.identifier);
+                              return (
+                                <label 
+                                  key={ws.id} 
+                                  style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '8px', 
+                                    fontSize: '0.78rem', 
+                                    cursor: 'pointer',
+                                    padding: '6px 10px',
+                                    borderRadius: '6px',
+                                    border: isChecked ? `1px solid ${group.color}40` : '1px solid var(--border-color)',
+                                    backgroundColor: isChecked ? `${group.color}0c` : 'rgba(255,255,255,0.01)',
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                >
+                                  <input 
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => handleToggleWorkspace(ws.identifier)}
+                                    style={{ cursor: 'pointer', accentColor: group.color }}
+                                  />
+                                  <span style={{ color: isChecked ? 'var(--text-main)' : 'var(--text-muted)', fontWeight: isChecked ? 600 : 400 }}>
+                                    {ws.name}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
@@ -474,7 +619,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
               >
                 {submitting ? (
                   <>
-                    <Loader2 size={14} className="udg-spinner" />
+                    <Loader2 size={14} className="udg-spinner" style={{ marginRight: '6px' }} />
                     Provisioning...
                   </>
                 ) : (
