@@ -3,6 +3,7 @@ import argparse
 import asyncio
 import os
 import sys
+import getpass
 from passlib.context import CryptContext
 from sqlalchemy.future import select
 
@@ -11,6 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.database import AsyncSessionLocal
 from app.core.auth.models import User
+from app.models.organization import Department  # Required for SQLAlchemy mapper
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -56,18 +58,24 @@ async def create_genesis_admin(first_name: str, last_name: str, email: str, pass
         print("=" * 60 + "\n")
 
 def main():
-    parser = argparse.ArgumentParser(description="Bootstrap a new Tier 0 System Admin without data loss.")
-    parser.add_argument("--first-name", required=True, help="First name of the genesis admin")
-    parser.add_argument("--last-name", required=True, help="Last name of the genesis admin")
-    parser.add_argument("--email", required=True, help="Email address of the genesis admin")
-    parser.add_argument("--password", required=True, help="Password of the genesis admin (min 12 characters)")
-    args = parser.parse_args()
+    print("=" * 60)
+    print(" B-CORE NEXUS: TIER 0 GENESIS ADMIN SETUP ")
+    print("=" * 60)
     
-    if len(args.password) < 12:
-        print("Error: Password must be at least 12 characters long.", file=sys.stderr)
-        sys.exit(1)
+    full_name = input("Enter Full Name: ").strip()
+    email = input("Enter Email Address: ").strip()
+    
+    while True:
+        password = getpass.getpass("Enter Password (min 12 characters): ").strip()
+        if len(password) >= 12:
+            break
+        print("Error: Password must be at least 12 characters long.")
         
-    asyncio.run(create_genesis_admin(args.first_name, args.last_name, args.email, args.password))
+    name_parts = full_name.split(" ", 1)
+    first_name = name_parts[0]
+    last_name = name_parts[1] if len(name_parts) > 1 else ""
+    
+    asyncio.run(create_genesis_admin(first_name, last_name, email, password))
 
 if __name__ == "__main__":
     main()
