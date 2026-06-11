@@ -20,29 +20,36 @@ async def create_genesis_admin(first_name: str, last_name: str, email: str, pass
     hashed_pwd = pwd_context.hash(password)
     
     async with AsyncSessionLocal() as session:
-        # Check if email already exists to prevent duplicates
+        # Check if email already exists
         result = await session.execute(select(User).where(User.email == email))
         existing_user = result.scalars().first()
         if existing_user:
-            print(f"Error: User with email {email} already exists.")
-            return
-
-        print(f"Creating Tier 0 Genesis Admin '{first_name} {last_name}' without deleting existing data...")
-        
-        # Create new Tier 0 User
-        new_admin = User(
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            hashed_password=hashed_pwd,
-            role_tier=0,
-            is_active=True,
-            totp_secret=None,
-            mfa_enabled=False,
-            functional_roles=["admin", "root"]
-        )
-        session.add(new_admin)
-        await session.commit()
+            print(f"User with email {email} already exists. Updating their credentials and resetting MFA...")
+            existing_user.first_name = first_name
+            existing_user.last_name = last_name
+            existing_user.hashed_password = hashed_pwd
+            existing_user.role_tier = 0
+            existing_user.totp_secret = None
+            existing_user.mfa_enabled = False
+            session.add(existing_user)
+            await session.commit()
+        else:
+            print(f"Creating Tier 0 Genesis Admin '{first_name} {last_name}' without deleting existing data...")
+            
+            # Create new Tier 0 User
+            new_admin = User(
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                hashed_password=hashed_pwd,
+                role_tier=0,
+                is_active=True,
+                totp_secret=None,
+                mfa_enabled=False,
+                functional_roles=["admin", "root"]
+            )
+            session.add(new_admin)
+            await session.commit()
         
         print("\n" + "=" * 60)
         print(" GENESIS ADMIN CREATION SUCCESSFUL ")
