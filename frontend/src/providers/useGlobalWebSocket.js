@@ -26,9 +26,9 @@ export default function useGlobalWebSocket() {
     
     const connect = () => {
       try {
-        const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001';
-        const wsProto = apiBaseUrl.startsWith('https') ? 'wss' : 'ws';
-        const wsHost = apiBaseUrl.replace(/^https?:\/\//, '');
+        // Derive WebSocket URL dynamically based on the current browser URL
+        const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsHost = window.location.host;
         
         const currentWorkspace = getActiveWorkspaceFromUrl();
         const wsUrl = `${wsProto}://${wsHost}/api/v1/stream?token=${token}${
