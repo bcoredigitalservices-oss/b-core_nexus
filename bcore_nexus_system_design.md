@@ -96,31 +96,18 @@ graph TD
 
 ---
 
-## 4. Current Bottlenecks & Tech Debt
+## 4. Resolved Tech Debt (DDD Alignment Completed)
 
-Based on the architectural codebase audit, the following critical deviations from enterprise Domain-Driven Design (DDD) and scalability best practices exist:
+During the beta phase, several architectural deviations were identified and subsequently resolved to enforce strict Domain-Driven Design (DDD) and scalability:
 
-### A. Tightly Coupled Backend Modules (Anti-DDD Pattern)
-In `backend/app/main.py`, there is a forced eager import block for models:
-```python
-# ─── Eagerly import all models so SQLAlchemy mapper relationships configure
-# correctly before the first request (prevents 'Department not found' errors)
-from app.models.organization import Department, Organization
-from app.workspaces.crm.models import Customer, Contact...
-```
-**Issue:** This explicitly violates Domain-Driven Design. The "Immutable Core" is tightly coupled to the "Pluggable Workspace Layer" (CRM, Organization). A pluggable architecture should dynamically discover models or register them via decoupled registries without forcing the root entry point to know about domain-specific entities.
+### A. Decoupled Backend Modules (True Pluggability)
+**Resolved:** The eager imports of workspace-specific models in `main.py` were removed. The system now uses a dynamic model loader (`app.core.workspace.loader.load_workspace_models`) ensuring the Immutable Core remains entirely decoupled from the Pluggable Workspace Layer.
 
-### B. Global Catch-All Exception Swallowing
-The global `SQLAlchemyError` handler in `main.py` intercepts all database integrity exceptions and transforms them into a generic `500 Database Integrity Error`.
-**Issue:** This masks underlying data corruption, constraint violations (e.g., duplicate unique IDs), or missing relations. It hinders debugging and prevents specific workspaces from gracefully handling their own business logic failures (like a duplicate email in CRM). 
+### B. Granular Exception Handling
+**Resolved:** The global `SQLAlchemyError` catch-all was replaced with specific handlers for `IntegrityError` and `DataError`. The backend now gracefully parses underlying PostgreSQL constraints (e.g., unique violations, missing foreign keys) and returns actionable `409` or `422` HTTP responses, allowing the frontend to display precise validation errors.
 
-### C. Monolithic Frontend Anti-Pattern
-`frontend/src/App.jsx` is a massive monolithic file (900+ lines) handling:
-*   Offline state caching (`localStorage`).
-*   Global WebSocket state.
-*   Multiple UI views (Directory, Catalog, Virtualization).
-*   Mock Data seeding.
-**Issue:** This tightly couples view logic, state management, and API bridging into a single component. It needs to be refactored into modular components, dedicated service classes for API calls, and context/Zustand slices for state management.
+### C. Modular Frontend Architecture
+**Resolved:** The monolithic `App.jsx` file was refactored. View logic, state management, and API bridging are now split into dedicated directories (`/context`, `/providers`, `/routes`, `/layouts`, `/pages`). `App.jsx` now acts solely as a root provider wrapper.
 
-### D. Blocking Middleware Anti-Pattern
-While minor, the `context_and_logging_middleware` uses synchronous implementations (`uuid.uuid4()` and `json.dumps()`) within the async request path. Under heavy load, mixing sync CPU-bound serialization inside the main async event loop can degrade concurrent connection performance.
+### D. Non-Blocking Async Middleware
+**Resolved:** The synchronous bottlenecks in `context_and_logging_middleware` were optimized. Request IDs are now generated via fast `os.urandom(16).hex()`, and JSON serialization for logging has been offloaded to a non-blocking background thread via `QueueHandler` and `QueueListener`.

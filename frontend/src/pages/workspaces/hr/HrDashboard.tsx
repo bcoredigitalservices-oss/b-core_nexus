@@ -15,7 +15,7 @@ import {
   Clock,
   DollarSign
 } from 'lucide-react';
-import WorkspaceLayout, { WorkspaceLayoutConfig } from '../../../layouts/WorkspaceLayout';
+
 import { useAppContext } from '../../../context/AppContext';
 
 // ─── Sidebar Config ────────────────────────────────────────────────────────────
@@ -91,7 +91,7 @@ export default function HrDashboard() {
   const leaveCount = employees.filter(emp => emp.employment_status === 'ON_LEAVE').length;
 
   return (
-    <WorkspaceLayout config={HR_SIDEBAR}>
+    <div style={{ padding: '2rem', width: '100%', maxWidth: '1400px', margin: '0 auto', background: 'var(--bg-main)', minHeight: '100vh' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', width: '100%' }}>
         {/* Header Block */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -373,6 +373,6 @@ export default function HrDashboard() {
           animation: spin 1.5s linear infinite;
         }
       `}</style>
-    </WorkspaceLayout>
+    </div>
   );
 }

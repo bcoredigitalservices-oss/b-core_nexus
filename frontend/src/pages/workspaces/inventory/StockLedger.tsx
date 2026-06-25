@@ -16,7 +16,7 @@ import {
   ChevronsUpDown,
   Check
 } from 'lucide-react';
-import WorkspaceLayout, { WorkspaceLayoutConfig } from '../../../layouts/WorkspaceLayout';
+
 import { useAppContext } from '../../../context/AppContext';
 
 // ─── Sidebar Config ────────────────────────────────────────────────────────────
@@ -259,7 +259,7 @@ export default function StockLedgerPage() {
   );
 
   return (
-    <WorkspaceLayout config={INVENTORY_SIDEBAR}>
+    <div style={{ padding: '2rem', width: '100%', maxWidth: '1400px', margin: '0 auto', background: 'var(--bg-main)', minHeight: '100vh' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
         {/* Header Block */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -763,6 +763,6 @@ export default function StockLedgerPage() {
           50% { opacity: 0.4; }
         }
       `}</style>
-    </WorkspaceLayout>
+    </div>
   );
 }

@@ -14,7 +14,7 @@ import {
   ClipboardList,
   CalendarDays
 } from 'lucide-react';
-import WorkspaceLayout, { WorkspaceLayoutConfig } from '../../../layouts/WorkspaceLayout';
+
 import { useAppContext } from '../../../context/AppContext';
 
 // ─── Sidebar Config ────────────────────────────────────────────────────────────
@@ -131,7 +131,7 @@ export default function OperationsDashboard() {
   }, []);
 
   return (
-    <WorkspaceLayout config={OPERATIONS_SIDEBAR}>
+    <div style={{ padding: '2rem', width: '100%', maxWidth: '1400px', margin: '0 auto', background: 'var(--bg-main)', minHeight: '100vh' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', width: '100%' }}>
         
         {/* Header Block */}
@@ -492,6 +492,6 @@ export default function OperationsDashboard() {
           animation: spin 1.5s linear infinite;
         }
       `}</style>
-    </WorkspaceLayout>
+    </div>
   );
 }

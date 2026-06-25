@@ -5,8 +5,8 @@ import {
   Clock, Shield, Award, Clipboard, ChevronRight, FileText,
   CheckSquare, BarChart2, Filter, Activity, TrendingUp, Grid
 } from 'lucide-react';
-import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { useAppContext } from '../../../context/AppContext';
+import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { CRM_SIDEBAR } from './crmSidebarConfig';
 
 interface Interaction {
@@ -81,6 +81,12 @@ export default function CallLog() {
   const [quotationSent, setQuotationSent] = useState(false);
   const [remarks, setRemarks] = useState('');
 
+  // Dynamic Datalist State
+  const [customerContacts, setCustomerContacts] = useState<any[]>([]);
+  const [customerQuotations, setCustomerQuotations] = useState<any[]>([]);
+  const [customerSalesOrders, setCustomerSalesOrders] = useState<any[]>([]);
+  const [customerSearch, setCustomerSearch] = useState('');
+
   const fetchCalls = async () => {
     setLoading(true);
     setErrorMsg('');
@@ -108,15 +114,37 @@ export default function CallLog() {
   const custContactMap = Object.fromEntries(customers.map(c => [c.id, c.contact_name]));
 
   // Auto-populate target name and contact person when customer dropdown changes
-  const handleCustomerChange = (id: string) => {
+  const handleCustomerChange = async (id: string) => {
     setCustomerId(id);
+    setFollowUpRef('');
+    setContactPerson('');
+    
     const selected = customers.find(c => c.id === id);
     if (selected) {
       setClientNameInput(selected.company_name);
-      setContactPerson(selected.contact_name);
+      
+      try {
+        const [contactsRes, qtRes, soRes] = await Promise.all([
+          authFetch(`/workspaces/crm/contacts?customer_id=${id}&limit=50`),
+          authFetch(`/workspaces/crm/quotations?customer_id=${id}&page_size=50`),
+          authFetch(`/workspaces/crm/sales-orders?customer_id=${id}&page_size=50`),
+        ]);
+        setCustomerContacts(contactsRes.items || []);
+        setCustomerQuotations(qtRes.items || []);
+        setCustomerSalesOrders(soRes.items || []);
+        
+        // Auto-select first contact if available
+        if (contactsRes.items && contactsRes.items.length > 0) {
+          setContactPerson(`${contactsRes.items[0].first_name} ${contactsRes.items[0].last_name}`);
+        }
+      } catch (err) {
+        console.error("Failed to fetch customer dependent details", err);
+      }
     } else {
       setClientNameInput('');
-      setContactPerson('');
+      setCustomerContacts([]);
+      setCustomerQuotations([]);
+      setCustomerSalesOrders([]);
     }
   };
 
@@ -282,6 +310,7 @@ export default function CallLog() {
 
   return (
     <WorkspaceLayout config={CRM_SIDEBAR}>
+      <div style={{ padding: '2rem', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Visual stylesheet injection for CallLog layout */}
       <style>{`
         .crm-section-title {
@@ -952,14 +981,39 @@ export default function CallLog() {
 
                     <div className="crm-input-row">
                       <label className="crm-label">Select CRM Record (Fills Details)</label>
-                      <select 
-                        value={customerId} 
-                        onChange={e => handleCustomerChange(e.target.value)}
-                        className="crm-input-element"
-                      >
-                        <option value="">-- Choose Account --</option>
-                        {customers.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
-                      </select>
+                      {clientType === 'Customer' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <input
+                            type="text"
+                            placeholder="Search customers..."
+                            value={customerSearch}
+                            onChange={e => setCustomerSearch(e.target.value)}
+                            className="crm-input-element"
+                            style={{ height: '32px', fontSize: '0.8rem' }}
+                          />
+                          <select 
+                            value={customerId} 
+                            onChange={e => handleCustomerChange(e.target.value)}
+                            className="crm-input-element"
+                            size={customerSearch ? Math.min(customers.filter(c => c.company_name.toLowerCase().includes(customerSearch.toLowerCase())).length + 1, 4) : 1}
+                          >
+                            <option value="">-- Choose Account --</option>
+                            {customers
+                              .filter(c => c.company_name.toLowerCase().includes(customerSearch.toLowerCase()))
+                              .map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)
+                            }
+                          </select>
+                        </div>
+                      ) : (
+                        <select 
+                          value={customerId} 
+                          onChange={e => handleCustomerChange(e.target.value)}
+                          className="crm-input-element"
+                          disabled
+                        >
+                          <option value="">-- Not Applicable --</option>
+                        </select>
+                      )}
                     </div>
 
                     <div className="crm-input-row">
@@ -976,13 +1030,28 @@ export default function CallLog() {
 
                     <div className="crm-input-row">
                       <label className="crm-label">Contact Person</label>
-                      <input 
-                        type="text" 
-                        value={contactPerson} 
-                        onChange={e => setContactPerson(e.target.value)} 
-                        placeholder="Name of contact person"
-                        className="crm-input-element"
-                      />
+                      {customerContacts.length > 0 ? (
+                        <select
+                          value={contactPerson}
+                          onChange={e => setContactPerson(e.target.value)}
+                          className="crm-input-element"
+                        >
+                          <option value="">-- Select Contact --</option>
+                          {customerContacts.map(c => (
+                            <option key={c.id} value={`${c.first_name} ${c.last_name}`}>
+                              {c.first_name} {c.last_name} {c.job_title ? `(${c.job_title})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input 
+                          type="text" 
+                          value={contactPerson} 
+                          onChange={e => setContactPerson(e.target.value)} 
+                          placeholder="Name of contact person"
+                          className="crm-input-element"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1059,13 +1128,41 @@ export default function CallLog() {
 
                       <div className="crm-input-row">
                         <label className="crm-label">Follow-Up Reference (Doc ID/Code)</label>
-                        <input 
-                          type="text" 
-                          value={followUpRef} 
-                          onChange={e => setFollowUpRef(e.target.value)} 
-                          placeholder="e.g. QT-2026-0004"
-                          className="crm-input-element"
-                        />
+                        {followUpRefType === 'Quotation' ? (
+                          <select 
+                            value={followUpRef} 
+                            onChange={e => setFollowUpRef(e.target.value)} 
+                            className="crm-input-element"
+                          >
+                            <option value="">-- Select Quotation --</option>
+                            {customerQuotations.map(q => (
+                              <option key={q.id} value={q.quotation_reference || q.id}>
+                                {q.quotation_reference || q.id} - ${q.grand_total}
+                              </option>
+                            ))}
+                          </select>
+                        ) : followUpRefType === 'Sales Order' ? (
+                          <select 
+                            value={followUpRef} 
+                            onChange={e => setFollowUpRef(e.target.value)} 
+                            className="crm-input-element"
+                          >
+                            <option value="">-- Select Sales Order --</option>
+                            {customerSalesOrders.map(s => (
+                              <option key={s.id} value={s.order_reference || s.id}>
+                                {s.order_reference || s.id} - ${s.grand_total}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input 
+                            type="text" 
+                            value={followUpRef} 
+                            onChange={e => setFollowUpRef(e.target.value)} 
+                            placeholder="e.g. QT-2026-0004"
+                            className="crm-input-element"
+                          />
+                        )}
                       </div>
                     </div>
 
@@ -1286,6 +1383,7 @@ export default function CallLog() {
         </div>
       )}
 
+    </div>
     </WorkspaceLayout>
   );
 }

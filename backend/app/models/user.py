@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Table, Column, String, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Table, Column, String, DateTime, ForeignKey, UniqueConstraint, JSON
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -41,6 +41,7 @@ class User(CoreModel):
         ForeignKey("departments.id", ondelete="SET NULL"), 
         nullable=True
     )
+    preferences = Column(JSON, nullable=True)
 
     # Relationships
     department: Mapped["Department | None"] = relationship(

@@ -11,7 +11,7 @@ from app.core.auth.models import User
 
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
+ACCESS_TOKEN_EXPIRE_MINUTES = 720
 
 # Initialize CryptContext using the bcrypt algorithm
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

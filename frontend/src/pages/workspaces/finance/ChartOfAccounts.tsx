@@ -16,22 +16,8 @@ import {
   FileSignature,
   DollarSign
 } from 'lucide-react';
-import WorkspaceLayout, { WorkspaceLayoutConfig } from '../../../layouts/WorkspaceLayout';
-import { useAppContext } from '../../../context/AppContext';
 
-// ─── Sidebar Config ────────────────────────────────────────────────────────────
-const FINANCE_SIDEBAR: WorkspaceLayoutConfig = {
-  workspaceKey: 'finance',
-  workspaceName: 'Finance',
-  accentColor: '#3b82f6',
-  icon: <Wallet size={18} />,
-  navItems: [
-    { label: 'Financial Dashboard', subPath: '',             icon: <Layers size={15} /> },
-    { label: 'Chart of Accounts',   subPath: 'accounts',     icon: <BookOpen size={15} /> },
-    { label: 'Journal Entries',     subPath: 'journal',      icon: <FileText size={15} /> },
-    { label: 'Tax Config',          subPath: 'tax',          icon: <Percent size={15} /> },
-  ],
-};
+import { useAppContext } from '../../../context/AppContext';
 
 interface Account {
   id: string;
@@ -176,8 +162,9 @@ export default function ChartOfAccounts() {
   });
 
   return (
-    <WorkspaceLayout config={FINANCE_SIDEBAR}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+    <div className="flex h-full w-full bg-white overflow-hidden text-gray-800">
+      <div className="flex-1 overflow-auto" style={{ padding: '2rem', background: 'var(--bg-main)' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
         {/* Header Block */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
@@ -543,6 +530,7 @@ export default function ChartOfAccounts() {
           animation: spin 1.5s linear infinite;
         }
       `}</style>
-    </WorkspaceLayout>
+      </div>
+    </div>
   );
 }

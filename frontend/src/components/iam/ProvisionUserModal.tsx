@@ -4,11 +4,7 @@ import {
   User as UserIcon, 
   Network, 
   Cpu, 
-  Loader2, 
-  CheckCircle2, 
   AlertCircle,
-  Copy,
-  Check,
   X,
   Layers,
   ShieldCheck,
@@ -81,26 +77,25 @@ const WORKSPACE_CATEGORIES = [
 export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: ProvisionUserModalProps) {
   const { token, authFetch } = useAppContext();
 
-  // Load lists
+  // Metadata context lists
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [activeWorkspaces, setActiveWorkspaces] = useState<Workspace[]>([]);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Form Fields
+  // Form Field States
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [clearanceLevel, setClearanceLevel] = useState(4); // Default Tier 4 Auditor
+  const [roleTier, setRoleTier] = useState<number>(4);
+  const [clearanceLevel, setClearanceLevel] = useState<number>(4);
   const [departmentId, setDepartmentId] = useState('');
   const [selectedWorkspaces, setSelectedWorkspaces] = useState<string[]>([]);
 
-  // Submission Statuses
+  // Submission / Loading / Error States
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [inviteLink, setInviteLink] = useState('');
-  const [emailSent, setEmailSent] = useState<boolean | null>(null);
-  const [copied, setCopied] = useState(false);
 
+  // Fetch departments & workspaces on mount / open
   useEffect(() => {
     if (!isOpen || !token) return;
 
@@ -108,29 +103,38 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
       try {
         setLoading(true);
         setErrorMsg('');
-        setInviteLink('');
-        setEmailSent(null);
-        setCopied(false);
         
         const depts = await authFetch('/iam/departments');
         if (depts) setDepartments(depts);
 
         const wses = await authFetch('/iam/workspaces');
         if (wses) {
-          // Filter only ACTIVE workspaces
-          const activeOnly = wses.filter((w: Workspace) => w.status === 'Active');
-          setActiveWorkspaces(activeOnly);
+          setWorkspaces(wses);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to load provisioning form metadata:', err);
-        setErrorMsg('Error loading active workspaces or departments metadata.');
+        setErrorMsg('Error loading workspaces or departments metadata.');
       } finally {
         setLoading(false);
       }
     };
     
     loadFormData();
-  }, [isOpen, token]);
+  }, [isOpen, token, authFetch]);
+
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
 
   const handleToggleWorkspace = (identifier: string) => {
     setSelectedWorkspaces(prev => 
@@ -143,10 +147,8 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
     const allSelected = groupIdentifiers.every(id => selectedWorkspaces.includes(id));
     
     if (allSelected) {
-      // Deselect all
       setSelectedWorkspaces(prev => prev.filter(id => !groupIdentifiers.includes(id)));
     } else {
-      // Select all
       setSelectedWorkspaces(prev => {
         const next = [...prev];
         groupIdentifiers.forEach(id => {
@@ -157,45 +159,39 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(inviteLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim()) return;
+
     setSubmitting(true);
     setErrorMsg('');
-    setInviteLink('');
-    setEmailSent(null);
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/iam/users/provision`, {
+      await authFetch('/iam/users/provision', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
         body: JSON.stringify({
-          email,
-          first_name: firstName || null,
-          last_name: lastName || null,
-          role_tier: clearanceLevel,
+          email: email.trim(),
+          first_name: firstName.trim() || null,
+          last_name: lastName.trim() || null,
+          role_tier: roleTier,
           clearance_level: clearanceLevel,
           department_id: departmentId || null,
           workspace_strings: selectedWorkspaces
         })
       });
 
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.detail || 'User provisioning failed.');
-      }
+      // Call onSuccess and onClose as required
+      onSuccess();
+      onClose();
 
-      const data = await res.json();
-      setInviteLink(data.onboarding_url);
-      setEmailSent(data.email_sent);
+      // Reset form states
+      setEmail('');
+      setFirstName('');
+      setLastName('');
+      setRoleTier(4);
+      setClearanceLevel(4);
+      setDepartmentId('');
+      setSelectedWorkspaces([]);
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to provision user.');
     } finally {
@@ -203,25 +199,19 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
     }
   };
 
-  if (!isOpen) return null;
-
-  // Filter to get only leaf departments (departments that are not parents of any other department)
-  const parentIds = new Set(departments.map(d => d.parent_id).filter(Boolean));
-  const leafDepartments = departments.filter(d => !parentIds.has(d.id));
-  const departmentOptions = leafDepartments.length > 0 ? leafDepartments : departments;
-
-  // Group active workspaces
+  // Group fetched workspaces based on their categories (only active ones, or all)
+  const activeWorkspaces = workspaces.filter(w => w.status === 'Active');
+  
   const groupedWorkspaces = WORKSPACE_CATEGORIES.map(cat => {
     const items = activeWorkspaces.filter(ws => cat.keys.includes(ws.identifier));
     return { ...cat, items };
   }).filter(group => group.items.length > 0);
 
-  // Add other ungrouped workspaces if they exist
   const categorizedIdentifiers = new Set(WORKSPACE_CATEGORIES.flatMap(cat => cat.keys));
   const otherItems = activeWorkspaces.filter(ws => !categorizedIdentifiers.has(ws.identifier));
   if (otherItems.length > 0) {
     groupedWorkspaces.push({
-      name: 'Uncategorized Modules',
+      name: 'Other Modules',
       color: '#a3a3a3',
       keys: [],
       items: otherItems
@@ -233,7 +223,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(9, 13, 26, 0.85)',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         backdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
@@ -246,361 +236,276 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
         className="glass-panel" 
         style={{ 
           width: '100%', 
-          maxWidth: '620px', 
+          maxWidth: '600px', 
           maxHeight: '90vh',
           overflowY: 'auto',
-          backgroundColor: 'var(--bg-main)', 
-          border: '1px solid rgba(157, 78, 221, 0.3)',
+          backgroundColor: 'var(--bg-card)', 
+          border: '1px solid var(--border-color)',
           borderRadius: '16px',
           padding: '2rem',
-          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
+          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '1.5rem'
+          gap: '1.5rem',
+          position: 'relative'
         }}
       >
+        {/* Modal Close "X" Button */}
+        <button 
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '1.5rem',
+            right: '1.5rem',
+            background: 'var(--bg-card-hover)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            padding: '6px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = 'var(--text-main)';
+            e.currentTarget.style.borderColor = 'var(--accent-primary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'var(--text-muted)';
+            e.currentTarget.style.borderColor = 'var(--border-color)';
+          }}
+        >
+          <X size={16} />
+        </button>
+
         {/* Modal Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-display)' }}>
-            <UserIcon size={20} color="#9d4edd" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-display)', margin: 0 }}>
+            <UserIcon size={20} color="var(--accent-primary)" />
             Provision Operator User
           </h3>
-          <button 
-            onClick={onClose}
-            style={{
-              background: 'var(--bg-card-hover)',
-              border: 'none',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-              padding: '6px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <X size={16} />
-          </button>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+            Configure identity credentials, clearance tier, department, and workspace permissions.
+          </p>
         </div>
 
         {errorMsg && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.75rem 1rem', backgroundColor: 'rgba(255, 51, 102, 0.1)', border: '1px solid rgba(255, 51, 102, 0.2)', borderRadius: '8px', color: '#ff3366', fontSize: '0.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.75rem 1rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', color: 'var(--accent-danger)', fontSize: '0.85rem' }}>
             <AlertCircle size={16} />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-            <Loader2 className="udg-spinner" size={24} />
-            <span style={{ marginLeft: '10px' }}>Loading organization directory context...</span>
-          </div>
-        ) : inviteLink ? (
-          /* Success / Invite link view */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', textAlign: 'center', padding: '1rem 0' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', color: '#00f5a0' }}>
-              <CheckCircle2 size={48} />
-            </div>
-            <div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
-                User Provisioned Successfully!
-              </h3>
-              
-              {emailSent ? (
-                <div style={{
-                  padding: '10px 14px',
-                  backgroundColor: 'rgba(0, 245, 160, 0.08)',
-                  border: '1px solid rgba(0, 245, 160, 0.2)',
-                  borderRadius: '8px',
-                  color: '#00f5a0',
-                  fontSize: '0.82rem',
-                  display: 'inline-block',
-                  margin: '0.5rem 0'
-                }}>
-                  An activation email has been automatically dispatched via Resend to <strong>{email}</strong>
-                </div>
-              ) : (
-                <div style={{
-                  padding: '10px 14px',
-                  backgroundColor: 'rgba(255, 183, 3, 0.08)',
-                  border: '1px solid rgba(255, 183, 3, 0.2)',
-                  borderRadius: '8px',
-                  color: '#ffb703',
-                  fontSize: '0.82rem',
-                  display: 'inline-block',
-                  margin: '0.5rem 0'
-                }}>
-                  Resend integration unconfigured or failed to dispatch. Send this secure onboarding URL manually:
-                </div>
-              )}
-            </div>
-
-            <div 
-              style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                padding: '1rem',
-                borderRadius: '10px',
-                fontSize: '0.8rem',
-                fontFamily: 'var(--font-mono)',
-                wordBreak: 'break-all',
-                color: 'var(--accent-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '12px'
-              }}
-            >
-              <span>{inviteLink}</span>
-              <button 
-                type="button" 
-                onClick={handleCopy}
-                style={{
-                  background: 'var(--bg-card-hover)',
-                  border: '1px solid var(--border-color)',
-                  color: 'var(--text-main)',
-                  padding: '6px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}
-              >
-                {copied ? <Check size={14} color="#00f5a0" /> : <Copy size={14} />}
-              </button>
-            </div>
-
-            <button 
-              onClick={() => {
-                onSuccess();
-              }} 
-              className="btn btn-primary"
-              style={{ marginTop: '0.5rem', width: '100%' }}
-            >
-              Return to Ledger
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '3rem', color: 'var(--text-muted)', gap: '1rem' }}>
+            <div className="udg-spinner" style={{ width: '24px', height: '24px', border: '3px solid var(--border-color)', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            <span style={{ fontSize: '0.85rem' }}>Loading directory context...</span>
+            <style>{`
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
           </div>
         ) : (
-          /* Form layout with three vertical sections */
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             
-            {/* SECTION 1: Identity */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.25rem' }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#00f2fe', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
-                <UserIcon size={14} />
-                Section 1: Identity
-              </h4>
-              
+            {/* Identity & Basic Info */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>First Name</label>
-                  <div style={{ position: 'relative' }}>
-                    <UserIcon size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                    <input 
-                      type="text" 
-                      style={{ paddingLeft: '34px', width: '100%', fontSize: '0.85rem' }}
-                      placeholder="First Name"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                    />
-                  </div>
+                  <input 
+                    type="text" 
+                    placeholder="First name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    disabled={submitting}
+                  />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Last Name</label>
-                  <div style={{ position: 'relative' }}>
-                    <UserIcon size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                    <input 
-                      type="text" 
-                      style={{ paddingLeft: '34px', width: '100%', fontSize: '0.85rem' }}
-                      placeholder="Last Name"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Email Address *</label>
-                <div style={{ position: 'relative' }}>
-                  <Mail size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input 
-                    type="email" 
-                    required 
-                    style={{ paddingLeft: '34px', width: '100%', fontSize: '0.85rem' }}
-                    placeholder="operator@company.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text" 
+                    placeholder="Last name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    disabled={submitting}
                   />
                 </div>
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Clearance Level *</label>
-                <div style={{ position: 'relative' }}>
-                  <ShieldCheck size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <select 
-                    value={clearanceLevel} 
-                    onChange={(e) => setClearanceLevel(Number(e.target.value))}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 1rem',
-                      paddingLeft: '34px',
-                      backgroundColor: 'var(--bg-input)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '8px',
-                      color: 'var(--text-main)',
-                      fontSize: '0.85rem'
-                    }}
-                  >
-                    <option value={2}>Tier 2 Manager</option>
-                    <option value={3}>Tier 3 Operator</option>
-                    <option value={4}>Tier 4 Auditor</option>
-                  </select>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Email Address *</label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <Mail size={14} style={{ position: 'absolute', left: '12px', color: 'var(--text-muted)' }} />
+                  <input 
+                    type="email" 
+                    required 
+                    style={{ paddingLeft: '34px' }}
+                    placeholder="operator@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={submitting}
+                  />
                 </div>
               </div>
             </div>
 
-            {/* SECTION 2: Placement */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.25rem' }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
-                <Briefcase size={14} />
-                Section 2: Placement (The Human Org Chart)
-              </h4>
-
+            {/* Clearance & Role Tier Selection */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Department Assignment</label>
-                <div style={{ position: 'relative' }}>
-                  <Network size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <select 
-                    value={departmentId} 
-                    onChange={(e) => setDepartmentId(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 1rem',
-                      paddingLeft: '34px',
-                      backgroundColor: 'var(--bg-input)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '8px',
-                      color: 'var(--text-main)',
-                      fontSize: '0.85rem'
-                    }}
-                  >
-                    <option value="">-- Unassigned (Root/Independent Operator) --</option>
-                    {departmentOptions.map((dept) => (
-                      <option key={dept.id} value={dept.id}>
-                        {dept.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* SECTION 3: Access */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingBottom: '0.5rem' }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
-                <Layers size={14} />
-                Section 3: Access (Role-Based Workspace Control)
-              </h4>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '10px' }}>
-                  Authorized Workspaces
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>
+                  <ShieldCheck size={14} />
+                  Role Tier *
                 </label>
-                {activeWorkspaces.length === 0 ? (
-                  <div style={{ padding: '12px', backgroundColor: 'rgba(255, 183, 3, 0.05)', border: '1px solid rgba(255, 183, 3, 0.15)', borderRadius: '8px', fontSize: '0.78rem', color: '#ffb703', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Cpu size={14} />
-                    <span>No active workspaces registered. Toggles locked.</span>
-                  </div>
-                ) : (
-                  <div 
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '14px',
-                      maxHeight: '260px',
-                      overflowY: 'auto',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '8px',
-                      padding: '14px',
-                      backgroundColor: 'var(--bg-input)'
-                    }}
-                  >
-                    {groupedWorkspaces.map((group) => {
-                      const groupIdentifiers = group.items.map(item => item.identifier);
-                      const allSelected = groupIdentifiers.every(id => selectedWorkspaces.includes(id));
-                      const someSelected = groupIdentifiers.some(id => selectedWorkspaces.includes(id)) && !allSelected;
+                <select 
+                  value={roleTier} 
+                  onChange={(e) => setRoleTier(Number(e.target.value))}
+                  disabled={submitting}
+                >
+                  <option value={2}>Tier 2 Manager</option>
+                  <option value={3}>Tier 3 Operator</option>
+                  <option value={4}>Tier 4 Auditor</option>
+                </select>
+              </div>
 
-                      return (
-                        <div key={group.name} style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '12px', marginBottom: '4px' }}>
-                          {/* Group Header */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: group.color }} />
-                              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)' }}>{group.name}</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleToggleGroup(group.items)}
-                              style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: allSelected ? '#ff3366' : 'var(--accent-primary)',
-                                fontSize: '0.7rem',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                padding: 0
-                              }}
-                            >
-                              {allSelected ? 'Deselect All' : 'Select All'}
-                            </button>
-                          </div>
-
-                          {/* Workspaces Grid inside Category */}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                            {group.items.map((ws) => {
-                              const isChecked = selectedWorkspaces.includes(ws.identifier);
-                              return (
-                                <label 
-                                  key={ws.id} 
-                                  style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: '8px', 
-                                    fontSize: '0.78rem', 
-                                    cursor: 'pointer',
-                                    padding: '6px 10px',
-                                    borderRadius: '6px',
-                                    border: isChecked ? `1px solid ${group.color}40` : '1px solid var(--border-color)',
-                                    backgroundColor: isChecked ? `${group.color}0c` : 'rgba(255,255,255,0.01)',
-                                    transition: 'all 0.15s ease'
-                                  }}
-                                >
-                                  <input 
-                                    type="checkbox"
-                                    checked={isChecked}
-                                    onChange={() => handleToggleWorkspace(ws.identifier)}
-                                    style={{ cursor: 'pointer', accentColor: group.color }}
-                                  />
-                                  <span style={{ color: isChecked ? 'var(--text-main)' : 'var(--text-muted)', fontWeight: isChecked ? 600 : 400 }}>
-                                    {ws.name}
-                                  </span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>
+                  <ShieldCheck size={14} />
+                  Clearance Level *
+                </label>
+                <select 
+                  value={clearanceLevel} 
+                  onChange={(e) => setClearanceLevel(Number(e.target.value))}
+                  disabled={submitting}
+                >
+                  <option value={2}>Level 2 Clearance</option>
+                  <option value={3}>Level 3 Clearance</option>
+                  <option value={4}>Level 4 Clearance</option>
+                </select>
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Placement / Department */}
+            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>
+                <Briefcase size={14} />
+                Department Assignment
+              </label>
+              <select 
+                value={departmentId} 
+                onChange={(e) => setDepartmentId(e.target.value)}
+                disabled={submitting}
+              >
+                <option value="">-- Unassigned (Root/Independent Operator) --</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Workspaces Assignment Checklist */}
+            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '10px' }}>
+                <Layers size={14} />
+                Authorized Workspaces
+              </label>
+              
+              {activeWorkspaces.length === 0 ? (
+                <div style={{ padding: '12px', backgroundColor: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.15)', borderRadius: '8px', fontSize: '0.78rem', color: 'var(--accent-warning)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Cpu size={14} />
+                  <span>No active workspaces registered. Permissions locked.</span>
+                </div>
+              ) : (
+                <div 
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '14px',
+                    maxHeight: '220px',
+                    overflowY: 'auto',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '10px',
+                    padding: '14px',
+                    backgroundColor: 'rgba(0,0,0,0.02)'
+                  }}
+                >
+                  {groupedWorkspaces.map((group) => {
+                    const groupIdentifiers = group.items.map(item => item.identifier);
+                    const allSelected = groupIdentifiers.every(id => selectedWorkspaces.includes(id));
+
+                    return (
+                      <div key={group.name} style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', marginBottom: '4px' }}>
+                        {/* Category Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: group.color }} />
+                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)' }}>{group.name}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleGroup(group.items)}
+                            disabled={submitting}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--accent-primary)',
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              padding: 0
+                            }}
+                          >
+                            {allSelected ? 'Deselect All' : 'Select All'}
+                          </button>
+                        </div>
+
+                        {/* Checkboxes grid inside Category */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                          {group.items.map((ws) => {
+                            const isChecked = selectedWorkspaces.includes(ws.identifier);
+                            return (
+                              <label 
+                                key={ws.id} 
+                                style={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  gap: '8px', 
+                                  fontSize: '0.78rem', 
+                                  cursor: 'pointer',
+                                  padding: '6px 10px',
+                                  borderRadius: '6px',
+                                  border: isChecked ? `1px solid var(--accent-primary)` : '1px solid var(--border-color)',
+                                  backgroundColor: isChecked ? 'rgba(99, 91, 255, 0.05)' : 'var(--bg-card)',
+                                  transition: 'all 0.15s ease'
+                                }}
+                              >
+                                <input 
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => handleToggleWorkspace(ws.identifier)}
+                                  disabled={submitting}
+                                  style={{ cursor: 'pointer', accentColor: 'var(--accent-primary)', width: 'auto' }}
+                                />
+                                <span style={{ color: isChecked ? 'var(--text-main)' : 'var(--text-muted)', fontWeight: isChecked ? 600 : 400 }}>
+                                  {ws.name}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
               <button 
                 type="button" 
@@ -617,16 +522,10 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
                 style={{ flex: 1 }}
                 disabled={submitting}
               >
-                {submitting ? (
-                  <>
-                    <Loader2 size={14} className="udg-spinner" style={{ marginRight: '6px' }} />
-                    Provisioning...
-                  </>
-                ) : (
-                  'Provision Operator'
-                )}
+                {submitting ? 'Provisioning...' : 'Provision Operator'}
               </button>
             </div>
+
           </form>
         )}
       </div>

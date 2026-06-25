@@ -65,13 +65,19 @@ export default function Login() {
     setFormState('error');
   };
 
-  const saveTokenAndSession = (accessToken: string) => {
+  const saveTokenAndSession = (accessToken: string, refreshToken?: string) => {
     if (rememberMe) {
       localStorage.setItem('bcore_remember_email', email.trim());
       localStorage.setItem('bcore_token', accessToken);
+      if (refreshToken) {
+        localStorage.setItem('bcore_refresh_token', refreshToken);
+      }
     } else {
       localStorage.removeItem('bcore_remember_email');
       sessionStorage.setItem('bcore_token', accessToken);
+      if (refreshToken) {
+        sessionStorage.setItem('bcore_refresh_token', refreshToken);
+      }
     }
     setToken(accessToken);
   };
@@ -137,7 +143,7 @@ export default function Login() {
       }
 
       if (data.access_token) {
-        saveTokenAndSession(data.access_token);
+        saveTokenAndSession(data.access_token, data.refresh_token);
         handleSuccessAndRedirect();
         return;
       }
@@ -177,7 +183,7 @@ export default function Login() {
 
       const data = await res.json();
       if (data.access_token) {
-        saveTokenAndSession(data.access_token);
+        saveTokenAndSession(data.access_token, data.refresh_token);
         setMfaSetupMode(false);
         handleSuccessAndRedirect();
       }
@@ -217,7 +223,7 @@ export default function Login() {
 
         const data = await res.json();
         if (data.access_token) {
-          saveTokenAndSession(data.access_token);
+          saveTokenAndSession(data.access_token, data.refresh_token);
           handleSuccessAndRedirect();
         }
       } catch {
@@ -243,7 +249,7 @@ export default function Login() {
 
       const data = await res.json();
       if (data.access_token) {
-        saveTokenAndSession(data.access_token);
+        saveTokenAndSession(data.access_token, data.refresh_token);
         handleSuccessAndRedirect();
       }
     } catch {

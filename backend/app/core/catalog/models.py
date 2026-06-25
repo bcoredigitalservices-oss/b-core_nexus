@@ -21,6 +21,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.finance.tax_models import TaxCategory
 from app.database import CoreModel
 
+class ItemGroup(CoreModel):
+    __tablename__ = "item_groups"
+
+    name: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True)
+    parent_id: Mapped[uuid.UUID | None] = mapped_column(SQLUUID(as_uuid=True), ForeignKey("item_groups.id"), nullable=True)
+
 class Item(CoreModel):
     __tablename__ = "items"
 
@@ -30,6 +36,8 @@ class Item(CoreModel):
     catalog_type: Mapped[str] = mapped_column(String, nullable=False)
     default_uom: Mapped[str] = mapped_column(String, nullable=False)
     tax_category_id: Mapped[uuid.UUID | None] = mapped_column(SQLUUID(as_uuid=True), ForeignKey("tax_categories.id"), nullable=True)
+    item_group_id: Mapped[uuid.UUID | None] = mapped_column(SQLUUID(as_uuid=True), ForeignKey("item_groups.id"), nullable=True)
 
-    tax_category = relationship("TaxCategory")
+    tax_category = relationship("app.core.finance.tax_models.TaxCategory")
+    item_group = relationship("app.core.catalog.models.ItemGroup")
 

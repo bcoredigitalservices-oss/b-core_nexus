@@ -45,7 +45,8 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
   const [hoverBack, setHoverBack] = useState(false);
 
   const { accentColor, workspaceName, navItems, icon } = config;
-  const basePath = `/workspaces/${config.workspaceKey}`;
+  const isPlural = location.pathname.startsWith('/workspaces');
+  const basePath = isPlural ? `/workspaces/${config.workspaceKey}` : `/workspace/${config.workspaceKey}`;
 
   /** Resolve whether a nav item is active based on current URL */
   const isActive = (item: WorkspaceSidebarItem): boolean => {

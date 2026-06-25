@@ -37,7 +37,7 @@ export default function AdminSidebar() {
   const navItems: NavItem[] = [
     { label: 'Dashboard', path: '/', icon: <LayoutDashboard size={18} /> },
     { label: 'Workspaces', path: '/workspace', icon: <Briefcase size={18} /> },
-    { label: 'Users', path: '/directory', icon: <Users size={18} /> },
+    { label: 'Users', path: '/users', icon: <Users size={18} /> },
     { 
       label: 'Items & Products', 
       path: '/catalog', 
@@ -80,7 +80,7 @@ export default function AdminSidebar() {
           display: flex;
           align-items: center;
           padding: 0.65rem 1.25rem;
-          color: #9CA3AF;
+          color: var(--text-muted);
           text-decoration: none;
           font-size: 0.875rem;
           font-weight: 500;
@@ -89,13 +89,13 @@ export default function AdminSidebar() {
           gap: 10px;
         }
         .admin-sidebar-link:hover {
-          color: #E5E7EB;
-          background-color: rgba(255, 255, 255, 0.02);
+          color: var(--text-main);
+          background-color: var(--bg-card-hover);
         }
         .admin-sidebar-link.active {
-          border-left-color: #00A0DF;
-          background-color: rgba(255, 255, 255, 0.05);
-          color: #ffffff;
+          border-left-color: var(--accent-primary);
+          background-color: var(--sidebar-active-bg);
+          color: var(--sidebar-active-text);
         }
         .admin-sidebar-link-icon {
           display: flex;
@@ -104,7 +104,7 @@ export default function AdminSidebar() {
           opacity: 0.85;
         }
         .admin-sidebar-link.active .admin-sidebar-link-icon {
-          color: #00A0DF;
+          color: var(--sidebar-active-text);
           opacity: 1;
         }
       `}</style>
@@ -121,8 +121,8 @@ export default function AdminSidebar() {
       >
         <div 
           style={{
-            background: 'rgba(0, 160, 223, 0.1)',
-            border: '1px solid rgba(0, 160, 223, 0.2)',
+            background: 'color-mix(in srgb, var(--accent-primary) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--accent-primary) 20%, transparent)',
             borderRadius: '8px',
             padding: '6px',
             display: 'flex',
@@ -130,7 +130,7 @@ export default function AdminSidebar() {
             justifyContent: 'center'
           }}
         >
-          <Cpu size={20} color="#00A0DF" />
+          <Cpu size={20} color="var(--accent-primary)" />
         </div>
         <div>
           <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '0.05em', display: 'block' }}>
@@ -216,8 +216,8 @@ export default function AdminSidebar() {
                 width: '32px',
                 height: '32px',
                 borderRadius: '50%',
-                backgroundColor: 'rgba(0, 160, 223, 0.2)',
-                color: '#00A0DF',
+                backgroundColor: 'color-mix(in srgb, var(--accent-primary) 20%, transparent)',
+                color: 'var(--accent-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

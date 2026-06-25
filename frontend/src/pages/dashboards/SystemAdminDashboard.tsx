@@ -1,22 +1,31 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
-  Users, 
-  Database, 
   Activity, 
   Server, 
-  ShieldAlert, 
   Cpu, 
-  Settings,
   RefreshCw,
-  Lock,
-  Unlock,
-  Loader2,
-  Palette
+  Database,
+  Users,
+  Terminal,
+  Settings,
+  Shield,
+  ArrowRight
 } from 'lucide-react';
-// @ts-ignore: UniversalDataGrid is a JSX component, TypeScript might complain about the missing type definitions.
-import UniversalDataGrid from '../../components/ui/UniversalDataGrid';
 import { useAppContext } from '../../context/AppContext';
-import CommandCenter from '../../components/admin/CommandCenter';
+import { 
+  ResponsiveContainer, 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  PieChart, 
+  Pie, 
+  Cell 
+} from 'recharts';
 
 interface HealthData {
   api_uptime: string;
@@ -26,200 +35,100 @@ interface HealthData {
   system_memory_percent: string;
 }
 
-interface ModuleState {
-  key: string;
-  name: string;
-  status: 'DEPLOYED' | 'STANDBY' | 'OFFLINE';
-  enabled: boolean;
-  loading: boolean;
-  description: string;
-}
-
 export default function SystemAdminDashboard() {
-  const { authFetch, theme, setTheme } = useAppContext();
+  const { authFetch } = useAppContext();
+  
   const [health, setHealth] = useState<HealthData | null>(null);
-  const [healthLoading, setHealthLoading] = useState(true);
-  const [healthError, setHealthError] = useState<string | null>(null);
-  const [gridKey, setGridKey] = useState(0);
-  const [revokingUser, setRevokingUser] = useState<string | null>(null);
+  const [hardware, setHardware] = useState<any>(null);
+  const [traffic, setTraffic] = useState<any[]>([]);
+  const [pulse, setPulse] = useState<any[]>([]);
+  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Workspace Orchestration state
-  const [modules, setModules] = useState<ModuleState[]>([
-    { key: 'inventory_engine', name: 'Inventory Engine', status: 'DEPLOYED', enabled: true, loading: false, description: 'Core warehouse, item storage, and ledger sync routing.' },
-    { key: 'auth_gateway', name: 'Auth Gateway', status: 'DEPLOYED', enabled: true, loading: false, description: 'User JWT session manager, claims verification, and TOTP router.' },
-    { key: 'webhooks_processor', name: 'Webhooks Processor', status: 'STANDBY', enabled: false, loading: false, description: 'Outbound real-time webhook ingestion queues and retry loops.' },
-    { key: 'audit_logger', name: 'Audit Logger', status: 'DEPLOYED', enabled: true, loading: false, description: 'Immutable transaction ledger recorder and compliance auditor.' },
-    { key: 'sequence_dispatcher', name: 'Sequence Dispatcher', status: 'DEPLOYED', enabled: true, loading: false, description: 'Thread-safe document sequence generation and number assignment.' },
-    { key: 'notification_router', name: 'Notification Router', status: 'OFFLINE', enabled: false, loading: false, description: 'System alerts, emails, and WebPush dispatch management.' }
-  ]);
-
-  const fetchHealth = async () => {
+  const fetchData = async () => {
     try {
-      const data = await authFetch('/system/health');
-      setHealth(data);
-      setHealthError(null);
+      const [healthData, hardwareData, trafficData, pulseData] = await Promise.all([
+        authFetch('/system/health'),
+        authFetch('/system/telemetry/hardware'),
+        authFetch('/system/telemetry/traffic'),
+        authFetch('/system/telemetry/pulse')
+      ]);
+
+      setHealth(healthData);
+      setHardware(hardwareData);
+      setTraffic(trafficData);
+      setPulse(pulseData);
+      setError(null);
     } catch (err: any) {
-      setHealthError(err.message || 'Failed to fetch cluster health');
+      setError(err.message || 'Failed to fetch telemetry data');
     } finally {
-      setHealthLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchHealth();
-    const interval = setInterval(fetchHealth, 10000); // refresh health every 10s
+    fetchData();
+    const interval = setInterval(fetchData, 10000); // refresh every 10s
     return () => clearInterval(interval);
   }, []);
 
-  const handleRevoke = async (userId: string) => {
-    if (confirm("Are you sure you want to revoke this user's active session and disable access?")) {
-      setRevokingUser(userId);
-      try {
-        await authFetch(`/auth/users/${userId}/revoke`, { method: 'POST' });
-        // Increment grid key to force reload the UniversalDataGrid
-        setGridKey(prev => prev + 1);
-        // Refresh health stats to reflect updated active users count
-        fetchHealth();
-      } catch (err: any) {
-        alert(err.message || "Failed to revoke session");
-      } finally {
-        setRevokingUser(null);
-      }
-    }
-  };
+  const ramData = [
+    { name: 'Used RAM', value: hardware?.used_ram_bytes || 0 },
+    { name: 'Available RAM', value: (hardware?.total_ram_bytes - hardware?.used_ram_bytes) || 0 }
+  ];
 
-  const handleToggleModule = (moduleKey: string) => {
-    setModules(prev => prev.map(m => {
-      if (m.key === moduleKey) {
-        return { ...m, loading: true };
-      }
-      return m;
-    }));
-
-    // Simulate cluster re-orchestration latency
-    setTimeout(() => {
-      setModules(prev => prev.map(m => {
-        if (m.key === moduleKey) {
-          const nextEnabled = !m.enabled;
-          return {
-            ...m,
-            enabled: nextEnabled,
-            status: nextEnabled ? 'DEPLOYED' : 'OFFLINE',
-            loading: false
-          };
-        }
-        return m;
-      }));
-    }, 800);
-  };
+  const totalRamGB = hardware ? (hardware.total_ram_bytes / (1024 * 1024 * 1024)).toFixed(1) : '16.0';
+  const usedRamGB = hardware ? (hardware.used_ram_bytes / (1024 * 1024 * 1024)).toFixed(1) : '0.0';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+      
       <style>{`
-        .udg-th--actions, .udg-td--actions {
-          display: none !important;
+        .telemetry-row-2 {
+          display: grid;
+          grid-template-columns: 1.5fr 1fr;
+          gap: 1.5rem;
+          width: 100%;
         }
-        .btn-revoke {
-          background: rgba(239, 68, 68, 0.12);
-          border: 1px solid rgba(239, 68, 68, 0.25);
-          color: #f87171;
-          padding: 6px 12px;
-          border-radius: 6px;
-          font-size: 0.75rem;
-          cursor: pointer;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          transition: all 0.2s ease;
-          font-weight: 600;
+        .telemetry-row-3 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+          width: 100%;
+          margin-bottom: 2rem;
         }
-        .btn-revoke:hover:not(:disabled) {
-          background: rgba(239, 68, 68, 0.22);
-          border-color: rgba(239, 68, 68, 0.45);
-          transform: translateY(-1px);
-        }
-        .btn-revoke:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-        .module-toggle-switch {
-          position: relative;
-          display: inline-block;
-          width: 44px;
-          height: 22px;
-        }
-        .module-toggle-switch input {
-          opacity: 0;
-          width: 0;
-          height: 0;
-        }
-        .toggle-slider {
-          position: absolute;
-          cursor: pointer;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-color: rgba(255, 255, 255, 0.08);
-          transition: .3s;
-          border-radius: 34px;
-          border: 1px solid var(--border-color);
-        }
-        .toggle-slider:before {
-          position: absolute;
-          content: "";
-          height: 14px;
-          width: 14px;
-          left: 3px;
-          bottom: 3px;
-          background-color: var(--text-muted);
-          transition: .3s;
-          border-radius: 50%;
-        }
-        input:checked + .toggle-slider {
-          background-color: rgba(0, 245, 160, 0.12);
-          border-color: var(--accent-green);
-        }
-        input:checked + .toggle-slider:before {
-          transform: translateX(22px);
-          background-color: var(--accent-green);
-        }
-        .module-item {
+        .quick-jump-btn {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 1.1rem 1.5rem;
-          border-bottom: 1px solid var(--border-color);
-          transition: background-color 0.2s ease;
+          padding: 1.15rem 1.5rem;
+          border-radius: 10px;
+          background: var(--bg-main);
+          border: 1px solid var(--border-color);
+          color: var(--text-main);
+          text-decoration: none;
+          font-weight: 600;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .module-item:hover {
-          background-color: rgba(255, 255, 255, 0.01);
+        .quick-jump-btn:hover {
+          background: var(--bg-card) !important;
+          border-color: var(--accent-primary) !important;
+          transform: translateX(4px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
         }
-        .module-item:last-child {
-          border-bottom: none;
-        }
-        .badge-deployed {
-          background: rgba(0, 245, 160, 0.08);
-          border: 1px solid rgba(0, 245, 160, 0.2);
-          color: var(--accent-green);
-        }
-        .badge-standby {
-          background: rgba(157, 78, 221, 0.08);
-          border: 1px solid rgba(157, 78, 221, 0.2);
-          color: var(--accent-purple);
-        }
-        .badge-offline {
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          color: var(--text-muted);
+        @media (max-width: 900px) {
+          .telemetry-row-2, .telemetry-row-3 {
+            grid-template-columns: 1fr;
+          }
         }
       `}</style>
-      
+
       {/* Welcome & Security Header Banner */}
       <div 
         style={{
-          background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.05) 0%, rgba(157, 78, 221, 0.05) 100%)',
-          border: '1px solid var(--border-color)',
+          background: 'linear-gradient(135deg, #1e3a8a 0%, #6d28d9 100%)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '14px',
           padding: '1.75rem 2rem',
           display: 'flex',
@@ -228,14 +137,15 @@ export default function SystemAdminDashboard() {
           flexWrap: 'wrap',
           gap: '1.5rem',
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          boxShadow: '0 10px 25px rgba(30, 58, 138, 0.25)'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', zIndex: 1 }}>
           <div 
             style={{
-              background: 'rgba(0, 242, 254, 0.1)',
-              border: '1px solid rgba(0, 242, 254, 0.2)',
+              background: 'rgba(255, 255, 255, 0.12)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
               borderRadius: '12px',
               padding: '0.75rem',
               display: 'flex',
@@ -243,13 +153,13 @@ export default function SystemAdminDashboard() {
               justifyContent: 'center'
             }}
           >
-            <Cpu size={28} color="var(--accent-blue)" />
+            <Cpu size={28} color="#ffffff" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-display)', marginBottom: '0.3rem', fontWeight: 700 }}>
+            <h1 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-display)', marginBottom: '0.3rem', fontWeight: 700, color: '#ffffff' }}>
               System Administration
             </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.875rem' }}>
               Real-time cluster infrastructure, node telemetry, and identity configuration profiles.
             </p>
           </div>
@@ -261,39 +171,40 @@ export default function SystemAdminDashboard() {
             display: 'flex',
             alignItems: 'center',
             gap: '0.6rem',
-            background: 'rgba(20, 27, 46, 0.6)',
+            background: 'rgba(255, 255, 255, 0.15)',
             padding: '0.5rem 1rem',
             borderRadius: '20px',
-            border: '1px solid var(--border-color)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             fontSize: '0.85rem',
             fontWeight: 600,
+            color: '#ffffff',
             zIndex: 1
           }}
         >
-          <Server size={14} color="var(--accent-green)" />
+          <Server size={14} color="#34d399" />
           <span>Cluster Node: bcore-prod-01</span>
         </div>
       </div>
 
-      {/* KPI Cards Row */}
+      {/* Row 1: KPI Cards Grid */}
       <div 
         style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-          gap: '1.5rem' 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', 
+          gap: '1.5rem',
+          width: '100%'
         }}
       >
-        {/* KPI Card 1: API Uptime */}
+        {/* Card 1: API Uptime */}
         <div 
-          className="glass-panel" 
+          className="glass-card-premium" 
           style={{ 
-            padding: '1.5rem',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            minHeight: '130px',
+            minHeight: '150px',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
           }}
         >
           <div 
@@ -304,7 +215,7 @@ export default function SystemAdminDashboard() {
               width: '80px',
               height: '80px',
               borderRadius: '50%',
-              background: 'rgba(157, 78, 221, 0.15)',
+              background: 'rgba(139, 92, 246, 0.15)',
               filter: 'blur(30px)',
               pointerEvents: 'none'
             }}
@@ -313,39 +224,36 @@ export default function SystemAdminDashboard() {
             <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: 600 }}>
               API Uptime
             </span>
-            <span style={{ color: 'var(--accent-purple)' }}>
+            <span style={{ color: 'var(--accent-purple)', filter: 'drop-shadow(0 0 8px rgba(139, 92, 246, 0.5))' }}>
               <Activity size={24} />
             </span>
           </div>
           <div style={{ marginTop: '1rem' }}>
-            {healthLoading ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: '2.2rem' }}>
-                <RefreshCw size={18} className="spin" style={{ animation: 'spin 2s linear infinite', color: 'var(--text-muted)' }} />
-              </div>
-            ) : healthError ? (
-              <div style={{ fontSize: '1rem', color: 'rgba(239, 68, 68, 0.8)', fontWeight: 600 }}>Error</div>
+            {loading ? (
+              <RefreshCw size={18} className="spin" style={{ animation: 'spin 2s linear infinite', color: 'var(--text-muted)' }} />
+            ) : error ? (
+              <div style={{ fontSize: '1rem', color: 'rgba(239, 68, 68, 0.8)', fontWeight: 800 }}>Error</div>
             ) : (
-              <div style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--accent-purple)', lineHeight: 1.1 }}>
+              <div style={{ fontSize: '2.4rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--accent-purple)', lineHeight: 1.1 }}>
                 {health?.api_uptime || '99.98%'}
               </div>
             )}
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-              {healthLoading ? 'Fetching health status...' : healthError ? 'Could not reach node' : health?.api_uptime_detail || 'Avg response: 45ms'}
+              {loading ? 'Connecting...' : error ? 'Could not reach host' : health?.api_uptime_detail || 'Avg response: 45ms'}
             </div>
           </div>
         </div>
 
-        {/* KPI Card 2: Active JWT Sessions */}
+        {/* Card 2: Active Sessions */}
         <div 
-          className="glass-panel" 
+          className="glass-card-premium" 
           style={{ 
-            padding: '1.5rem',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            minHeight: '130px',
+            minHeight: '150px',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
           }}
         >
           <div 
@@ -356,48 +264,45 @@ export default function SystemAdminDashboard() {
               width: '80px',
               height: '80px',
               borderRadius: '50%',
-              background: 'rgba(0, 242, 254, 0.15)',
+              background: 'rgba(99, 91, 255, 0.15)',
               filter: 'blur(30px)',
               pointerEvents: 'none'
             }}
           />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: 600 }}>
-              Active JWT Sessions
+              Active Sessions
             </span>
-            <span style={{ color: 'var(--accent-blue)' }}>
+            <span style={{ color: 'var(--accent-primary)', filter: 'drop-shadow(0 0 8px rgba(99, 91, 255, 0.5))' }}>
               <Users size={24} />
             </span>
           </div>
           <div style={{ marginTop: '1rem' }}>
-            {healthLoading ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: '2.2rem' }}>
-                <RefreshCw size={18} className="spin" style={{ animation: 'spin 2s linear infinite', color: 'var(--text-muted)' }} />
-              </div>
-            ) : healthError ? (
-              <div style={{ fontSize: '1rem', color: 'rgba(239, 68, 68, 0.8)', fontWeight: 600 }}>Error</div>
+            {loading ? (
+              <RefreshCw size={18} className="spin" style={{ animation: 'spin 2s linear infinite', color: 'var(--text-muted)' }} />
+            ) : error ? (
+              <div style={{ fontSize: '1rem', color: 'rgba(239, 68, 68, 0.8)', fontWeight: 800 }}>Error</div>
             ) : (
-              <div style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--accent-blue)', lineHeight: 1.1 }}>
+              <div style={{ fontSize: '2.4rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--accent-primary)', lineHeight: 1.1 }}>
                 {health?.active_jwt_sessions ?? 0}
               </div>
             )}
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-              Concurrent active sessions
+              Concurrent active sessions on node
             </div>
           </div>
         </div>
 
-        {/* KPI Card 3: System Memory */}
+        {/* Card 3: Memory Allocation */}
         <div 
-          className="glass-panel" 
+          className="glass-card-premium" 
           style={{ 
-            padding: '1.5rem',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            minHeight: '130px',
+            minHeight: '150px',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
           }}
         >
           <div 
@@ -408,218 +313,253 @@ export default function SystemAdminDashboard() {
               width: '80px',
               height: '80px',
               borderRadius: '50%',
-              background: 'rgba(0, 245, 160, 0.15)',
+              background: 'rgba(16, 185, 129, 0.15)',
               filter: 'blur(30px)',
               pointerEvents: 'none'
             }}
           />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: 600 }}>
-              System Memory
+              Memory Utilization
             </span>
-            <span style={{ color: 'var(--accent-green)' }}>
+            <span style={{ color: 'var(--accent-green)', filter: 'drop-shadow(0 0 8px rgba(16, 185, 129, 0.5))' }}>
               <Database size={24} />
             </span>
           </div>
           <div style={{ marginTop: '1rem' }}>
-            {healthLoading ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: '2.2rem' }}>
-                <RefreshCw size={18} className="spin" style={{ animation: 'spin 2s linear infinite', color: 'var(--text-muted)' }} />
-              </div>
-            ) : healthError ? (
-              <div style={{ fontSize: '1rem', color: 'rgba(239, 68, 68, 0.8)', fontWeight: 600 }}>Error</div>
+            {loading ? (
+              <RefreshCw size={18} className="spin" style={{ animation: 'spin 2s linear infinite', color: 'var(--text-muted)' }} />
+            ) : error ? (
+              <div style={{ fontSize: '1rem', color: 'rgba(239, 68, 68, 0.8)', fontWeight: 800 }}>Error</div>
             ) : (
-              <div style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--accent-green)', lineHeight: 1.1 }}>
-                {health?.system_memory || '4.2 GB / 16.0 GB'}
+              <div style={{ fontSize: '2.4rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--accent-green)', lineHeight: 1.1 }}>
+                {hardware ? `${hardware.ram_usage_percent}%` : '26%'}
               </div>
             )}
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-              {healthLoading ? 'Fetching usage...' : healthError ? 'Could not read memory' : `Memory Used: ${health?.system_memory_percent || '0%'}`}
+              {loading ? 'Reading node...' : error ? 'Could not read RAM' : `${usedRamGB} GB / ${totalRamGB} GB allocated`}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Grid: Data management grid and settings panel */}
-      <div 
-        style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', 
-          gap: '1.5rem',
-          alignItems: 'start'
-        }}
-      >
-        {/* Main Left Column: Identity & Access Control */}
-        <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden' }}>
-          <div 
-            style={{ 
-              padding: '1.25rem 1.5rem', 
-              borderBottom: '1px solid var(--border-color)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem'
-            }}
-          >
-            <ShieldAlert size={20} color="var(--accent-blue)" />
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Identity & Access</h2>
+      {/* Row 2: Charts (60/40 Split) */}
+      <div className="telemetry-row-2">
+        {/* Line Chart: Traffic Analysis */}
+        <div className="glass-card-premium" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Traffic Analysis</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.2rem' }}>
+              Rolling 60-minute request rates and system exceptions.
+            </p>
           </div>
-          <div style={{ padding: '1.25rem' }}>
-            <UniversalDataGrid
-              key={gridKey}
-              endpointUrl="/api/v1/auth/users"
-              title="Registered Users"
-              pageSize={10}
-              emptyMessage="No active users registered on this node."
-              columns={[
-                { key: 'email', label: 'Email', sortable: true },
-                {
-                  key: 'role_tier',
-                  label: 'Tier',
-                  sortable: true,
-                  render: (value: any) => (
-                    <span className={`badge badge-t${value}`}>
-                      Tier {value}
-                    </span>
-                  )
-                },
-                {
-                  key: 'is_active',
-                  label: 'Status',
-                  sortable: true,
-                  render: (value: any) => (
-                    <span className={`badge ${value ? 'badge-site' : 'badge-t4'}`}>
-                      {value ? 'Active' : 'Inactive'}
-                    </span>
-                  )
-                },
-                {
-                  key: 'revoke_session',
-                  label: 'Control',
-                  render: (_: any, row: any) => (
-                    row.is_active ? (
-                      <button
-                        className="btn-revoke"
-                        onClick={() => handleRevoke(row.id)}
-                        disabled={revokingUser === row.id}
-                      >
-                        <Lock size={12} />
-                        {revokingUser === row.id ? 'Revoking...' : 'Revoke Session'}
-                      </button>
-                    ) : (
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-                        <Unlock size={12} style={{ opacity: 0.5 }} />
-                        Revoked
-                      </span>
-                    )
-                  )
-                }
-              ]}
-            />
-          </div>
-        </div>
-
-        {/* Main Right Column: Orchestration & Command Controls */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Workspace Orchestration */}
-          <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', margin: 0 }}>
-            <div 
-              style={{ 
-                padding: '1.25rem 1.5rem', 
-                borderBottom: '1px solid var(--border-color)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Settings size={20} color="var(--accent-purple)" />
-                <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Workspace Orchestration</h2>
+          
+          <div style={{ width: '100%', height: 300 }}>
+            {traffic.length === 0 ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
+                Waiting for traffic telemetry...
               </div>
-              <span 
-                className="badge" 
-                style={{ 
-                  background: 'rgba(0, 242, 254, 0.08)', 
-                  border: '1px solid rgba(0, 242, 254, 0.2)', 
-                  color: 'var(--accent-blue)',
-                  fontSize: '0.75rem',
-                  fontWeight: 600
-                }}
-              >
-                Cluster Status: ACTIVE
-              </span>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {modules.map((mod) => (
-                <div key={mod.key} className="module-item">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', maxWidth: '75%' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>{mod.name}</span>
-                      <span className={`badge badge-${mod.status.toLowerCase()}`} style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
-                        {mod.status}
-                      </span>
-                    </div>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.3' }}>
-                      {mod.description}
-                    </span>
-                  </div>
-                  
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {mod.loading ? (
-                      <Loader2 size={16} className="spin" style={{ animation: 'spin 2s linear infinite', color: 'var(--accent-green)' }} />
-                    ) : (
-                      <label className="module-toggle-switch">
-                        <input 
-                          type="checkbox" 
-                          checked={mod.enabled}
-                          onChange={() => handleToggleModule(mod.key)}
-                        />
-                        <span className="toggle-slider"></span>
-                      </label>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={traffic} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0, 0, 0, 0.05)" />
+                  <XAxis 
+                    dataKey="minute" 
+                    tickFormatter={(tick) => {
+                      try {
+                        const parts = tick.split('T');
+                        return parts.length > 1 ? parts[1].substring(0, 5) : tick;
+                      } catch {
+                        return tick;
+                      }
+                    }}
+                    style={{ fontSize: '0.75rem', fill: 'var(--text-muted)', fontWeight: 500 }}
+                  />
+                  <YAxis style={{ fontSize: '0.75rem', fill: 'var(--text-muted)', fontWeight: 500 }} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      background: 'var(--bg-card)', 
+                      borderColor: 'var(--border-color)',
+                      borderRadius: '8px',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '0.75rem', fontWeight: 600 }} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="requests" 
+                    name="Total Requests" 
+                    stroke="var(--accent-primary)" 
+                    strokeWidth={3} 
+                    dot={false} 
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="errors" 
+                    name="Errors (500)" 
+                    stroke="var(--accent-danger)" 
+                    strokeWidth={3} 
+                    dot={false} 
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* Pie Chart: Memory Allocations */}
+        <div className="glass-card-premium" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative' }}>
+          <div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Memory Pool</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.2rem' }}>
+              Host memory availability mapping.
+            </p>
           </div>
 
-          {/* Command Center */}
-          <CommandCenter />
+          <div style={{ width: '100%', height: 300, position: 'relative' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={ramData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={65}
+                  outerRadius={90}
+                  paddingAngle={4}
+                  dataKey="value"
+                >
+                  <Cell fill="var(--accent-primary)" />
+                  <Cell fill="rgba(99, 91, 255, 0.12)" />
+                </Pie>
+                <Tooltip 
+                  formatter={(value: any) => `${(Number(value) / (1024*1024*1024)).toFixed(2)} GB`}
+                  contentStyle={{ 
+                    background: 'var(--bg-card)', 
+                    borderColor: 'var(--border-color)',
+                    borderRadius: '8px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
 
-          {/* Theme Configuration */}
-          <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', margin: 0 }}>
-            <div 
-              style={{ 
-                padding: '1.25rem 1.5rem', 
-                borderBottom: '1px solid var(--border-color)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem'
-              }}
-            >
-              <Palette size={20} color="var(--accent-primary)" />
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Theme Configuration</h2>
-            </div>
-            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Select an enterprise color palette. This preference will be saved across all sessions.
-              </p>
-              <select 
-                value={theme}
-                onChange={(e) => setTheme(e.target.value)}
-                style={{ width: '100%', maxWidth: '300px' }}
-              >
-                <option value="Stripe Blurple">Stripe Blurple</option>
-                <option value="Vercel Crisp">Vercel Crisp</option>
-                <option value="Azure Cloud">Azure Cloud</option>
-                <option value="Linear Cool">Linear Cool</option>
-                <option value="Tech Teal">Tech Teal</option>
-              </select>
+            {/* Inner Ring Stats Label */}
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.1 }}>
+                {hardware ? `${hardware.ram_usage_percent}%` : '26%'}
+              </div>
+              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em', marginTop: '0.2rem' }}>
+                Used
+              </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Row 3: Pulse & Quick Actions (50/50 Split) */}
+      <div className="telemetry-row-3">
+        {/* Live Pulse Stream */}
+        <div className="glass-card-premium" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflow: 'hidden' }}>
+          <div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>System Event Pulse</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.2rem' }}>
+              Recent events broadcasted on the cluster backplane.
+            </p>
+          </div>
+          
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
+                  <th style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontWeight: 700 }}>Event Type</th>
+                  <th style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontWeight: 700 }}>User Email</th>
+                  <th style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontWeight: 700 }}>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pulse.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      No events registered.
+                    </td>
+                  </tr>
+                ) : (
+                  pulse.map((event) => (
+                    <tr key={event.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>
+                        <span style={{
+                          background: event.event_type === 'blocker_beacon' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(99, 91, 255, 0.08)',
+                          color: event.event_type === 'blocker_beacon' ? '#ef4444' : 'var(--accent-primary)',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700
+                        }}>
+                          {event.event_type}
+                        </span>
+                      </td>
+                      <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-main)' }}>
+                        {event.created_by_email || 'System Agent'}
+                      </td>
+                      <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-muted)' }}>
+                        {new Date(event.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Quick Jump Shortcuts */}
+        <div className="glass-card-premium" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Quick Actions</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.2rem' }}>
+              Direct access links to administrative control panels.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, justifyContent: 'center' }}>
+            <Link to="/users" className="quick-jump-btn">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ background: 'rgba(99, 91, 255, 0.1)', padding: '6px', borderRadius: '6px', display: 'flex' }}>
+                  <Users size={20} color="var(--accent-primary)" />
+                </div>
+                <span>Identity & Access Directory</span>
+              </div>
+              <ArrowRight size={16} color="var(--text-muted)" />
+            </Link>
+
+            <Link to="/events" className="quick-jump-btn">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '6px', borderRadius: '6px', display: 'flex' }}>
+                  <Shield size={20} color="var(--accent-green)" />
+                </div>
+                <span>Security & Audit Trails</span>
+              </div>
+              <ArrowRight size={16} color="var(--text-muted)" />
+            </Link>
+
+            <Link to="/settings/config" className="quick-jump-btn">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ background: 'rgba(139, 92, 246, 0.1)', padding: '6px', borderRadius: '6px', display: 'flex' }}>
+                  <Settings size={20} color="var(--accent-purple)" />
+                </div>
+                <span>System Settings & Themes</span>
+              </div>
+              <ArrowRight size={16} color="var(--text-muted)" />
+            </Link>
+          </div>
+        </div>
+      </div>
+      
     </div>
   );
 }

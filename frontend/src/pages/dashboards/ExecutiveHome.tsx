@@ -35,6 +35,10 @@ import {
   Layers,
   Lock,
   Clock,
+  PieChart,
+  Briefcase,
+  Receipt,
+  LineChart,
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 
@@ -60,14 +64,18 @@ interface DepartmentDefinition {
 const DEPARTMENTS: DepartmentDefinition[] = [
   {
     id: 'finance',
-    name: 'Finance',
+    name: 'Finance & Accounting',
     description: 'Accounting, banking operations, tax compliance and financial reporting.',
     accentColor: '#00f5a0',
     glowColor: 'rgba(0,245,160,0.14)',
     workspaces: [
-      { key: 'accounting', label: 'Accounting', icon: <Landmark size={20} />, route: '/workspaces/finance/accounting', color: '#00f5a0' },
+      { key: 'invoicing', label: 'Invoicing', icon: <FileText size={20} />, route: '/workspaces/finance/invoicing', color: '#00f5a0' },
+      { key: 'payments', label: 'Payments', icon: <CreditCard size={20} />, route: '/workspaces/finance/payments', color: '#00f5a0' },
       { key: 'banking', label: 'Banking', icon: <PiggyBank size={20} />, route: '/workspaces/finance/banking', color: '#00f5a0' },
       { key: 'taxes', label: 'Taxes', icon: <FileText size={20} />, route: '/workspaces/finance/taxes', color: '#00f5a0' },
+      { key: 'reports', label: 'Reports', icon: <BarChart2 size={20} />, route: '/workspaces/finance/reports', color: '#00f5a0' },
+      { key: 'budget', label: 'Budget', icon: <PieChart size={20} />, route: '/workspaces/finance/budgets', color: '#00f5a0' },
+      { key: 'shares', label: 'Shares', icon: <Briefcase size={20} />, route: '/workspaces/finance/shares', color: '#00f5a0' },
     ],
   },
   {
@@ -77,12 +85,12 @@ const DEPARTMENTS: DepartmentDefinition[] = [
     accentColor: '#ffb703',
     glowColor: 'rgba(255,183,3,0.14)',
     workspaces: [
-      { key: 'assets', label: 'Assets', icon: <BarChart2 size={20} />, route: '/workspaces/inventory/assets', color: '#ffb703' },
-      { key: 'products', label: 'Products', icon: <Package size={20} />, route: '/workspaces/inventory/products', color: '#ffb703' },
-      { key: 'items', label: 'Items', icon: <Box size={20} />, route: '/workspaces/inventory/items', color: '#ffb703' },
-      { key: 'warehouse', label: 'Warehouse', icon: <Boxes size={20} />, route: '/workspaces/inventory/warehouse', color: '#ffb703' },
-      { key: 'stock', label: 'Stock', icon: <Building2 size={20} />, route: '/workspaces/inventory/stock', color: '#ffb703' },
-      { key: 'buying', label: 'Buying', icon: <ShoppingCart size={20} />, route: '/workspaces/inventory/buying', color: '#ffb703' },
+      { key: 'assets', label: 'Assets', icon: <BarChart2 size={20} />, route: '/workspace/inventory/assets', color: '#ffb703' },
+      { key: 'products', label: 'Products', icon: <Package size={20} />, route: '/workspace/inventory/products', color: '#ffb703' },
+      { key: 'items', label: 'Items', icon: <Box size={20} />, route: '/workspace/items/item', color: '#ffb703' },
+      { key: 'warehouse', label: 'Warehouse', icon: <Boxes size={20} />, route: '/workspace/inventory/warehouses', color: '#ffb703' },
+      { key: 'stock', label: 'Stock', icon: <Building2 size={20} />, route: '/workspace/inventory/stock', color: '#ffb703' },
+      { key: 'buying', label: 'Buying', icon: <ShoppingCart size={20} />, route: '/workspace/inventory/buying', color: '#ffb703' },
     ],
   },
   {
@@ -92,10 +100,10 @@ const DEPARTMENTS: DepartmentDefinition[] = [
     accentColor: '#00f2fe',
     glowColor: 'rgba(0,242,254,0.14)',
     workspaces: [
-      { key: 'pos', label: 'POS', icon: <CreditCard size={20} />, route: '/workspaces/crm/pos', color: '#00f2fe' },
-      { key: 'crm', label: 'CRM', icon: <Users size={20} />, route: '/workspaces/crm', color: '#00f2fe' },
-      { key: 'sales', label: 'Sales', icon: <TrendingUp size={20} />, route: '/workspaces/crm/sales', color: '#00f2fe' },
-      { key: 'support', label: 'Support', icon: <Headphones size={20} />, route: '/workspaces/crm/support', color: '#00f2fe' },
+      { key: 'pos', label: 'POS', icon: <CreditCard size={20} />, route: '/workspace/crm/pos', color: '#00f2fe' },
+      { key: 'crm', label: 'CRM', icon: <Users size={20} />, route: '/workspace/crm', color: '#00f2fe' },
+      { key: 'sales', label: 'Sales', icon: <TrendingUp size={20} />, route: '/workspace/crm/sales', color: '#00f2fe' },
+      { key: 'support', label: 'Support', icon: <Headphones size={20} />, route: '/workspace/crm/support', color: '#00f2fe' },
     ],
   },
   {

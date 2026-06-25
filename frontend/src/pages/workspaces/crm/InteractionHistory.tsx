@@ -4,6 +4,7 @@ import {
   MessageSquare, Plus, X, AlertCircle, CheckCircle2, RefreshCw,
   Phone, Mail, Users, TrendingUp, Target, FileText
 } from 'lucide-react';
+import { useAppContext } from '../../../context/AppContext';
 import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { CRM_SIDEBAR } from './crmSidebarConfig';
 
@@ -87,6 +88,7 @@ export default function InteractionHistory() {
 
   return (
     <WorkspaceLayout config={CRM_SIDEBAR}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 1.5rem' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -160,7 +162,7 @@ export default function InteractionHistory() {
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}><X size={18} /></button>
             </div>
             <form onSubmit={handleSubmit(onSubmit)} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {formError && <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(255,51,102,0.1)', border: '1px solid rgba(255,51,102,0.2)', color: '#ff3366', padding: '0.75rem', borderRadius: '8px', fontSize: '0.8rem' }}><AlertCircle size={14} />{formError}</div>}
+              {formError && <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(255,51,102,0.1)', border: '1px solid rgba(255,51,102,0.25)', color: '#ff3366', padding: '0.75rem', borderRadius: '8px', fontSize: '0.8rem' }}><AlertCircle size={14} />{formError}</div>}
               {formSuccess && <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', color: '#10b981', padding: '0.75rem', borderRadius: '8px', fontSize: '0.8rem' }}><CheckCircle2 size={14} />{formSuccess}</div>}
               <div>
                 <label>Customer *</label>
@@ -195,6 +197,7 @@ export default function InteractionHistory() {
         </div>
       )}
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
     </WorkspaceLayout>
   );
 }

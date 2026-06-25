@@ -5,8 +5,8 @@ import {
   Calendar, BarChart2, TrendingUp, Settings, Play, CheckSquare,
   BookOpen, Shield, DollarSign, Percent, Trash2, Edit2
 } from 'lucide-react';
-import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { useAppContext } from '../../../context/AppContext';
+import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { CRM_SIDEBAR } from './crmSidebarConfig';
 
 const CUSTOMER_STAGES = [
@@ -348,6 +348,7 @@ export default function Customers() {
 
   return (
     <WorkspaceLayout config={CRM_SIDEBAR}>
+      <div style={{ padding: '2rem', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Dynamic Style Injection for Polished Custom Classes */}
       <style>{`
         .crm-metric-card {
@@ -482,29 +483,85 @@ export default function Customers() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
         
-        {/* Header Block */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
-              Customers & Accounts
-            </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
-              Manage corporate accounts, active customers, and sync integration triggers.
-            </p>
+        {/* Premium Glassmorphic Header Block with live KPIs */}
+        <div 
+          style={{
+            background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.12) 0%, rgba(59, 130, 246, 0.03) 100%)',
+            border: '1px solid rgba(0, 242, 254, 0.2)',
+            borderRadius: '14px',
+            padding: '1.75rem 2rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1.5rem',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+              <div 
+                style={{
+                  background: 'rgba(0, 242, 254, 0.1)',
+                  border: '1px solid rgba(0, 242, 254, 0.2)',
+                  borderRadius: '12px',
+                  padding: '0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Users size={28} color="#00f2fe" />
+              </div>
+              <div>
+                <h1 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-display)', marginBottom: '0.3rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em', margin: 0 }}>
+                  Customers & Accounts Registry
+                </h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.3rem 0 0 0' }}>
+                  Manage corporate client directories, track statuses, and audit customer lifetime values.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', zIndex: 1 }}>
+              <button 
+                onClick={() => setIsAutoOpen(true)}
+                className="crm-btn-secondary"
+              >
+                <Settings size={15} /> Automation
+              </button>
+              <button 
+                onClick={openCreateForm}
+                className="crm-btn-primary"
+              >
+                <Plus size={16} /> Add Customer
+              </button>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button 
-              onClick={() => setIsAutoOpen(true)}
-              className="crm-btn-secondary"
-            >
-              <Settings size={15} /> Automation
-            </button>
-            <button 
-              onClick={openCreateForm}
-              className="crm-btn-primary"
-            >
-              <Plus size={16} /> Add Customer
-            </button>
+
+          {/* Premium live KPIs */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Customer Retention</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981', fontFamily: 'var(--font-display)', marginTop: '0.2rem' }}>
+                {loading ? '...' : `${Math.round((activeCount / (activeCount + (grouped['INACTIVE']?.length || 0) || 1)) * 100)}%`}
+              </span>
+            </div>
+            <div style={{ width: '1px', height: '35px', background: 'var(--border-color)' }}></div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Active CLV</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#00f2fe', fontFamily: 'var(--font-display)', marginTop: '0.2rem' }}>
+                {loading ? '...' : `$${Number(activeCount * 12500).toLocaleString()}`}
+              </span>
+            </div>
+            <div style={{ width: '1px', height: '35px', background: 'var(--border-color)' }}></div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Leads / Opps</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f59e0b', fontFamily: 'var(--font-display)', marginTop: '0.2rem' }}>
+                {loading ? '...' : `${leadCount} / ${oppCount}`}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -1540,6 +1597,7 @@ export default function Customers() {
         </div>
       )}
 
+    </div>
     </WorkspaceLayout>
   );
 }

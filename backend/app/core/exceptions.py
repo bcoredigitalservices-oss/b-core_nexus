@@ -50,3 +50,12 @@ class DataIntegrityError(CoreERPException):
             error_code="DATA_INTEGRITY_CONFLICT",
             status_code=409
         )
+
+class DatabaseDataError(CoreERPException):
+    """Raised when a database data type or range validation fails (e.g., DataError)."""
+    def __init__(self, message: str = "Database data validation failed."):
+        super().__init__(
+            message=message,
+            error_code="DATABASE_DATA_ERROR",
+            status_code=422
+        )

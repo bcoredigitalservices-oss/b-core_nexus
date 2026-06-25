@@ -24,8 +24,8 @@ class TaxRule(CoreModel):
     effective_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     effective_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    region = relationship("TaxRegion")
-    category = relationship("TaxCategory")
+    region = relationship("app.core.finance.tax_models.TaxRegion")
+    category = relationship("app.core.finance.tax_models.TaxCategory")
 
     __table_args__ = (
         Index("idx_tax_rules_region_category_effective", "region_id", "category_id", "effective_from", unique=True),

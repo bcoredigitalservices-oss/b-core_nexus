@@ -52,10 +52,14 @@ services:
         condition: service_healthy
     networks:
       - nexus_network
+    volumes:
+      - ./backend:/app
 
   frontend:
     build:
       context: ./frontend
+      args:
+        - VITE_API_URL=http://localhost:8005
     container_name: nexus_frontend
     depends_on:
       - backend

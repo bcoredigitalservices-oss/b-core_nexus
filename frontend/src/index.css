@@ -1,7 +1,7 @@
 
 :root {
-  /* Default: Stripe Blurple */
-  --bg-main: #F6F9FC;
+  /* Default Theme: Stripe Blurple */
+  --bg-main: #F1F5F9;
   --bg-card: #FFFFFF;
   --bg-card-hover: #F8F9FA;
   --bg-input: #FFFFFF;
@@ -10,7 +10,7 @@
   --text-main: #0A2540;
   --text-muted: #64748B;
   
-  /* Brand Accent */
+  /* Brand Accent Default */
   --accent-primary: #635BFF;
   --accent-blue: #635BFF;
   --accent-green: #10B981;
@@ -22,6 +22,12 @@
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
+  /* Theme-aware Sidebar and Header Defaults */
+  --bg-sidebar: #FFFFFF;
+  --bg-header: rgba(255, 255, 255, 0.85);
+  --sidebar-active-bg: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --sidebar-active-text: var(--accent-primary);
+
   /* Layout Tokens */
   --sidebar-width: 250px;
   --sidebar-collapsed-width: 64px;
@@ -30,8 +36,9 @@
   color-scheme: light;
 }
 
+/* ─── Light Mode Theme Presets ───────────────────────────────────────────── */
 [data-theme="Stripe Blurple"] {
-  --bg-main: #F6F9FC;
+  --bg-main: #F1F5F9;
   --bg-card: #FFFFFF;
   --bg-card-hover: #F8F9FA;
   --bg-input: #FFFFFF;
@@ -80,9 +87,73 @@
   --bg-card-hover: #F8FAFC;
   --bg-input: #FFFFFF;
   --border-color: #E5E7EB;
-  --text-main: var(--bg-card);
+  --text-main: #0F172A;
   --accent-primary: #0D9488;
   --accent-blue: #0D9488;
+}
+
+/* ─── Strict Dark Mode Override Block ────────────────────────────────────── */
+/* Commented out to prevent forced dark mode bugs
+[data-mode="dark"] {
+  --bg-main: #0F172A;
+  --bg-card: #1E293B;
+  --bg-card-hover: #334155;
+  --bg-input: #1E293B;
+  --border-color: #334155;
+  
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  
+  --bg-sidebar: #1E293B;
+  --bg-header: rgba(30, 41, 59, 0.85);
+
+  --sidebar-active-bg: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --sidebar-active-text: color-mix(in srgb, var(--accent-primary) 85%, #FFFFFF);
+
+  color-scheme: dark;
+}
+*/
+
+/* Dark Mode Accent Adjustments to ensure crisp accessibility contrast */
+[data-mode="dark"][data-theme="Stripe Blurple"] {
+  --accent-primary: #818CF8;
+  --accent-blue: #818CF8;
+}
+
+[data-mode="dark"][data-theme="Vercel Crisp"] {
+  --accent-primary: #FFFFFF;
+  --accent-blue: #FFFFFF;
+}
+
+[data-mode="dark"][data-theme="Azure Cloud"] {
+  --accent-primary: #3B82F6;
+  --accent-blue: #3B82F6;
+}
+
+[data-mode="dark"][data-theme="Linear Cool"] {
+  --accent-primary: #9F7AEA;
+  --accent-blue: #9F7AEA;
+}
+
+[data-mode="dark"][data-theme="Tech Teal"] {
+  --accent-primary: #2DD4BF;
+  --accent-blue: #2DD4BF;
+}
+
+/* ─── Font Customizations ────────────────────────────────────────────────── */
+[data-font="Inter"] {
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+[data-font="Outfit"] {
+  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+[data-font="Roboto"] {
+  --font-display: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Desktop: when sidebar is collapsed, shrink the main margin */
@@ -140,6 +211,20 @@ h1, h2, h3, h4 {
 
 .glass-panel:hover {
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.glass-card-premium {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.75rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.glass-card-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
 }
 
 /* Inputs and Forms */

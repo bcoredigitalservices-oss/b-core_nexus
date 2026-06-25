@@ -20,7 +20,7 @@ import {
   ClipboardList,
   BookOpen,
 } from 'lucide-react';
-import WorkspaceLayout, { WorkspaceLayoutConfig } from '../../../layouts/WorkspaceLayout';
+
 import { useAppContext } from '../../../context/AppContext';
 
 // ─── Sidebar Config ────────────────────────────────────────────────────────────
@@ -255,7 +255,7 @@ export default function InventoryDashboard() {
   }, []);
 
   return (
-    <WorkspaceLayout config={INVENTORY_SIDEBAR}>
+    <div style={{ padding: '2rem', width: '100%', maxWidth: '1400px', margin: '0 auto', background: 'var(--bg-main)', minHeight: '100vh' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1100px' }}>
 
         {/* ── Page Header ── */}
@@ -519,6 +519,6 @@ export default function InventoryDashboard() {
 
       {/* Spin keyframe */}
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-    </WorkspaceLayout>
+    </div>
   );
 }

@@ -29,7 +29,7 @@ if config.config_file_name is not None:
 from app.database import Base
 from app.core.auth.models import User
 from app.core.directory.models import DirectoryProfile, Entity
-from app.core.catalog.models import CatalogItem, Item
+from app.core.catalog.models import CatalogItem, Item, ItemGroup
 from app.core.events.models import EventLog
 from app.core.system.models import InstanceProfile
 from app.core.localization.models import SystemSettings
@@ -39,6 +39,7 @@ from app.core.ledger.models import Transaction, LedgerEntry
 from app.core.sequencing.models import DocumentSequence
 from app.models.organization import Organization, Department
 from app.models.workspace import Workspace, user_workspaces
+
 
 # Workspace models loaded dynamically
 from app.core.workspace.loader import load_workspace_models

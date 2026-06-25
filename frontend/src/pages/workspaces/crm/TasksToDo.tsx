@@ -4,9 +4,9 @@ import {
   CheckSquare, Plus, X, AlertCircle, CheckCircle2, RefreshCw,
   Calendar, Flag, Trash2, Users, TrendingUp, Target, Phone, Edit3
 } from 'lucide-react';
+
 import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { CRM_SIDEBAR } from './crmSidebarConfig';
-
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string; dot: string }> = {
   LOW:    { label: 'Low',    color: 'var(--text-muted)', bg: 'rgba(107,114,128,0.12)', dot: 'var(--text-muted)' },
   MEDIUM: { label: 'Medium', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  dot: '#3b82f6' },
@@ -104,23 +104,61 @@ export default function TasksToDo() {
 
   return (
     <WorkspaceLayout config={CRM_SIDEBAR}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 1.5rem' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', fontFamily: 'var(--font-display)' }}>Tasks & To-Do</h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>{tasks.length} total · {grouped.TODO.length} open · {grouped.IN_PROGRESS.length} in progress</p>
+        {/* Header Block */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.12) 0%, rgba(59, 130, 246, 0.03) 100%)',
+          border: '1px solid rgba(0, 242, 254, 0.2)',
+          borderRadius: '14px',
+          padding: '1.75rem 2rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1.5rem',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+            <div style={{ background: 'rgba(0, 242, 254, 0.1)', border: '1px solid rgba(0, 242, 254, 0.2)', borderRadius: '12px', padding: '0.75rem' }}>
+              <CheckSquare size={28} color="#00f2fe" />
+            </div>
+            <div>
+              <h1 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                Tasks & To-Do
+              </h1>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.3rem 0 0 0' }}>
+                {tasks.length} total tasks registered
+              </p>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <select value={filterPriority} onChange={e => setFilterPriority(e.target.value)} style={{ height: '38px', minWidth: '130px' }}>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Open (To Do)</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-muted)' }}>{grouped.TODO.length}</span>
+            </div>
+            <div style={{ width: '1px', height: '35px', background: 'var(--border-color)' }}></div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>In Progress</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#3b82f6' }}>{grouped.IN_PROGRESS.length}</span>
+            </div>
+            <div style={{ width: '1px', height: '35px', background: 'var(--border-color)' }}></div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Done</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981' }}>{grouped.DONE.length}</span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <select value={filterPriority} onChange={e => setFilterPriority(e.target.value)} style={{ height: '40px', padding: '0 1rem', background: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '8px', minWidth: '130px' }}>
               <option value="">All Priorities</option>
               {Object.keys(PRIORITY_CONFIG).map(p => <option key={p} value={p}>{PRIORITY_CONFIG[p].label}</option>)}
             </select>
-            <button onClick={fetchAll} disabled={loading} className="btn btn-secondary" style={{ height: '38px', padding: '0 0.75rem' }}>
-              <RefreshCw size={14} style={{ animation: loading ? 'spin 1.5s linear infinite' : 'none' }} />
+            <button onClick={fetchAll} disabled={loading} className="btn btn-secondary" style={{ height: '40px', padding: '0 0.75rem' }}>
+              <RefreshCw size={15} style={{ animation: loading ? 'spin 1.5s linear infinite' : 'none' }} />
             </button>
-            <button onClick={() => { reset(); setFormError(''); setFormSuccess(''); setIsModalOpen(true); }} className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#00f2fe,#0080c6)', color: '#fff', fontWeight: 700 }}>
-              <Plus size={15} /> New Task
+            <button onClick={() => { reset(); setFormError(''); setFormSuccess(''); setIsModalOpen(true); }} className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#00f2fe,#0080c6)', color: '#fff', fontWeight: 700, height: '40px', padding: '0 1rem' }}>
+              <Plus size={15} style={{ marginRight: '6px' }} /> New Task
             </button>
           </div>
         </div>
@@ -149,7 +187,7 @@ export default function TasksToDo() {
                     return (
                       <div key={task.id} style={{ background: 'var(--bg-card)', border: `1px solid ${isOverdue ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.07)'}`, borderRadius: '10px', padding: '0.85rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
-                          <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.85rem', flex: 1, lineHeight: 1.3 }}>{task.title}</div>
+                          <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.85rem', flex: 1, lineHeight: 1.3 }}>{task.title}</div>
                           <span style={{ marginLeft: '6px', padding: '2px 6px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 700, background: pc.bg, color: pc.color, flexShrink: 0 }}>{pc.label}</span>
                         </div>
                         {task.description && <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.5rem', lineHeight: 1.4 }}>{task.description}</div>}
@@ -186,31 +224,31 @@ export default function TasksToDo() {
 
       {/* Create Task Modal */}
       {isModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1.5rem' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1.5rem' }}>
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', width: '100%', maxWidth: '500px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)' }}>
-              <h3 style={{ fontWeight: 700, color: '#fff', fontSize: '1.1rem' }}>Create Task</h3>
+              <h3 style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '1.1rem' }}>Create Task</h3>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}><X size={18} /></button>
             </div>
             <form onSubmit={handleSubmit(onSubmit)} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {formError && <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(255,51,102,0.1)', border: '1px solid rgba(255,51,102,0.2)', color: '#ff3366', padding: '0.75rem', borderRadius: '8px', fontSize: '0.8rem' }}><AlertCircle size={14} />{formError}</div>}
               {formSuccess && <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', color: '#10b981', padding: '0.75rem', borderRadius: '8px', fontSize: '0.8rem' }}><CheckCircle2 size={14} />{formSuccess}</div>}
-              <div>
-                <label>Task Title *</label>
-                <input type="text" placeholder="e.g. Follow up with client" {...register('title', { required: 'Title required' })} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Task Title *</label>
+                <input type="text" placeholder="e.g. Follow up with client" {...register('title', { required: 'Title required' })} style={{ height: '38px' }} />
                 {errors.title && <p style={{ color: '#ff3366', fontSize: '0.72rem', marginTop: '4px' }}>{errors.title.message}</p>}
               </div>
-              <div><label>Description</label><textarea rows={2} placeholder="Optional details..." {...register('description')} /></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}><label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Description</label><textarea rows={2} placeholder="Optional details..." {...register('description')} style={{ padding: '0.5rem' }} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label>Priority</label>
-                  <select {...register('priority')}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Priority</label>
+                  <select {...register('priority')} style={{ height: '38px' }}>
                     {Object.keys(PRIORITY_CONFIG).map(p => <option key={p} value={p}>{PRIORITY_CONFIG[p].label}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label>Status</label>
-                  <select {...register('status')}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Status</label>
+                  <select {...register('status')} style={{ height: '38px' }}>
                     <option value="TODO">To Do</option>
                     <option value="IN_PROGRESS">In Progress</option>
                     <option value="DONE">Done</option>
@@ -218,13 +256,13 @@ export default function TasksToDo() {
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label>Due Date</label>
-                  <input type="date" {...register('due_date')} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Due Date</label>
+                  <input type="date" {...register('due_date')} style={{ height: '38px' }} />
                 </div>
-                <div>
-                  <label>Linked Customer</label>
-                  <select {...register('customer_id')}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Linked Customer</label>
+                  <select {...register('customer_id')} style={{ height: '38px' }}>
                     <option value="">No customer</option>
                     {customers.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
                   </select>
@@ -241,6 +279,7 @@ export default function TasksToDo() {
         </div>
       )}
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
     </WorkspaceLayout>
   );
 }

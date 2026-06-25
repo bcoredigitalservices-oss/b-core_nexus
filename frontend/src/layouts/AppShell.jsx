@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  Menu, Bell, RefreshCw, Database, Server, User, ChevronDown, Settings, LogOut,
+  Menu, Bell, RefreshCw, Database, Server, User, ChevronDown, Settings, LogOut, LayoutGrid,
 } from 'lucide-react';
 import Sidebar from '../components/navigation/Sidebar';
 import { useAppContext } from '../context/AppContext';
@@ -13,7 +13,8 @@ export default function AppShell() {
   const { isApiLive, currentUser, systemSettings, logout, isBooting } = useAppContext();
   const navigate = useNavigate();
   const location = useLocation();
-  const isWorkspaceRoute = location.pathname.startsWith('/workspaces');
+  const isHub = location.pathname === '/workspace' || location.pathname === '/workspace/' || location.pathname === '/workspaces' || location.pathname === '/workspaces/';
+  const isWorkspaceAppRoute = (location.pathname.startsWith('/workspace/') || location.pathname.startsWith('/workspaces/')) && !isHub;
 
   // ── Responsive state ────────────────────────────────────────────────────────
   const [isMobile, setIsMobile]           = useState(window.innerWidth < MOBILE_BREAKPOINT);
@@ -57,7 +58,7 @@ export default function AppShell() {
   return (
     <div className="appshell">
       {/* ── Sidebar ──────────────────────────────────────────────── */}
-      {!isWorkspaceRoute && (
+      {!isWorkspaceAppRoute && (
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
@@ -69,8 +70,8 @@ export default function AppShell() {
       {/* ── Main Column (header + content) ───────────────────────── */}
       <div className={[
         'appshell-main',
-        !isMobile && !isWorkspaceRoute && 'appshell-main--desktop',
-        !isMobile && !isWorkspaceRoute && sidebarCollapsed && 'sidebar-is-collapsed',
+        !isMobile && !isWorkspaceAppRoute && 'appshell-main--desktop',
+        !isMobile && !isWorkspaceAppRoute && sidebarCollapsed && 'sidebar-is-collapsed',
       ].filter(Boolean).join(' ')}>
 
         {/* ── Top Header ─────────────────────────────────────────── */}
@@ -88,6 +89,46 @@ export default function AppShell() {
                 <Menu size={20} />
               </button>
             )}
+
+            {/* Workspace Hub Button */}
+            <button
+              id="header-hub-btn"
+              onClick={() => navigate('/workspace')}
+              style={{
+                display: 'none', // hidden by default on mobile, shown on desktop below or handle layout cleanly
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                color: 'var(--text-muted)',
+                background: 'var(--bg-card-hover)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                padding: '5px 12px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                marginRight: '0.75rem'
+              }}
+              className="appshell-desktop-only-btn" // we can style or write style directly
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--text-main)';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--text-muted)';
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+              }}
+            >
+              <LayoutGrid size={13} />
+              <span>Workspace Hub</span>
+            </button>
+            <style>{`
+              @media (min-width: 768px) {
+                #header-hub-btn {
+                  display: flex !important;
+                }
+              }
+            `}</style>
 
             {/* API status badge */}
             <div className={`appshell-api-badge ${isApiLive ? 'appshell-api-badge--live' : 'appshell-api-badge--offline'}`}>
@@ -176,7 +217,7 @@ export default function AppShell() {
           className="appshell-content" 
           id="main-content" 
           role="main"
-          style={isWorkspaceRoute ? { padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' } : {}}
+          style={isWorkspaceAppRoute ? { padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' } : {}}
         >
           <Outlet />
         </main>

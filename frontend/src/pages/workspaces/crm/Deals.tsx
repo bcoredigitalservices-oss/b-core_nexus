@@ -3,8 +3,8 @@ import {
   TrendingUp, RefreshCw, AlertCircle, Search, Filter, ArrowUpRight,
   Users, Target, Mail, Calendar, DollarSign, BarChart2, PieChart
 } from 'lucide-react';
-import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { useAppContext } from '../../../context/AppContext';
+import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { CRM_SIDEBAR } from './crmSidebarConfig';
 
 const DEAL_STAGES = [
@@ -129,6 +129,7 @@ export default function Deals() {
 
   return (
     <WorkspaceLayout config={CRM_SIDEBAR}>
+      <div style={{ padding: '2rem', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
 
         {/* Header */}
@@ -389,6 +390,7 @@ export default function Deals() {
         )}
       </div>
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
     </WorkspaceLayout>
   );
 }

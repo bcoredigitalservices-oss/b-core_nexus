@@ -2,24 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import {
-  Users,
-  Plus,
-  RefreshCw,
-  X,
-  AlertCircle,
-  CheckCircle2,
-  Layers,
-  TrendingUp,
-  History,
-  FileText,
-  ShoppingBag,
-  Trash2,
-  Calendar,
-  DollarSign,
-  Tag
+  Users, Plus, RefreshCw, X, AlertCircle, CheckCircle2, Layers, TrendingUp, History,
+  FileText, ShoppingBag, Trash2, Calendar, DollarSign, Tag, Search, CheckSquare, Printer, MessageCircle, Download
 } from 'lucide-react';
-import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { useAppContext } from '../../../context/AppContext';
+import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { CRM_SIDEBAR } from './crmSidebarConfig';
 
 interface Customer {
@@ -35,23 +22,28 @@ interface InventoryItem {
   base_price: number;
 }
 
+interface SalesOrderTax {
+  type: 'Actual' | 'Percent';
+  account_head: string;
+  rate: number;
+  amount: number;
+}
+
+interface SalesOrderLog {
+  timestamp: string;
+  user: string;
+  action: string;
+  comment: string;
+}
+
 interface SalesOrderLine {
-  id: string;
-  sales_order_id: string;
   item_id: string;
   quantity: number;
   unit_price: number;
   line_total: number;
-}
-
-interface SalesOrder {
-  id: string;
-  customer_id: string;
-  order_reference: string;
-  order_date: string;
-  status: 'DRAFT' | 'CONFIRMED' | 'FULFILLED' | 'CANCELLED';
-  grand_total: number;
-  lines: SalesOrderLine[];
+  custom_attributes: {
+    delivery_date?: string;
+  };
 }
 
 interface SalesOrderFormValues {
@@ -59,40 +51,50 @@ interface SalesOrderFormValues {
   order_reference: string;
   order_date: string;
   status: 'DRAFT' | 'CONFIRMED' | 'FULFILLED' | 'CANCELLED';
-  lines: {
-    item_id: string;
-    quantity: number;
-    unit_price: number;
-    line_total: number;
-  }[];
+  grand_total: number;
+  custom_attributes: {
+    series?: string;
+    order_type?: string;
+    is_subcontracted?: boolean;
+    delivery_date?: string;
+    title?: string;
+    tax_category?: string;
+    shipping_rule?: string;
+    incoterm?: string;
+    rounding_adjustment?: number;
+    rounded_total?: number;
+    advance_paid?: number;
+    taxes?: SalesOrderTax[];
+    logs?: SalesOrderLog[];
+  };
+  lines: SalesOrderLine[];
 }
 
 export default function SalesOrders() {
-  const { authFetch } = useAppContext();
+  const { authFetch, user } = useAppContext();
   const navigate = useNavigate();
 
-  // Grid/List State
-  const [orders, setOrders] = useState<SalesOrder[]>([]);
+  // Data State
+  const [orders, setOrders] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Lookup Options
+  // Lookups
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [items, setItems] = useState<InventoryItem[]>([]);
-  const [customerSearch, setCustomerSearch] = useState('');
-
-  // Lookup Maps
   const [customerMap, setCustomerMap] = useState<Record<string, string>>({});
   const [itemMap, setItemMap] = useState<Record<string, { sku: string; name: string }>>({});
 
-  // Modal State
+  // Form & Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+  const [activeTab, setActiveTab] = useState<'DETAILS' | 'ITEMS' | 'TAXES' | 'LOGS'>('DETAILS');
 
   const { register, control, handleSubmit, reset, setValue, formState: { errors } } = useForm<SalesOrderFormValues>({
     defaultValues: {
@@ -100,19 +102,44 @@ export default function SalesOrders() {
       order_reference: '',
       order_date: new Date().toISOString().split('T')[0],
       status: 'DRAFT',
-      lines: [{ item_id: '', quantity: 1, unit_price: 0, line_total: 0 }]
+      grand_total: 0,
+      custom_attributes: {
+        series: 'SAL-ORD-YYYY-',
+        order_type: 'Sales',
+        is_subcontracted: false,
+        delivery_date: '',
+        title: '',
+        tax_category: '',
+        shipping_rule: '',
+        incoterm: '',
+        rounding_adjustment: 0,
+        rounded_total: 0,
+        advance_paid: 0,
+        taxes: [],
+        logs: []
+      },
+      lines: []
     }
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields: lineFields, append: appendLine, remove: removeLine } = useFieldArray({
     control,
     name: 'lines'
   });
 
-  const watchLines = useWatch({
+  const { fields: taxFields, append: appendTax, remove: removeTax } = useFieldArray({
     control,
-    name: 'lines'
+    name: 'custom_attributes.taxes'
   });
+
+  const { fields: logFields, append: appendLog } = useFieldArray({
+    control,
+    name: 'custom_attributes.logs'
+  });
+
+  const watchLines = useWatch({ control, name: 'lines' }) || [];
+  const watchTaxes = useWatch({ control, name: 'custom_attributes.taxes' }) || [];
+  const watchRounding = useWatch({ control, name: 'custom_attributes.rounding_adjustment' }) || 0;
 
   const API_BASE = `${import.meta.env.VITE_API_URL}/api/v1/workspaces/crm`;
   const INV_BASE = `${import.meta.env.VITE_API_URL}/api/v1/workspaces/inventory`;
@@ -120,63 +147,37 @@ export default function SalesOrders() {
   const fetchDependencies = async () => {
     try {
       const token = localStorage.getItem('bcore_token');
-      // Fetch customers
-      const custRes = await fetch(`${API_BASE}/customers?limit=200`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const custRes = await fetch(`${API_BASE}/customers?limit=200`, { headers: { Authorization: `Bearer ${token}` } });
       if (custRes.ok) {
         const data = await custRes.json();
-        const custs = data.customers || [];
-        setCustomers(custs);
+        setCustomers(data.customers || []);
         const map: Record<string, string> = {};
-        custs.forEach((c: any) => {
-          map[c.id] = c.company_name;
-        });
+        (data.customers || []).forEach((c: any) => map[c.id] = c.company_name);
         setCustomerMap(map);
       }
-
-      // Fetch Inventory Items
-      const itemRes = await fetch(`${INV_BASE}/items?limit=200`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const itemRes = await fetch(`${INV_BASE}/items?limit=200`, { headers: { Authorization: `Bearer ${token}` } });
       if (itemRes.ok) {
         const data = await itemRes.json();
-        const itemsList = data.items || [];
-        setItems(itemsList);
+        setItems(data.items || []);
         const map: Record<string, { sku: string; name: string }> = {};
-        itemsList.forEach((it: any) => {
-          map[it.id] = { sku: it.sku, name: it.name };
-        });
+        (data.items || []).forEach((it: any) => map[it.id] = { sku: it.sku, name: it.name });
         setItemMap(map);
       }
-    } catch (err) {
-      console.warn('Failed to load customers or items options.', err);
-    }
+    } catch (err) {}
   };
 
   const fetchOrders = async () => {
     setLoading(true);
-    setErrorMsg('');
     try {
       const token = localStorage.getItem('bcore_token');
       const response = await fetch(`${API_BASE}/sales-orders?page=${page}&page_size=${pageSize}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error('Access Denied: You do not have permission to access the CRM Workspace.');
-        }
-        throw new Error('Failed to retrieve Sales Order records.');
+      if (response.ok) {
+        const data = await response.json();
+        setOrders(data.items || []);
+        setTotal(data.total || 0);
       }
-
-      const data = await response.json();
-      setOrders(data.items || []);
-      setTotal(data.total || 0);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'An error occurred while fetching sales orders.');
     } finally {
       setLoading(false);
     }
@@ -190,49 +191,129 @@ export default function SalesOrders() {
     fetchOrders();
   }, [page]);
 
-  useEffect(() => {
-    const handleMutation = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      if (customEvent.detail?.workspace === 'crm' && customEvent.detail?.entity === 'sales_order') {
-        console.log('[WS Trigger] State mutation received. Reloading sales orders...');
-        fetchOrders();
-      }
-    };
-    window.addEventListener('STATE_MUTATION', handleMutation);
-    return () => window.removeEventListener('STATE_MUTATION', handleMutation);
-  }, []);
+  // Computed Totals
+  const watchLinesComputed = watchLines.map((line: any) => {
+    const qty = Number(line?.quantity) || 0;
+    const price = Number(line?.unit_price) || 0;
+    return { ...line, line_total: Number((qty * price).toFixed(4)) };
+  });
 
-  const handleOpenModal = () => {
+  const linesTotal = watchLinesComputed.reduce((sum, line) => sum + line.line_total, 0);
+
+  const watchTaxesComputed = watchTaxes.map((tax: any) => {
+    const rate = Number(tax?.rate) || 0;
+    const amount = tax.type === 'Percent' ? linesTotal * (rate / 100) : rate;
+    return { ...tax, amount: Number(amount.toFixed(4)) };
+  });
+
+  const taxesTotal = watchTaxesComputed.reduce((sum, tax) => sum + tax.amount, 0);
+  const grandTotal = linesTotal + taxesTotal;
+  const roundedTotal = grandTotal + Number(watchRounding);
+
+  const handleOpenCreate = () => {
+    setEditingOrderId(null);
     reset({
       customer_id: '',
       order_reference: `SO-${new Date().getFullYear()}-${String(Math.floor(100 + Math.random() * 900))}`,
       order_date: new Date().toISOString().split('T')[0],
       status: 'DRAFT',
-      lines: [{ item_id: '', quantity: 1, unit_price: 0, line_total: 0 }]
+      grand_total: 0,
+      custom_attributes: {
+        series: 'SAL-ORD-YYYY-',
+        order_type: 'Sales',
+        is_subcontracted: false,
+        delivery_date: '',
+        title: '',
+        tax_category: '',
+        shipping_rule: '',
+        incoterm: '',
+        rounding_adjustment: 0,
+        rounded_total: 0,
+        advance_paid: 0,
+        taxes: [],
+        logs: []
+      },
+      lines: [{ item_id: '', quantity: 1, unit_price: 0, line_total: 0, custom_attributes: {} }]
     });
     setFormError('');
     setFormSuccess('');
-    setCustomerSearch('');
+    setActiveTab('DETAILS');
     setIsModalOpen(true);
   };
 
-  // Watch lines to calculate totals
-  const watchLinesComputed = (watchLines || []).map((line: any) => {
-    const qty = Number(line?.quantity) || 0;
-    const price = Number(line?.unit_price) || 0;
-    return {
-      ...line,
-      line_total: Number((qty * price).toFixed(4))
-    };
-  });
+  const handleOpenEdit = async (orderId: string) => {
+    setFormError('');
+    setFormSuccess('');
+    setActiveTab('DETAILS');
+    try {
+      const token = localStorage.getItem('bcore_token');
+      const response = await fetch(`${API_BASE}/sales-orders/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to load order');
+      const order = await response.json();
 
-  const grandTotal = watchLinesComputed.reduce((sum, line) => sum + line.line_total, 0);
-
-  const handleItemSelect = (index: number, itemId: string) => {
-    const matchedItem = items.find(it => it.id === itemId);
-    if (matchedItem) {
-      setValue(`lines.${index}.unit_price`, matchedItem.base_price);
+      reset({
+        customer_id: order.customer_id,
+        order_reference: order.order_reference,
+        order_date: order.order_date,
+        status: order.status,
+        grand_total: order.grand_total,
+        custom_attributes: {
+          series: order.custom_attributes?.series || 'SAL-ORD-YYYY-',
+          order_type: order.custom_attributes?.order_type || 'Sales',
+          is_subcontracted: order.custom_attributes?.is_subcontracted || false,
+          delivery_date: order.custom_attributes?.delivery_date || '',
+          title: order.custom_attributes?.title || '',
+          tax_category: order.custom_attributes?.tax_category || '',
+          shipping_rule: order.custom_attributes?.shipping_rule || '',
+          incoterm: order.custom_attributes?.incoterm || '',
+          rounding_adjustment: order.custom_attributes?.rounding_adjustment || 0,
+          rounded_total: order.custom_attributes?.rounded_total || 0,
+          advance_paid: order.custom_attributes?.advance_paid || 0,
+          taxes: order.custom_attributes?.taxes || [],
+          logs: order.custom_attributes?.logs || []
+        },
+        lines: order.lines.map((l: any) => ({
+          item_id: l.item_id,
+          quantity: l.quantity,
+          unit_price: l.unit_price,
+          line_total: l.line_total,
+          custom_attributes: l.custom_attributes || {}
+        }))
+      });
+      setEditingOrderId(orderId);
+      setIsModalOpen(true);
+    } catch (err: any) {
+      setErrorMsg(err.message);
     }
+  };
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleWhatsAppShare = () => {
+    if (!editingOrderId) return;
+    const ord = orders.find(o => o.id === editingOrderId);
+    if (!ord) return;
+    const text = `*Sales Order*: ${ord.order_reference}%0A*Customer*: ${customerMap[ord.customer_id]}%0A*Total*: $${Number(ord.grand_total).toLocaleString()}%0A*Status*: ${ord.status}`;
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+  };
+
+  const handleExportCSV = () => {
+    if (!editingOrderId) return;
+    const ord = orders.find(o => o.id === editingOrderId);
+    if (!ord) return;
+    const csvContent = "data:text/csv;charset=utf-8," 
+        + "Order Reference,Customer,Order Date,Status,Grand Total\n"
+        + `${ord.order_reference},${customerMap[ord.customer_id]},${ord.order_date},${ord.status},${ord.grand_total}`;
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `sales_order_${ord.order_reference}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const onSubmit = async (values: SalesOrderFormValues) => {
@@ -240,54 +321,52 @@ export default function SalesOrders() {
     setFormError('');
     setFormSuccess('');
 
-    // Pre-calculate line totals & grand total to ensure float accuracy matches Pydantic
-    const payloadLines = values.lines.map(line => {
-      const qty = Number(line.quantity) || 0;
-      const price = Number(line.unit_price) || 0;
-      return {
-        item_id: line.item_id,
-        quantity: qty,
-        unit_price: price,
-        line_total: Number((qty * price).toFixed(4)),
-        custom_attributes: {}
-      };
-    });
+    // Prepare payload
+    const payloadLines = values.lines.map((line, idx) => ({
+      item_id: line.item_id,
+      quantity: Number(line.quantity),
+      unit_price: Number(line.unit_price),
+      line_total: watchLinesComputed[idx].line_total,
+      custom_attributes: line.custom_attributes
+    }));
 
-    const payloadGrandTotal = payloadLines.reduce((sum, line) => sum + line.line_total, 0);
+    const payloadTaxes = (values.custom_attributes.taxes || []).map((tax, idx) => ({
+      ...tax,
+      amount: watchTaxesComputed[idx].amount
+    }));
 
     const payload = {
       customer_id: values.customer_id,
       order_reference: values.order_reference,
       order_date: values.order_date,
       status: values.status,
-      grand_total: Number(payloadGrandTotal.toFixed(4)),
+      grand_total: Number(grandTotal.toFixed(4)),
       lines: payloadLines,
-      custom_attributes: {}
+      custom_attributes: {
+        ...values.custom_attributes,
+        taxes: payloadTaxes,
+        rounded_total: Number(roundedTotal.toFixed(4)),
+        rounding_adjustment: Number(watchRounding)
+      }
     };
 
     try {
       const token = localStorage.getItem('bcore_token');
-      const response = await fetch(`${API_BASE}/sales-orders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+      const url = editingOrderId ? `${API_BASE}/sales-orders/${editingOrderId}` : `${API_BASE}/sales-orders`;
+      const method = editingOrderId ? 'PATCH' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        let errMsg = 'Failed to create sales order.';
-        if (typeof errorData.detail === 'string') {
-          errMsg = errorData.detail;
-        } else if (Array.isArray(errorData.detail)) {
-          errMsg = errorData.detail.map((d: any) => d.msg).join(', ');
-        }
-        throw new Error(errMsg);
+        throw new Error(errorData.detail || 'Failed to save sales order.');
       }
 
-      setFormSuccess('Sales Order created successfully!');
+      setFormSuccess('Sales Order saved successfully!');
       setTimeout(() => {
         setIsModalOpen(false);
         fetchOrders();
@@ -299,532 +378,393 @@ export default function SalesOrders() {
     }
   };
 
-  // Filtered customer list for search dropdown
-  const filteredCustomers = customers.filter(cust =>
-    cust.company_name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    cust.contact_name.toLowerCase().includes(customerSearch.toLowerCase())
-  );
+  const handleAddLog = (e: any) => {
+    e.preventDefault();
+    const comment = prompt('Enter review comment:');
+    if (comment) {
+      appendLog({
+        timestamp: new Date().toISOString(),
+        user: user?.full_name || 'Current User',
+        action: 'Reviewed',
+        comment
+      });
+    }
+  };
+
+  // KPIs
+  const pipelineTotal = orders.filter(o => o.status === 'DRAFT' || o.status === 'CONFIRMED').reduce((s, o) => s + Number(o.grand_total), 0);
+  const fulfilledTotal = orders.filter(o => o.status === 'FULFILLED').reduce((s, o) => s + Number(o.grand_total), 0);
 
   return (
     <WorkspaceLayout config={CRM_SIDEBAR}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
-        {/* Header Block */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
-              Sales Orders
-            </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
-              Create, confirm, and monitor commercial customer purchase orders and cross-workspace inventory bookings.
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button
-              onClick={fetchOrders}
-              disabled={loading}
-              className="btn btn-secondary"
-              style={{ height: '38px', padding: '0 0.85rem' }}
-            >
-              <RefreshCw size={14} className={loading ? 'spin' : ''} style={{ animation: loading ? 'spin 1.5s linear infinite' : 'none' }} />
-            </button>
-            <button
-              id="btn-create-order"
-              onClick={handleOpenModal}
-              className="btn btn-primary"
-              style={{
-                background: 'linear-gradient(135deg, #00f5a0, #00d980)',
-                color: 'var(--text-main)',
-                fontWeight: 700,
-                boxShadow: '0 4px 12px rgba(0,245,160,0.2)',
-              }}
-            >
-              <Plus size={16} />
-              Create Sales Order
-            </button>
-          </div>
-        </div>
-
-        {/* Error notification */}
-        {errorMsg && (
+      <div style={{ padding: '2rem', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+          
+          {/* Header Block */}
           <div style={{
+            background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.12) 0%, rgba(59, 130, 246, 0.03) 100%)',
+            border: '1px solid rgba(0, 242, 254, 0.2)',
+            borderRadius: '14px',
+            padding: '1.75rem 2rem',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            background: 'rgba(255,51,102,0.1)',
-            border: '1px solid rgba(255,51,102,0.25)',
-            color: '#ff3366',
-            padding: '1rem',
-            borderRadius: '8px',
-            fontSize: '0.85rem'
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1.5rem',
           }}>
-            <AlertCircle size={16} />
-            <span>{errorMsg}</span>
-          </div>
-        )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+              <div style={{ background: 'rgba(0, 242, 254, 0.1)', border: '1px solid rgba(0, 242, 254, 0.2)', borderRadius: '12px', padding: '0.75rem' }}>
+                <ShoppingBag size={28} color="#00f2fe" />
+              </div>
+              <div>
+                <h1 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                  Sales Order Registry
+                </h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.3rem 0 0 0' }}>
+                  ERP Advanced view for Sales Orders.
+                </p>
+              </div>
+            </div>
 
-        {/* Data Grid Table */}
-        <div style={{
-          background: 'var(--bg-card)',
-          borderRadius: '12px',
-          border: '1px solid var(--border-color)',
-          overflow: 'hidden'
-        }}>
-          <div style={{ overflowX: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Active Pipeline</span>
+                <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#00f2fe' }}>${pipelineTotal.toLocaleString()}</span>
+              </div>
+              <div style={{ width: '1px', height: '35px', background: 'var(--border-color)' }}></div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Fulfilled</span>
+                <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981' }}>${fulfilledTotal.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button onClick={fetchOrders} className="btn btn-secondary"><RefreshCw size={14} /></button>
+              <button onClick={handleOpenCreate} className="btn btn-primary"><Plus size={16} /> Create Sales Order</button>
+            </div>
+          </div>
+
+          {/* List View */}
+          <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
               <thead>
-                <tr style={{
-                  borderBottom: '2px solid rgba(255,255,255,0.08)',
-                  color: 'var(--text-muted)',
-                  background: 'var(--bg-card)',
-                  fontWeight: 600
-                }}>
+                <tr style={{ borderBottom: '2px solid rgba(255,255,255,0.08)', color: 'var(--text-muted)' }}>
                   <th style={{ padding: '1rem' }}>Order Reference</th>
-                  <th style={{ padding: '1rem' }}>Customer Name</th>
-                  <th style={{ padding: '1rem' }}>Order Date</th>
-                  <th style={{ padding: '1rem', textAlign: 'right' }}>Grand Total</th>
+                  <th style={{ padding: '1rem' }}>Customer</th>
+                  <th style={{ padding: '1rem' }}>Date</th>
+                  <th style={{ padding: '1rem', textAlign: 'right' }}>Total</th>
                   <th style={{ padding: '1rem', textAlign: 'center' }}>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                      <RefreshCw size={24} className="spin" style={{ animation: 'spin 1.5s linear infinite', margin: '0 auto 1rem' }} />
-                      Loading Sales Orders...
-                    </td>
+                {orders.map((ord) => (
+                  <tr key={ord.id} onClick={() => handleOpenEdit(ord.id)} style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                    <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>{ord.order_reference}</td>
+                    <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{customerMap[ord.customer_id] || ord.customer_id}</td>
+                    <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{ord.order_date}</td>
+                    <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 700, color: '#00f5a0' }}>${Number(ord.grand_total).toLocaleString()}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>{ord.status}</td>
                   </tr>
-                ) : orders.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                      No sales orders found. Click "Create Sales Order" to register new records.
-                    </td>
-                  </tr>
-                ) : (
-                  orders.map((ord) => {
-                    let pillColor = 'var(--text-muted)';
-                    let pillBg = 'rgba(148, 163, 184, 0.12)';
-                    if (ord.status === 'CONFIRMED') {
-                      pillColor = '#3b82f6';
-                      pillBg = 'rgba(59, 130, 246, 0.12)';
-                    } else if (ord.status === 'FULFILLED') {
-                      pillColor = '#10b981';
-                      pillBg = 'rgba(16, 185, 129, 0.12)';
-                    } else if (ord.status === 'CANCELLED') {
-                      pillColor = '#ef4444';
-                      pillBg = 'rgba(239, 68, 68, 0.12)';
-                    }
-
-                    return (
-                      <tr key={ord.id} style={{
-                        borderBottom: '1px solid var(--border-color)',
-                        transition: 'background 0.2s',
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <FileText size={14} color="#00f5a0" />
-                            {ord.order_reference}
-                          </div>
-                        </td>
-                        <td style={{ padding: '1rem', color: 'var(--text-main)' }}>
-                          {customerMap[ord.customer_id] || ord.customer_id}
-                        </td>
-                        <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>
-                          {ord.order_date}
-                        </td>
-                        <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 700, color: 'var(--text-main)' }}>
-                          ${Number(ord.grand_total).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </td>
-                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            background: pillBg,
-                            color: pillColor,
-                            border: `1px solid ${pillColor}22`
-                          }}>
-                            {ord.status}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
+                ))}
               </tbody>
             </table>
           </div>
-
-          {/* Pagination Controls */}
-          {total > pageSize && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '1rem',
-              borderTop: '1px solid var(--border-color)',
-              background: 'var(--bg-card)'
-            }}>
-              <button
-                disabled={page === 1}
-                onClick={() => setPage(p => Math.max(p - 1, 1))}
-                className="btn btn-secondary"
-                style={{ height: '32px', padding: '0 0.75rem', fontSize: '0.8rem' }}
-              >
-                Previous
-              </button>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Page {page} of {Math.ceil(total / pageSize)} ({total} records)
-              </span>
-              <button
-                disabled={page >= Math.ceil(total / pageSize)}
-                onClick={() => setPage(p => p + 1)}
-                className="btn btn-secondary"
-                style={{ height: '32px', padding: '0 0.75rem', fontSize: '0.8rem' }}
-              >
-                Next
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* ─── Sales Order Creation Modal ─── */}
+      {/* ─── Advanced Sales Order Modal ─── */}
       {isModalOpen && (
         <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.4)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          padding: '1.5rem'
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem'
         }}>
           <div style={{
-            background: 'linear-gradient(135deg, #141b2e 0%, #0c1224 100%)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '16px',
-            width: '100%',
-            maxWidth: '800px',
-            maxHeight: '90vh',
-            boxShadow: '0 24px 48px -12px rgba(0,0,0,0.5), 0 0 32px rgba(0,245,160,0.1)',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden'
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)', borderRadius: '16px',
+            width: '95vw', maxWidth: '1200px', height: '90vh',
+            display: 'flex', flexDirection: 'column', overflow: 'hidden'
           }}>
-            {/* Header */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '1.25rem 1.5rem',
-              borderBottom: '1px solid var(--border-color)',
-              background: 'var(--bg-card-hover)'
-            }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ShoppingBag size={18} color="#00f5a0" />
-                Create New Sales Order
-              </h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-              >
-                <X size={18} />
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card-hover)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
+                  {editingOrderId ? 'Edit Sales Order' : 'Create Sales Order'}
+                </h3>
+                {editingOrderId && (
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button onClick={handleExportCSV} className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Download size={14} color="var(--text-muted)" /> Export
+                    </button>
+                    <button onClick={handlePrint} className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Printer size={14} color="var(--text-muted)" /> Print
+                    </button>
+                    <button onClick={handleWhatsAppShare} className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <MessageCircle size={14} color="#25D366" /> Share via WhatsApp
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <X size={20} />
               </button>
             </div>
 
-            {/* Form scrollable container */}
-            <div style={{ overflowY: 'auto', flex: 1 }}>
-              <form onSubmit={handleSubmit(onSubmit)} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                {formError && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: 'rgba(255,51,102,0.1)',
-                    border: '1px solid rgba(255,51,102,0.2)',
-                    color: '#ff3366',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '8px',
-                    fontSize: '0.8rem'
-                  }}>
-                    <AlertCircle size={14} />
-                    <span>{formError}</span>
+            {/* Modal Tabs */}
+            <div style={{ display: 'flex', gap: '2rem', padding: '0 1.5rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card)' }}>
+              {['DETAILS', 'ITEMS', 'TAXES', 'LOGS'].map(tab => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab as any)}
+                  style={{
+                    background: 'none', border: 'none', padding: '1rem 0',
+                    color: activeTab === tab ? '#00f2fe' : 'var(--text-muted)',
+                    borderBottom: activeTab === tab ? '2px solid #00f2fe' : '2px solid transparent',
+                    fontWeight: activeTab === tab ? 700 : 500,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ overflowY: 'auto', flex: 1, padding: '1.5rem' }}>
+              <form id="sales-order-form" onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {formError && <div style={{ color: '#ff3366', background: 'rgba(255,51,102,0.1)', padding: '1rem', borderRadius: '8px' }}>{formError}</div>}
+                
+                {/* Details Tab */}
+                {activeTab === 'DETAILS' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <h4 style={{ color: '#00f2fe' }}>Primary Info</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                        <label>Series</label>
+                        <select {...register('custom_attributes.series')} style={{ height: '36px' }}>
+                          <option value="SAL-ORD-YYYY-">SAL-ORD-YYYY-</option>
+                          <option value="MAINT-YYYY-">MAINT-YYYY-</option>
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                        <label>Customer *</label>
+                        <select {...register('customer_id', { required: true })} style={{ height: '36px' }}>
+                          <option value="">-- Choose --</option>
+                          {customers.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                        <label>Date *</label>
+                        <input type="date" {...register('order_date', { required: true })} style={{ height: '36px' }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                        <label>Delivery Date</label>
+                        <input type="date" {...register('custom_attributes.delivery_date')} style={{ height: '36px' }} />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <h4 style={{ color: '#00f2fe' }}>Additional Info</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                        <label>Order Type</label>
+                        <select {...register('custom_attributes.order_type')} style={{ height: '36px' }}>
+                          <option value="Sales">Sales</option>
+                          <option value="Maintenance">Maintenance</option>
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                        <label>Order Reference *</label>
+                        <input type="text" {...register('order_reference', { required: true })} style={{ height: '36px' }} />
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.5rem' }}>
+                        <input type="checkbox" {...register('custom_attributes.is_subcontracted')} style={{ width: '18px', height: '18px' }} />
+                        <label style={{ margin: 0 }}>Is Subcontracted</label>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginTop: '0.8rem' }}>
+                        <label>Title</label>
+                        <input type="text" {...register('custom_attributes.title')} placeholder="Optional title..." style={{ height: '36px' }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                        <label>Status *</label>
+                        <select {...register('status')} style={{ height: '36px' }}>
+                          <option value="DRAFT">DRAFT</option>
+                          <option value="CONFIRMED">CONFIRMED</option>
+                          <option value="FULFILLED">FULFILLED</option>
+                          <option value="CANCELLED">CANCELLED</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                {formSuccess && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: 'rgba(16,185,129,0.1)',
-                    border: '1px solid rgba(16,185,129,0.2)',
-                    color: '#10b981',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '8px',
-                    fontSize: '0.8rem'
-                  }}>
-                    <CheckCircle2 size={14} />
-                    <span>{formSuccess}</span>
-                  </div>
-                )}
-
-                {/* ─── Top Section: Header ─── */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                  gap: '1rem',
-                  background: 'var(--bg-card-hover)',
-                  padding: '1rem',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border-color)'
-                }}>
-                  {/* Customer Select dropdown */}
+                {/* Items Tab */}
+                {activeTab === 'ITEMS' && (
                   <div>
-                    <label>Customer *</label>
-                    <select
-                      {...register('customer_id', { required: 'Customer is required' })}
-                    >
-                      <option value="">-- Choose Customer --</option>
-                      {customers.map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.company_name} ({c.contact_name})
-                        </option>
-                      ))}
-                    </select>
-                    {errors.customer_id && <p style={{ color: '#ff3366', fontSize: '0.75rem', marginTop: '4px' }}>{errors.customer_id.message}</p>}
-                  </div>
-
-                  {/* Order Reference */}
-                  <div>
-                    <label>Order Reference *</label>
-                    <div style={{ position: 'relative' }}>
-                      <Tag size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                      <input
-                        type="text"
-                        placeholder="SO-YYYY-XXX"
-                        style={{ paddingLeft: '2.2rem' }}
-                        {...register('order_reference', { required: 'Order reference is required' })}
-                      />
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+                      <button type="button" onClick={() => appendLine({ item_id: '', quantity: 1, unit_price: 0, line_total: 0, custom_attributes: {} })} className="btn btn-secondary">
+                        <Plus size={14} /> Add Row
+                      </button>
                     </div>
-                    {errors.order_reference && <p style={{ color: '#ff3366', fontSize: '0.75rem', marginTop: '4px' }}>{errors.order_reference.message}</p>}
-                  </div>
-
-                  {/* Order Date */}
-                  <div>
-                    <label>Order Date *</label>
-                    <div style={{ position: 'relative' }}>
-                      <Calendar size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                      <input
-                        type="date"
-                        style={{ paddingLeft: '2.2rem' }}
-                        {...register('order_date', { required: 'Order date is required' })}
-                      />
-                    </div>
-                    {errors.order_date && <p style={{ color: '#ff3366', fontSize: '0.75rem', marginTop: '4px' }}>{errors.order_date.message}</p>}
-                  </div>
-
-                  {/* Status */}
-                  <div>
-                    <label>Order Status *</label>
-                    <select {...register('status')}>
-                      <option value="DRAFT">DRAFT</option>
-                      <option value="CONFIRMED">CONFIRMED</option>
-                      <option value="FULFILLED">FULFILLED</option>
-                      <option value="CANCELLED">CANCELLED</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* ─── Middle Section: Line Items ─── */}
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
-                      Order Line Items
-                    </h4>
-                    <button
-                      type="button"
-                      onClick={() => append({ item_id: '', quantity: 1, unit_price: 0, line_total: 0 })}
-                      className="btn btn-secondary"
-                      style={{ height: '32px', padding: '0 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
-                    >
-                      <Plus size={12} />
-                      Add Row
-                    </button>
-                  </div>
-
-                  <div style={{
-                    background: 'rgba(0,0,0,0.2)',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-color)',
-                    overflow: 'hidden'
-                  }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                       <thead>
-                        <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card-hover)', color: 'var(--text-muted)' }}>
-                          <th style={{ padding: '0.75rem', width: '45%' }}>Inventory Item *</th>
-                          <th style={{ padding: '0.75rem', width: '15%', textAlign: 'right' }}>Qty *</th>
-                          <th style={{ padding: '0.75rem', width: '20%', textAlign: 'right' }}>Unit Price (USD) *</th>
-                          <th style={{ padding: '0.75rem', width: '15%', textAlign: 'right' }}>Total</th>
-                          <th style={{ padding: '0.75rem', width: '5%', textAlign: 'center' }}></th>
+                        <tr style={{ background: 'var(--bg-card-hover)', borderBottom: '1px solid var(--border-color)' }}>
+                          <th style={{ padding: '1rem', textAlign: 'left' }}>Item Code</th>
+                          <th style={{ padding: '1rem', textAlign: 'left' }}>Delivery Date</th>
+                          <th style={{ padding: '1rem', textAlign: 'right' }}>Quantity</th>
+                          <th style={{ padding: '1rem', textAlign: 'right' }}>Rate (NGN)</th>
+                          <th style={{ padding: '1rem', textAlign: 'right' }}>Amount (NGN)</th>
+                          <th style={{ padding: '1rem', textAlign: 'center' }}></th>
                         </tr>
                       </thead>
                       <tbody>
-                        {fields.map((field, index) => {
-                          const qty = Number(watchLinesComputed[index]?.quantity) || 0;
-                          const price = Number(watchLinesComputed[index]?.unit_price) || 0;
-                          const total = qty * price;
-
-                          return (
-                            <tr key={field.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                              {/* Item select */}
-                              <td style={{ padding: '0.5rem 0.75rem' }}>
-                                <select
-                                  style={{ height: '36px', fontSize: '0.8rem' }}
-                                  {...register(`lines.${index}.item_id` as const, { required: true })}
-                                  onChange={(e) => handleItemSelect(index, e.target.value)}
-                                >
-                                  <option value="">-- Select Catalog Item --</option>
-                                  {items.map(it => (
-                                    <option key={it.id} value={it.id}>
-                                      {it.name} [{it.sku}]
-                                    </option>
-                                  ))}
-                                </select>
-                              </td>
-
-                              {/* Qty */}
-                              <td style={{ padding: '0.5rem 0.75rem' }}>
-                                <input
-                                  type="number"
-                                  step="any"
-                                  min="0.0001"
-                                  style={{ height: '36px', textAlign: 'right', padding: '0 0.5rem', fontSize: '0.8rem' }}
-                                  {...register(`lines.${index}.quantity` as const, {
-                                    required: true,
-                                    valueAsNumber: true,
-                                    validate: v => v > 0
-                                  })}
-                                />
-                              </td>
-
-                              {/* Price */}
-                              <td style={{ padding: '0.5rem 0.75rem' }}>
-                                <input
-                                  type="number"
-                                  step="any"
-                                  min="0"
-                                  style={{ height: '36px', textAlign: 'right', padding: '0 0.5rem', fontSize: '0.8rem' }}
-                                  {...register(`lines.${index}.unit_price` as const, {
-                                    required: true,
-                                    valueAsNumber: true,
-                                    validate: v => v >= 0
-                                  })}
-                                />
-                              </td>
-
-                              {/* Calculated line total */}
-                              <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right', fontWeight: 700, color: 'var(--text-main)' }}>
-                                ${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                              </td>
-
-                              {/* Delete button */}
-                              <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
-                                <button
-                                  type="button"
-                                  onClick={() => remove(index)}
-                                  disabled={fields.length === 1}
-                                  style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: fields.length === 1 ? 'var(--text-muted)' : '#ff3366',
-                                    cursor: fields.length === 1 ? 'not-allowed' : 'pointer',
-                                    padding: '4px',
-                                    display: 'flex',
-                                    opacity: fields.length === 1 ? 0.4 : 1
-                                  }}
-                                >
-                                  <Trash2 size={15} />
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
+                        {lineFields.map((field, idx) => (
+                          <tr key={field.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                            <td style={{ padding: '0.5rem' }}>
+                              <select {...register(`lines.${idx}.item_id`)} onChange={(e) => {
+                                const matched = items.find(it => it.id === e.target.value);
+                                if (matched) setValue(`lines.${idx}.unit_price`, matched.base_price);
+                              }} style={{ height: '36px' }}>
+                                <option value="">-- Item --</option>
+                                {items.map(it => <option key={it.id} value={it.id}>{it.name}</option>)}
+                              </select>
+                            </td>
+                            <td style={{ padding: '0.5rem' }}>
+                              <input type="date" {...register(`lines.${idx}.custom_attributes.delivery_date`)} style={{ height: '36px' }} />
+                            </td>
+                            <td style={{ padding: '0.5rem' }}>
+                              <input type="number" step="any" {...register(`lines.${idx}.quantity`)} style={{ textAlign: 'right', height: '36px' }} />
+                            </td>
+                            <td style={{ padding: '0.5rem' }}>
+                              <input type="number" step="any" {...register(`lines.${idx}.unit_price`)} style={{ textAlign: 'right', height: '36px' }} />
+                            </td>
+                            <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 600 }}>
+                              {watchLinesComputed[idx]?.line_total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                            <td style={{ padding: '0.5rem', textAlign: 'center' }}>
+                              <button type="button" onClick={() => removeLine(idx)} style={{ background: 'none', border: 'none', color: '#ff3366', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
-                </div>
+                )}
 
-                {/* ─── Bottom Section: Grand Total & Buttons ─── */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  background: 'var(--bg-card-hover)',
-                  padding: '1.25rem',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border-color)',
-                  marginTop: '0.5rem'
-                }}>
+                {/* Taxes Tab */}
+                {activeTab === 'TAXES' && (
                   <div>
-                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600 }}>
-                      Aggregate Grand Total
-                    </span>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#00f5a0', fontFamily: 'var(--font-display)', marginTop: '0.2rem' }}>
-                      ${grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}><label>Tax Category</label><input type="text" {...register('custom_attributes.tax_category')} style={{ height: '36px' }} /></div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}><label>Shipping Rule</label><input type="text" {...register('custom_attributes.shipping_rule')} style={{ height: '36px' }} /></div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}><label>Incoterm</label><input type="text" {...register('custom_attributes.incoterm')} style={{ height: '36px' }} /></div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                      <h4 style={{ color: '#00f2fe' }}>Sales Taxes and Charges</h4>
+                      <button type="button" onClick={() => appendTax({ type: 'Percent', account_head: '', rate: 0, amount: 0 })} className="btn btn-secondary">
+                        <Plus size={14} /> Add Row
+                      </button>
+                    </div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ background: 'var(--bg-card-hover)', borderBottom: '1px solid var(--border-color)' }}>
+                          <th style={{ padding: '1rem', textAlign: 'left' }}>Type</th>
+                          <th style={{ padding: '1rem', textAlign: 'left' }}>Account Head</th>
+                          <th style={{ padding: '1rem', textAlign: 'right' }}>Rate</th>
+                          <th style={{ padding: '1rem', textAlign: 'right' }}>Amount (NGN)</th>
+                          <th style={{ padding: '1rem', textAlign: 'center' }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {taxFields.map((field, idx) => (
+                          <tr key={field.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                            <td style={{ padding: '0.5rem' }}>
+                              <select {...register(`custom_attributes.taxes.${idx}.type`)} style={{ height: '36px' }}>
+                                <option value="Percent">Percent</option>
+                                <option value="Actual">Actual</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: '0.5rem' }}>
+                              <input type="text" {...register(`custom_attributes.taxes.${idx}.account_head`)} style={{ height: '36px' }} />
+                            </td>
+                            <td style={{ padding: '0.5rem' }}>
+                              <input type="number" step="any" {...register(`custom_attributes.taxes.${idx}.rate`)} style={{ textAlign: 'right', height: '36px' }} />
+                            </td>
+                            <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 600 }}>
+                              {watchTaxesComputed[idx]?.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                            <td style={{ padding: '0.5rem', textAlign: 'center' }}>
+                              <button type="button" onClick={() => removeTax(idx)} style={{ background: 'none', border: 'none', color: '#ff3366', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* Logs Tab */}
+                {activeTab === 'LOGS' && (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                      <h4 style={{ color: '#00f2fe' }}>Review Logs & Activity</h4>
+                      <button type="button" onClick={handleAddLog} className="btn btn-secondary">
+                        <CheckSquare size={14} /> Add Review Log
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {logFields.map((log, idx) => (
+                        <div key={log.id} style={{ background: 'var(--bg-card-hover)', padding: '1rem', borderRadius: '8px', borderLeft: '4px solid #00f2fe' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                            <strong style={{ color: 'var(--text-main)' }}>{log.user} ({log.action})</strong>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{new Date(log.timestamp).toLocaleString()}</span>
+                          </div>
+                          <p style={{ margin: 0, color: 'var(--text-muted)' }}>{log.comment}</p>
+                        </div>
+                      ))}
+                      {logFields.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No logs added yet.</p>}
                     </div>
                   </div>
-
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <button
-                      type="button"
-                      onClick={() => setIsModalOpen(false)}
-                      className="btn btn-secondary"
-                      style={{ height: '40px', padding: '0 1.25rem' }}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="btn btn-primary"
-                      style={{
-                        background: 'linear-gradient(135deg, #00f5a0, #00d980)',
-                        color: 'var(--text-main)',
-                        fontWeight: 700,
-                        height: '40px',
-                        padding: '0 1.5rem',
-                        boxShadow: '0 4px 12px rgba(0,245,160,0.2)',
-                      }}
-                    >
-                      {submitting ? 'Submitting...' : 'Create Order'}
-                    </button>
-                  </div>
-                </div>
+                )}
               </form>
             </div>
+
+            {/* Modal Footer with Totals & Submit */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem', background: 'var(--bg-card-hover)', borderTop: '1px solid var(--border-color)' }}>
+              {/* Totals Box */}
+              <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'center' }}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Items (NGN)</span>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>{linesTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Taxes (NGN)</span>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>{taxesTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Rounding</span>
+                  <input type="number" step="any" {...register('custom_attributes.rounding_adjustment')} style={{ width: '90px', height: '32px', fontSize: '0.9rem', textAlign: 'right' }} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: '#00f5a0', textTransform: 'uppercase' }}>Grand Total (NGN)</span>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#00f5a0' }}>{roundedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                </div>
+              </div>
+
+              {/* Submit Buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary" style={{ padding: '0 1.5rem', height: '44px' }}>Cancel</button>
+                <button type="submit" form="sales-order-form" disabled={submitting} className="btn btn-primary" style={{ background: 'linear-gradient(135deg, #00f5a0, #00d980)', color: '#000', padding: '0 1.5rem', height: '44px', fontWeight: 700 }}>
+                  {submitting ? 'Saving...' : 'Save Order'}
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .spin {
-          animation: spin 1.5s linear infinite;
-        }
-      `}</style>
     </WorkspaceLayout>
   );
 }

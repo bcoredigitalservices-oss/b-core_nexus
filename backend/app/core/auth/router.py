@@ -19,7 +19,8 @@ from app.core.auth.schemas import (
     UserRegisterRequest,
     OnboardVerifyRequest,
     OnboardCompleteRequest,
-    OnboardPasswordRequest
+    OnboardPasswordRequest,
+    RefreshTokenRequest
 )
 from app.core.auth.security import (
     pwd_context,
@@ -361,7 +362,7 @@ async def login(
         samesite="strict",
         max_age=7 * 24 * 60 * 60 # 7 days
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 @auth_router.post("/login/verify-totp")
 async def verify_totp(
@@ -400,7 +401,7 @@ async def verify_totp(
         samesite="strict",
         max_age=7 * 24 * 60 * 60
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 @auth_router.post("/totp/setup")
 async def setup_totp(
@@ -497,7 +498,12 @@ async def login_for_access_token(
     access_token = create_access_token(
         data={"sub": str(user.id), "role_tier": user.role_tier}
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
 
 async def oauth2_token_alias(
     form_data: OAuth2PasswordRequestForm = Depends(), 
@@ -505,6 +511,66 @@ async def oauth2_token_alias(
     db: AsyncSession = Depends(get_db)
 ):
     return await login_for_access_token(form_data=form_data, totp_code=totp_code, db=db)
+
+@auth_router.post("/refresh")
+async def refresh_token(
+    response: Response,
+    request: Request,
+    payload: Optional[RefreshTokenRequest] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    refresh_token = None
+    if payload and payload.refresh_token:
+        refresh_token = payload.refresh_token
+    else:
+        refresh_token = request.cookies.get("refresh_token")
+    
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token missing"
+        )
+        
+    try:
+        decoded = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = decoded.get("sub")
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token payload"
+            )
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+        
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalars().first()
+    
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive"
+        )
+        
+    new_access_token = create_access_token(data={"sub": str(user.id), "role_tier": user.role_tier})
+    new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=7 * 24 * 60 * 60
+    )
+    
+    return {
+        "access_token": new_access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer"
+    }
 
 @auth_router.get("/me", response_model=UserRead)
 async def read_users_me(current_user: User = Depends(get_current_user)):
@@ -539,5 +605,30 @@ async def revoke_user_session(
     user.is_active = False
     db.add(user)
     await db.commit()
+
+    # Broadcast global force logout to all streams/managers
+    # 1. ws_manager from events/websocket.py
+    try:
+        from app.core.events.websocket import ws_manager
+        await ws_manager.broadcast({
+            "event_type": "force_logout",
+            "payload": {"target_user_id": str(user_id)}
+        })
+    except Exception as e:
+        print(f"[WS] ws_manager force_logout broadcast failed: {e}")
+
+    # 2. manager from events/router.py (Event Engine ConnectionManager)
+    try:
+        from app.core.events.router import manager as event_manager
+        await event_manager.broadcast(
+            str(user_uuid),
+            {
+                "event_type": "force_logout",
+                "payload": {"target_user_id": str(user_id)}
+            }
+        )
+    except Exception as e:
+        print(f"[WS] event_manager force_logout broadcast failed: {e}")
+
     return {"message": "Session successfully revoked", "user_id": str(user.id)}
 

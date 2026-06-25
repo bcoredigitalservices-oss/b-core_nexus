@@ -6,9 +6,6 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.database import AsyncSessionLocal
-from app.workspaces.crm.models import SalesOrder, SalesOrderStatus
-from app.workspaces.inventory.models import StockLedger, StockTransactionType, Warehouse, InventoryItem
-from app.workspaces.finance.models import Account, AccountType, JournalEntry, JournalEntryLine, JournalEntryStatus
 from app.core.events.websocket import ws_manager
 
 async def process_sales_order_fulfillment(order_id: uuid.UUID):
@@ -19,6 +16,10 @@ async def process_sales_order_fulfillment(order_id: uuid.UUID):
       2. Creates a balanced JournalEntry (Debit Cost of Goods Sold, Credit Inventory Asset).
       3. Dispatches WebSockets STATE_MUTATION broadcast to CRM, Inventory, and Finance workspaces.
     """
+    from app.workspaces.crm.models import SalesOrder, SalesOrderStatus
+    from app.workspaces.inventory.models import StockLedger, StockTransactionType, Warehouse
+    from app.workspaces.finance.models import Account, AccountType, JournalEntry, JournalEntryLine, JournalEntryStatus
+
     print(f"[Trigger] Executing sales order fulfillment automation for order: {order_id}")
     async with AsyncSessionLocal() as db:
         # 1. Fetch Sales Order with lines

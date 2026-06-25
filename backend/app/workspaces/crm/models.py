@@ -50,6 +50,12 @@ class QuotationStatus(str, enum.Enum):
     EXPIRED  = "EXPIRED"
 
 
+class ContactStatus(str, enum.Enum):
+    PASSIVE = "Passive"
+    OPEN    = "Open"
+    REPLIED = "Replied"
+
+
 class TaskStatus(str, enum.Enum):
     TODO        = "TODO"
     IN_PROGRESS = "IN_PROGRESS"
@@ -120,14 +126,14 @@ class Customer(CoreModel):
 
 class Contact(CoreModel):
     """
-    Individual contact person linked to a Customer organization.
+    Individual contact person linked to a Customer organization, or standalone.
     """
     __tablename__ = "crm_contacts"
 
-    customer_id: Mapped[uuid.UUID] = mapped_column(
+    customer_id: Mapped[uuid.UUID | None] = mapped_column(
         SQLUUID(as_uuid=True),
         ForeignKey("crm_customers.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
     first_name: Mapped[str] = mapped_column(String(150), nullable=False)
@@ -136,6 +142,17 @@ class Contact(CoreModel):
     phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
     job_title: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    status: Mapped[ContactStatus] = mapped_column(
+        SAEnum(ContactStatus, name="crm_contact_status", create_type=True),
+        nullable=False,
+        default=ContactStatus.PASSIVE,
+    )
+    custom_attributes: Mapped[dict] = mapped_column(
+        JSONB,
+        nullable=False,
+        server_default='{}',
+        default=dict
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

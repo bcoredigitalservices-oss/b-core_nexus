@@ -28,11 +28,13 @@ from app.workspaces.crm.schemas import (
     CustomerResponse,
     PaginatedCustomersResponse,
     ContactCreate,
+    ContactUpdate,
     ContactResponse,
     PaginatedContactsResponse,
     InteractionLogCreate,
     InteractionLogResponse,
     QuotationCreate,
+    QuotationUpdate,
     QuotationResponse,
     PaginatedQuotationsResponse,
     QuotationStatusUpdate,
@@ -41,6 +43,7 @@ from app.workspaces.crm.schemas import (
     TaskResponse,
     PaginatedTasksResponse,
     SalesOrderCreate,
+    SalesOrderUpdate,
     SalesOrderResponse,
     PaginatedSalesOrdersResponse,
 )
@@ -139,9 +142,10 @@ async def delete_customer(customer_id: uuid.UUID, db: AsyncSession = Depends(get
 
 @router.post("/contacts", response_model=ContactResponse, status_code=status.HTTP_201_CREATED)
 async def create_contact(payload: ContactCreate, db: AsyncSession = Depends(get_db)):
-    cust = await db.execute(select(Customer).where(Customer.id == payload.customer_id))
-    if not cust.scalars().first():
-        raise HTTPException(status_code=404, detail="Customer not found.")
+    if payload.customer_id is not None:
+        cust = await db.execute(select(Customer).where(Customer.id == payload.customer_id))
+        if not cust.scalars().first():
+            raise HTTPException(status_code=404, detail="Customer not found.")
     contact = Contact(**payload.model_dump())
     db.add(contact)
     await db.flush()
@@ -149,7 +153,37 @@ async def create_contact(payload: ContactCreate, db: AsyncSession = Depends(get_
     await db.refresh(contact)
     return contact
 
+@router.get("/contacts/{contact_id}", response_model=ContactResponse)
+async def get_contact(contact_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    res = await db.execute(select(Contact).where(Contact.id == contact_id))
+    contact = res.scalars().first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    return contact
 
+@router.patch("/contacts/{contact_id}", response_model=ContactResponse)
+async def update_contact(
+    contact_id: uuid.UUID,
+    payload: ContactUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    res = await db.execute(select(Contact).where(Contact.id == contact_id))
+    contact = res.scalars().first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    if "customer_id" in update_data and update_data["customer_id"] is not None:
+        cust = await db.execute(select(Customer).where(Customer.id == update_data["customer_id"]))
+        if not cust.scalars().first():
+            raise HTTPException(status_code=404, detail="Customer not found.")
+
+    for k, v in update_data.items():
+        setattr(contact, k, v)
+
+    await db.commit()
+    await db.refresh(contact)
+    return contact
 @router.get("/contacts", response_model=PaginatedContactsResponse)
 async def list_contacts(
     customer_id: Optional[uuid.UUID] = Query(default=None),
@@ -231,6 +265,7 @@ async def create_quotation(payload: QuotationCreate, db: AsyncSession = Depends(
         status=payload.status,
         notes=payload.notes,
         grand_total=payload.grand_total,
+        custom_attributes=payload.custom_attributes,
     )
     db.add(q)
     await db.flush()
@@ -242,6 +277,7 @@ async def create_quotation(payload: QuotationCreate, db: AsyncSession = Depends(
             quantity=float(line_data.quantity),
             unit_price=float(line_data.unit_price),
             line_total=float(line_data.line_total),
+            custom_attributes=line_data.custom_attributes,
         )
         db.add(line)
 
@@ -254,16 +290,82 @@ async def create_quotation(payload: QuotationCreate, db: AsyncSession = Depends(
     return result.scalars().first()
 
 
+@router.get("/quotations/{quotation_id}", response_model=QuotationResponse)
+async def get_quotation(quotation_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    res = await db.execute(
+        select(Quotation).options(selectinload(Quotation.lines)).where(Quotation.id == quotation_id)
+    )
+    q = res.scalars().first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Quotation not found.")
+    return q
+
+
+@router.patch("/quotations/{quotation_id}", response_model=QuotationResponse)
+async def update_quotation(
+    quotation_id: uuid.UUID,
+    payload: QuotationUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    res = await db.execute(
+        select(Quotation).options(selectinload(Quotation.lines)).where(Quotation.id == quotation_id)
+    )
+    q = res.scalars().first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Quotation not found.")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    
+    # Handle fields
+    if "lines" in update_data:
+        # Replace all lines
+        await db.execute(QuotationLine.__table__.delete().where(QuotationLine.quotation_id == quotation_id))
+        lines_data = update_data.pop("lines")
+        for line_data in lines_data:
+            line = QuotationLine(
+                quotation_id=quotation_id,
+                description=line_data["description"],
+                quantity=float(line_data["quantity"]),
+                unit_price=float(line_data["unit_price"]),
+                line_total=float(line_data["line_total"]),
+                custom_attributes=line_data.get("custom_attributes", {})
+            )
+            db.add(line)
+
+    if "custom_attributes" in update_data:
+        new_ca = update_data.pop("custom_attributes")
+        if q.custom_attributes:
+            merged = q.custom_attributes.copy()
+            merged.update(new_ca)
+            q.custom_attributes = merged
+        else:
+            q.custom_attributes = new_ca
+
+    for key, value in update_data.items():
+        setattr(q, key, value)
+
+    await db.commit()
+    
+    # Reload with new lines
+    res = await db.execute(
+        select(Quotation).options(selectinload(Quotation.lines)).where(Quotation.id == quotation_id)
+    )
+    return res.scalars().first()
+
+
 @router.get("/quotations", response_model=PaginatedQuotationsResponse)
 async def list_quotations(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     status_filter: Optional[QuotationStatus] = Query(default=None, alias="status"),
+    customer_id: Optional[uuid.UUID] = Query(default=None),
     db: AsyncSession = Depends(get_db),
 ):
     stmt = select(Quotation)
     if status_filter:
         stmt = stmt.where(Quotation.status == status_filter)
+    if customer_id:
+        stmt = stmt.where(Quotation.customer_id == customer_id)
 
     total = (await db.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one()
     stmt = (
@@ -448,9 +550,13 @@ async def fulfill_sales_order(
 async def list_sales_orders(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    customer_id: Optional[uuid.UUID] = Query(default=None),
     db: AsyncSession = Depends(get_db),
 ):
     stmt = select(SalesOrder)
+    if customer_id:
+        stmt = stmt.where(SalesOrder.customer_id == customer_id)
+        
     total = (await db.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one()
     stmt = (
         stmt.order_by(SalesOrder.order_date.desc())
@@ -460,6 +566,90 @@ async def list_sales_orders(
     )
     items = (await db.execute(stmt)).scalars().all()
     return PaginatedSalesOrdersResponse(items=items, total=total, page=page, page_size=page_size)
+
+
+@router.get("/sales-orders/{order_id}", response_model=SalesOrderResponse)
+async def get_sales_order(order_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    res = await db.execute(
+        select(SalesOrder).where(SalesOrder.id == order_id).options(selectinload(SalesOrder.lines))
+    )
+    order = res.scalars().first()
+    if not order:
+        raise HTTPException(status_code=404, detail=f"Sales order {order_id} not found.")
+    return order
+
+
+@router.patch("/sales-orders/{order_id}", response_model=SalesOrderResponse)
+async def update_sales_order(
+    order_id: uuid.UUID,
+    payload: SalesOrderUpdate,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
+    res = await db.execute(
+        select(SalesOrder).where(SalesOrder.id == order_id).options(selectinload(SalesOrder.lines))
+    )
+    order = res.scalars().first()
+    if not order:
+        raise HTTPException(status_code=404, detail=f"Sales order {order_id} not found.")
+
+    if payload.customer_id is not None:
+        cust_res = await db.execute(select(Customer).where(Customer.id == payload.customer_id))
+        if not cust_res.scalars().first():
+            raise HTTPException(status_code=404, detail=f"Customer {payload.customer_id} not found.")
+        order.customer_id = payload.customer_id
+
+    if payload.order_reference is not None and payload.order_reference != order.order_reference:
+        ref_res = await db.execute(select(SalesOrder).where(SalesOrder.order_reference == payload.order_reference))
+        if ref_res.scalars().first():
+            raise HTTPException(status_code=409, detail=f"Sales Order '{payload.order_reference}' already exists.")
+        order.order_reference = payload.order_reference
+
+    if payload.order_date is not None:
+        order.order_date = payload.order_date
+    if payload.status is not None:
+        order.status = payload.status
+    if payload.grand_total is not None:
+        order.grand_total = payload.grand_total
+    
+    if payload.custom_attributes is not None:
+        # Merge dict safely
+        new_attrs = dict(order.custom_attributes)
+        new_attrs.update(payload.custom_attributes)
+        order.custom_attributes = new_attrs
+
+    # If lines are provided, we replace all existing lines.
+    if payload.lines is not None:
+        # Delete existing lines
+        await db.execute(SalesOrderLine.__table__.delete().where(SalesOrderLine.sales_order_id == order.id))
+        await db.flush()
+        
+        # Add new lines
+        for line_payload in payload.lines:
+            item_res = await db.execute(select(InventoryItem).where(InventoryItem.id == line_payload.item_id))
+            if not item_res.scalars().first():
+                raise HTTPException(status_code=400, detail=f"Inventory item {line_payload.item_id} not found.")
+                
+            line = SalesOrderLine(
+                sales_order_id=order.id,
+                item_id=line_payload.item_id,
+                quantity=line_payload.quantity,
+                unit_price=line_payload.unit_price,
+                line_total=line_payload.line_total,
+                custom_attributes=line_payload.custom_attributes,
+            )
+            db.add(line)
+
+    await db.commit()
+
+    if payload.status == SalesOrderStatus.FULFILLED and order.status != SalesOrderStatus.FULFILLED:
+        background_tasks.add_task(process_sales_order_fulfillment, order.id)
+
+    final_res = await db.execute(
+        select(SalesOrder).where(SalesOrder.id == order.id).options(selectinload(SalesOrder.lines))
+    )
+    return final_res.scalars().first()
+
 
 
 # ══════════════════════════════════════════════════════════════════════════════

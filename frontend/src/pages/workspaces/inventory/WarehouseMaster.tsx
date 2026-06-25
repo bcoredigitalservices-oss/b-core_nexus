@@ -11,9 +11,11 @@ import {
   MapPin,
   Layers,
   Package,
-  FileText
+  FileText,
+  Edit,
+  Trash2
 } from 'lucide-react';
-import WorkspaceLayout, { WorkspaceLayoutConfig } from '../../../layouts/WorkspaceLayout';
+
 import { useAppContext } from '../../../context/AppContext';
 
 // ─── Sidebar Config ────────────────────────────────────────────────────────────
@@ -58,11 +60,13 @@ export default function WarehouseMaster() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+  const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<WarehouseFormValues>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<any>({
     defaultValues: {
       name: '',
       location_address: '',
+      is_active: true
     }
   });
 
@@ -100,24 +104,65 @@ export default function WarehouseMaster() {
   }, []);
 
   const handleOpenModal = () => {
+    setEditingWarehouse(null);
     reset({
       name: '',
       location_address: '',
+      is_active: true
     });
     setFormError('');
     setFormSuccess('');
     setIsModalOpen(true);
   };
 
-  const onSubmit = async (values: WarehouseFormValues) => {
+  const handleOpenEditModal = (wh: Warehouse) => {
+    setEditingWarehouse(wh);
+    reset({
+      name: wh.name,
+      location_address: wh.location_address,
+      is_active: wh.is_active
+    });
+    setFormError('');
+    setFormSuccess('');
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteWarehouse = async (id: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to delete warehouse "${name}"? This cannot be undone.`)) {
+      return;
+    }
+    try {
+      const token = localStorage.getItem('bcore_token');
+      const response = await fetch(`${API_BASE}/warehouses/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to delete warehouse.');
+      }
+      fetchWarehouses();
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to delete warehouse.');
+    }
+  };
+
+  const onSubmit = async (values: any) => {
     setSubmitting(true);
     setFormError('');
     setFormSuccess('');
 
     try {
       const token = localStorage.getItem('bcore_token');
-      const response = await fetch(`${API_BASE}/warehouses`, {
-        method: 'POST',
+      const url = editingWarehouse
+        ? `${API_BASE}/warehouses/${editingWarehouse.id}`
+        : `${API_BASE}/warehouses`;
+      const method = editingWarehouse ? 'PATCH' : 'POST';
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -127,7 +172,7 @@ export default function WarehouseMaster() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        let errMsg = 'Failed to register warehouse.';
+        let errMsg = editingWarehouse ? 'Failed to update warehouse.' : 'Failed to register warehouse.';
         if (typeof errorData.detail === 'string') {
           errMsg = errorData.detail;
         } else if (Array.isArray(errorData.detail)) {
@@ -136,13 +181,13 @@ export default function WarehouseMaster() {
         throw new Error(errMsg);
       }
 
-      setFormSuccess('Warehouse registered successfully!');
+      setFormSuccess(editingWarehouse ? 'Warehouse updated successfully!' : 'Warehouse registered successfully!');
       setTimeout(() => {
         setIsModalOpen(false);
         fetchWarehouses();
       }, 1000);
     } catch (err: any) {
-      setFormError(err.message || 'An error occurred while registering the warehouse.');
+      setFormError(err.message || 'An error occurred.');
     } finally {
       setSubmitting(false);
     }
@@ -156,7 +201,7 @@ export default function WarehouseMaster() {
   );
 
   return (
-    <WorkspaceLayout config={INVENTORY_SIDEBAR}>
+    <div style={{ padding: '2rem', width: '100%', maxWidth: '1400px', margin: '0 auto', background: 'var(--bg-main)', minHeight: '100vh' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
         {/* Header Block */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -253,19 +298,20 @@ export default function WarehouseMaster() {
                   <th style={{ padding: '1rem' }}>Warehouse Name</th>
                   <th style={{ padding: '1rem' }}>Physical Address</th>
                   <th style={{ padding: '1rem', textAlign: 'center' }}>Status</th>
+                  <th style={{ padding: '1rem', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={4} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                       <RefreshCw size={24} className="spin" style={{ animation: 'spin 1.5s linear infinite', margin: '0 auto 1rem' }} />
                       Loading warehouses...
                     </td>
                   </tr>
                 ) : filteredWarehouses.length === 0 ? (
                   <tr>
-                    <td colSpan={4} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                       No warehouses match the query.
                     </td>
                   </tr>
@@ -306,6 +352,47 @@ export default function WarehouseMaster() {
                         }}>
                           {wh.is_active ? 'Active' : 'Inactive'}
                         </span>
+                      </td>
+                      <td style={{ padding: '1rem', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                          <button
+                            onClick={() => handleOpenEditModal(wh)}
+                            className="btn btn-secondary"
+                            style={{ 
+                              padding: '4px 8px', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '4px', 
+                              fontSize: '0.8rem',
+                              height: '28px',
+                              background: 'rgba(255,255,255,0.05)',
+                              border: '1px solid rgba(255,255,255,0.1)'
+                            }}
+                            title="Edit Location"
+                          >
+                            <Edit size={12} />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteWarehouse(wh.id, wh.name)}
+                            className="btn"
+                            style={{ 
+                              padding: '4px 8px', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '4px', 
+                              fontSize: '0.8rem', 
+                              height: '28px',
+                              background: 'rgba(255, 51, 102, 0.1)', 
+                              color: '#ff3366',
+                              border: '1px solid rgba(255, 51, 102, 0.2)'
+                            }}
+                            title="Delete Location"
+                          >
+                            <Trash2 size={12} />
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -350,7 +437,7 @@ export default function WarehouseMaster() {
               background: 'var(--bg-card-hover)'
             }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
-                Register New Warehouse Location
+                {editingWarehouse ? 'Edit Warehouse Location' : 'Register New Warehouse Location'}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -423,6 +510,18 @@ export default function WarehouseMaster() {
                 {errors.location_address && <p style={{ color: '#ff3366', fontSize: '0.75rem', marginTop: '4px' }}>{errors.location_address.message}</p>}
               </div>
 
+              {editingWarehouse && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    id="is_active"
+                    style={{ width: 'auto', height: 'auto', cursor: 'pointer' }}
+                    {...register('is_active')}
+                  />
+                  <label htmlFor="is_active" style={{ margin: 0, cursor: 'pointer', color: 'var(--text-main)', fontSize: '0.875rem' }}>Active / Operational</label>
+                </div>
+              )}
+
               {/* Modal Footer */}
               <div style={{
                 display: 'flex',
@@ -452,7 +551,7 @@ export default function WarehouseMaster() {
                     boxShadow: '0 4px 12px rgba(255,183,3,0.2)',
                   }}
                 >
-                  {submitting ? 'Registering...' : 'Register Warehouse'}
+                  {submitting ? (editingWarehouse ? 'Saving...' : 'Registering...') : (editingWarehouse ? 'Save Changes' : 'Register Warehouse')}
                 </button>
               </div>
 
@@ -470,6 +569,6 @@ export default function WarehouseMaster() {
           animation: spin 1.5s linear infinite;
         }
       `}</style>
-    </WorkspaceLayout>
+    </div>
   );
 }

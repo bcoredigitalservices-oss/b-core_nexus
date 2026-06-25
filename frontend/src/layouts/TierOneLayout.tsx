@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Menu, Database, Server, User, ChevronDown, Bell, LogOut, Settings, 
-  MessageSquare, Send, X, ShieldAlert 
+  MessageSquare, Send, X, ShieldAlert, LayoutGrid 
 } from 'lucide-react';
 import TierOneSidebar from '../components/navigation/TierOneSidebar';
 import { useAppContext } from '../context/AppContext';
@@ -20,7 +20,8 @@ export default function TierOneLayout() {
   const { isApiLive, currentUser, systemSettings, logout, isBooting } = useAppContext();
   const navigate = useNavigate();
   const location = useLocation();
-  const isWorkspaceRoute = location.pathname.startsWith('/workspaces');
+  const isHub = location.pathname === '/workspace' || location.pathname === '/workspace/' || location.pathname === '/workspaces' || location.pathname === '/workspaces/';
+  const isWorkspaceAppRoute = (location.pathname.startsWith('/workspace/') || location.pathname.startsWith('/workspaces/')) && !isHub;
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -142,7 +143,7 @@ export default function TierOneLayout() {
       )}
 
       {/* Sidebar (sticky left) */}
-      {!isWorkspaceRoute && (
+      {!isWorkspaceAppRoute && (
         <div 
           style={{
             display: isMobile && !mobileSidebarOpen ? 'none' : 'block',
@@ -193,6 +194,38 @@ export default function TierOneLayout() {
                 <Menu size={20} />
               </button>
             )}
+
+            {/* Workspace Hub Button */}
+            <button
+              id="header-hub-btn-t1"
+              onClick={() => navigate('/workspace')}
+              style={{
+                display: isMobile ? 'none' : 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                color: 'var(--text-muted)',
+                background: 'var(--bg-card-hover)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                padding: '5px 12px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                marginRight: '0.75rem'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--text-main)';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--text-muted)';
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+              }}
+            >
+              <LayoutGrid size={13} />
+              <span>Workspace Hub</span>
+            </button>
 
             {/* API Connectivity Badge */}
             <div 
@@ -408,16 +441,17 @@ export default function TierOneLayout() {
           <main 
             style={{ 
               flex: 1, 
-              overflow: isWorkspaceRoute ? 'hidden' : 'auto', 
-              padding: isWorkspaceRoute ? '0' : '2rem',
+              overflow: 'hidden',
+              padding: isWorkspaceAppRoute ? '0' : '2rem',
               background: 'var(--bg-main)',
-              transition: 'all 0.3s ease',
               display: 'flex',
               flexDirection: 'column',
-              height: '100%'
+              minHeight: 0,
             }}
           >
-            <Outlet />
+            <div style={isWorkspaceAppRoute ? { flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' } : { flex: 1, overflowY: 'auto' }}>
+              <Outlet />
+            </div>
           </main>
 
           {/* Right-Side "Active Chat" Panel */}
@@ -426,25 +460,26 @@ export default function TierOneLayout() {
               width: chatOpen ? '280px' : '0px',
               opacity: chatOpen ? 1 : 0,
               visibility: chatOpen ? 'visible' : 'hidden',
-              backgroundColor: 'var(--bg-card)',
+              background: 'var(--bg-surface)',
               borderLeft: chatOpen ? '1px solid var(--border-color)' : 'none',
               display: 'flex',
               flexDirection: 'column',
               height: '100%',
               transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, visibility 0.2s',
               zIndex: 25,
-              position: 'relative'
+              position: 'relative',
+              boxShadow: chatOpen ? '-4px 0 20px rgba(0,0,0,0.2)' : 'none',
             }}
           >
             {/* Chat Header */}
             <div 
               style={{
-                padding: '1rem',
+                padding: '0.875rem 1rem',
                 borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                background: 'rgba(157, 78, 221, 0.02)'
+                background: 'var(--bg-card)',
               }}
             >
               <div>
@@ -538,9 +573,9 @@ export default function TierOneLayout() {
             <form 
               onSubmit={handleSendChat}
               style={{
-                padding: '1rem',
-                borderTop: '1px solid var(--border-color)',
-                background: 'var(--bg-card-hover)'
+                padding: '0.875rem 1rem',
+                borderTop: '1px solid rgba(255,255,255,0.07)',
+                background: 'rgba(255,255,255,0.02)',
               }}
             >
               <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>

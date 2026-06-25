@@ -18,8 +18,8 @@ import {
   ArrowUpRight,
   Filter
 } from 'lucide-react';
-import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { useAppContext } from '../../../context/AppContext';
+import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { CRM_SIDEBAR } from './crmSidebarConfig';
 
 interface Customer {
@@ -240,6 +240,7 @@ export default function CrmDashboard() {
 
   return (
     <WorkspaceLayout config={CRM_SIDEBAR}>
+      <div style={{ padding: '2rem', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
         
         {/* Header Navigation Bar */}
@@ -935,6 +936,7 @@ export default function CrmDashboard() {
           animation: spin 1.5s linear infinite;
         }
       `}</style>
+    </div>
     </WorkspaceLayout>
   );
 }

@@ -9,6 +9,7 @@ from app.workspaces.crm.models import (
     InteractionType,
     SalesOrderStatus,
     QuotationStatus,
+    ContactStatus,
     TaskStatus,
     TaskPriority,
 )
@@ -46,14 +47,27 @@ class CustomerResponse(CustomerBase):
 # ─── Contact Schemas ──────────────────────────────────────────────────────────
 
 class ContactCreate(BaseModel):
-    customer_id: UUID
+    customer_id: Optional[UUID] = None
     first_name: str = Field(..., min_length=1, max_length=150)
     last_name: str = Field(..., min_length=1, max_length=150)
     email: Optional[str] = Field(default=None, max_length=255)
     phone: Optional[str] = Field(default=None, max_length=50)
     job_title: Optional[str] = Field(default=None, max_length=255)
     is_primary: bool = Field(default=False)
+    status: ContactStatus = Field(default=ContactStatus.PASSIVE)
+    custom_attributes: Dict[str, Any] = Field(default_factory=dict)
 
+
+class ContactUpdate(BaseModel):
+    customer_id: Optional[UUID] = None
+    first_name: Optional[str] = Field(default=None, min_length=1, max_length=150)
+    last_name: Optional[str] = Field(default=None, min_length=1, max_length=150)
+    email: Optional[str] = Field(default=None, max_length=255)
+    phone: Optional[str] = Field(default=None, max_length=50)
+    job_title: Optional[str] = Field(default=None, max_length=255)
+    is_primary: Optional[bool] = Field(default=None)
+    status: Optional[ContactStatus] = Field(default=None)
+    custom_attributes: Optional[Dict[str, Any]] = Field(default=None)
 
 class ContactResponse(ContactCreate):
     id: UUID
@@ -95,12 +109,14 @@ class PaginatedCustomersResponse(BaseModel):
 
 # ─── Quotation Schemas ────────────────────────────────────────────────────────
 
-class QuotationLineCreate(BaseModel):
+class QuotationLineBase(BaseModel):
     description: str = Field(..., min_length=1, max_length=500)
     quantity: Decimal = Field(..., gt=Decimal("0"))
     unit_price: Decimal = Field(..., ge=Decimal("0"))
     line_total: Decimal = Field(..., ge=Decimal("0"))
+    custom_attributes: Dict[str, Any] = Field(default_factory=dict)
 
+class QuotationLineCreate(QuotationLineBase):
     @model_validator(mode="after")
     def validate_line_total(self) -> "QuotationLineCreate":
         expected = self.quantity * self.unit_price
@@ -108,15 +124,14 @@ class QuotationLineCreate(BaseModel):
             raise ValueError(f"line_total ({self.line_total}) != quantity * unit_price ({expected})")
         return self
 
-
-class QuotationLineResponse(QuotationLineCreate):
+class QuotationLineResponse(QuotationLineBase):
     id: UUID
     quotation_id: UUID
+    created_at: datetime
 
     model_config = {"from_attributes": True}
 
-
-class QuotationCreate(BaseModel):
+class QuotationBase(BaseModel):
     customer_id: UUID
     quotation_reference: str = Field(..., min_length=1, max_length=100)
     quotation_date: date
@@ -124,37 +139,34 @@ class QuotationCreate(BaseModel):
     status: QuotationStatus = Field(default=QuotationStatus.DRAFT)
     notes: Optional[str] = None
     grand_total: Decimal = Field(..., ge=Decimal("0"))
+    custom_attributes: Dict[str, Any] = Field(default_factory=dict)
+
+class QuotationCreate(QuotationBase):
     lines: List[QuotationLineCreate] = Field(..., min_length=1)
 
-    @model_validator(mode="after")
-    def validate_grand_total(self) -> "QuotationCreate":
-        calculated = sum(line.line_total for line in self.lines)
-        if abs(self.grand_total - calculated) > Decimal("0.01"):
-            raise ValueError(f"grand_total ({self.grand_total}) != sum of lines ({calculated})")
-        return self
+class QuotationUpdate(BaseModel):
+    customer_id: Optional[UUID] = None
+    quotation_reference: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    quotation_date: Optional[date] = None
+    expiry_date: Optional[date] = None
+    status: Optional[QuotationStatus] = None
+    notes: Optional[str] = None
+    grand_total: Optional[Decimal] = Field(default=None, ge=Decimal("0"))
+    custom_attributes: Optional[Dict[str, Any]] = None
+    lines: Optional[List[QuotationLineCreate]] = None
 
-
-class QuotationResponse(BaseModel):
+class QuotationResponse(QuotationBase):
     id: UUID
-    customer_id: UUID
-    quotation_reference: str
-    quotation_date: date
-    expiry_date: Optional[date]
-    status: QuotationStatus
-    notes: Optional[str]
-    grand_total: Decimal
     lines: List[QuotationLineResponse]
     created_at: datetime
 
     model_config = {"from_attributes": True}
-
 
 class PaginatedQuotationsResponse(BaseModel):
     total: int
     page: int
     page_size: int
     items: List[QuotationResponse]
-
 
 class QuotationStatusUpdate(BaseModel):
     status: QuotationStatus
@@ -235,13 +247,14 @@ class SalesOrderBase(BaseModel):
 class SalesOrderCreate(SalesOrderBase):
     lines: List[SalesOrderLineCreate] = Field(..., min_length=1)
 
-    @model_validator(mode="after")
-    def validate_grand_total(self) -> "SalesOrderCreate":
-        calculated_total = sum(line.line_total for line in self.lines)
-        if abs(self.grand_total - calculated_total) > Decimal("0.001"):
-            raise ValueError(f"Grand total ({self.grand_total}) does not match the sum of line totals ({calculated_total}).")
-        return self
-
+class SalesOrderUpdate(BaseModel):
+    customer_id: Optional[UUID] = None
+    order_reference: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    order_date: Optional[date] = None
+    status: Optional[SalesOrderStatus] = None
+    grand_total: Optional[Decimal] = Field(default=None, ge=Decimal("0.0"))
+    custom_attributes: Optional[Dict[str, Any]] = None
+    lines: Optional[List[SalesOrderLineCreate]] = None
 
 class SalesOrderResponse(SalesOrderBase):
     id: UUID

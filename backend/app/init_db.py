@@ -18,7 +18,8 @@ from app.models.organization import Organization, Department
 from app.models.workspace import Workspace, user_workspaces
 from app.core.auth.utils import get_password_hash
 # Workspace models — must be imported so Base.metadata registers their tables
-from app.workspaces.inventory.models import InventoryItem, Warehouse, StockLedger
+from app.workspaces.inventory.models import InventoryItem, Warehouse, StockLedger, CoreWarehouse, CoreAsset, StockLedgerEntry, StockBalance, ProductBundle, ProductBundleItem, BatchNumber, SerialNumber
+from app.workspaces.procurement.models import PurchaseReceipt, PurchaseReceiptItem
 from app.workspaces.crm.models import Customer, InteractionLog, SalesOrder, SalesOrderLine
 from app.workspaces.finance.models import Account, JournalEntry, JournalEntryLine
 from app.workspaces.hr.models import EmployeeRecord, LeaveRequest
@@ -84,6 +85,7 @@ async def init_db():
                 {"name": "Warehouse", "identifier": "warehouse"},
                 {"name": "Stock", "identifier": "stock"},
                 {"name": "Buying", "identifier": "buying"},
+                {"name": "Procurement", "identifier": "procurement"},
                 
                 # CRM & Sales Workspaces
                 {"name": "POS", "identifier": "pos"},

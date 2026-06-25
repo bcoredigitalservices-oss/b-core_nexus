@@ -31,6 +31,7 @@ class ItemBase(BaseModel):
     catalog_type: str = Field(..., description="e.g. stock, service, raw_material, fixed_asset")
     default_uom: str = Field(..., description="Unit of Measure (e.g. NOS, KG, BOX)")
     tax_category_id: Optional[UUID] = None
+    item_group_id: Optional[UUID] = None
 
     @field_validator("sku")
     @classmethod
@@ -49,6 +50,7 @@ class ItemUpdate(BaseModel):
     catalog_type: Optional[str] = None
     default_uom: Optional[str] = None
     tax_category_id: Optional[UUID] = None
+    item_group_id: Optional[UUID] = None
 
     @field_validator("sku")
     @classmethod
@@ -60,6 +62,21 @@ class ItemUpdate(BaseModel):
         return v.strip().upper()
 
 class ItemRead(ItemBase):
+    id: UUID
+
+    class Config:
+        from_attributes = True
+
+
+class ItemGroupBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    parent_id: Optional[UUID] = None
+    custom_attributes: Dict[str, Any] = Field(default_factory=dict)
+
+class ItemGroupCreate(ItemGroupBase):
+    pass
+
+class ItemGroupResponse(ItemGroupBase):
     id: UUID
 
     class Config:

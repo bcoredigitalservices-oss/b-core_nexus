@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   TrendingUp, Plus, RefreshCw, X, AlertCircle, CheckCircle2,
-  Search, Filter, ArrowUpRight, Users, Target, Zap, Phone, Mail
+  Search, Filter, ArrowUpRight, Users, Target, Zap, Phone, Mail, Eye
 } from 'lucide-react';
-import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { useAppContext } from '../../../context/AppContext';
+import WorkspaceLayout from '../../../layouts/WorkspaceLayout';
 import { CRM_SIDEBAR } from './crmSidebarConfig';
 
 const LIFECYCLE_STAGES = [
@@ -48,6 +48,7 @@ interface FormValues {
   lead_potential: string;
   recontact_interval_days: string;
   request_type: string;
+  request_type_other?: string;
   type_of_lead: string;
 
   // Contact Info
@@ -55,7 +56,7 @@ interface FormValues {
   mobile_no: string;
   phone: string;
   whatsapp: string;
-  phone_ext: string;
+  fax: string;
 
   // Organization
   organization_name: string;
@@ -63,7 +64,6 @@ interface FormValues {
   territory: string;
   no_of_employees: string;
   industry: string;
-  fax: string;
   market_segment: string;
 
   // Address
@@ -73,7 +73,7 @@ interface FormValues {
 }
 
 export default function PipelineLeads() {
-  const { authFetch } = useAppContext();
+  const { authFetch, currentUser } = useAppContext();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -85,17 +85,83 @@ export default function PipelineLeads() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+  const [visibleColumns, setVisibleColumns] = useState(['company', 'contact', 'email', 'status', 'actions']);
+  const [showColMenu, setShowColMenu] = useState(false);
+  const [editingLeadId, setEditingLeadId] = useState<string | null>(null);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormValues>({
     defaultValues: {
-      series: 'CRM-LEAD-YYYY-', product_title: '', lead_owner: '', salutation: '',
+      series: '', product_title: '', lead_owner: '', salutation: '',
       first_name: '', middle_name: '', last_name: '', gender: '', lifecycle_status: 'LEAD',
-      lead_potential: 'High', recontact_interval_days: '', request_type: '', type_of_lead: 'By Call',
-      email: '', mobile_no: '', phone: '', whatsapp: '', phone_ext: '',
+      lead_potential: 'High', recontact_interval_days: '', request_type: '', request_type_other: '', type_of_lead: 'By Call',
+      email: '', mobile_no: '', phone: '', whatsapp: '', fax: '',
       organization_name: '', annual_revenue: '', territory: '', no_of_employees: '1-10',
-      industry: '', fax: '', market_segment: '', city: '', state_province: '', country: ''
+      industry: '', market_segment: '', city: '', state_province: '', country: ''
     }
   });
+
+  const watchRequestType = watch('request_type');
+
+  const openEditForm = (c: any) => {
+    setEditingLeadId(c.id);
+    setFormError('');
+    setFormSuccess('');
+    
+    setValue('email', c.email || '');
+    setValue('mobile_no', c.phone || '');
+    setValue('organization_name', c.company_name || '');
+    setValue('lifecycle_status', c.lifecycle_status || 'LEAD');
+    
+    const nameParts = (c.contact_name || '').split(' ');
+    setValue('first_name', nameParts[0] || '');
+    setValue('last_name', nameParts.slice(1).join(' ') || '');
+    
+    const attrs = c.custom_attributes || {};
+    setValue('series', attrs.series || '');
+    setValue('product_title', attrs.product_title || '');
+    setValue('lead_owner', attrs.lead_owner || '');
+    setValue('salutation', attrs.salutation || '');
+    setValue('middle_name', attrs.middle_name || '');
+    setValue('gender', attrs.gender || '');
+    setValue('lead_potential', attrs.lead_potential || 'High');
+    setValue('recontact_interval_days', attrs.recontact_interval_days || '');
+    
+    if (['Product Enquiry', 'Request for Information', 'Suggestion', ''].includes(attrs.request_type || '')) {
+      setValue('request_type', attrs.request_type || '');
+      setValue('request_type_other', '');
+    } else {
+      setValue('request_type', 'Other');
+      setValue('request_type_other', attrs.request_type || '');
+    }
+    
+    setValue('type_of_lead', attrs.type_of_lead || 'By Call');
+    setValue('whatsapp', attrs.whatsapp || '');
+    setValue('phone', attrs.phone || '');
+    setValue('fax', attrs.fax || '');
+    setValue('annual_revenue', attrs.annual_revenue || '');
+    setValue('territory', attrs.territory || '');
+    setValue('no_of_employees', attrs.no_of_employees || '1-10');
+    setValue('industry', attrs.industry || '');
+    setValue('market_segment', attrs.market_segment || '');
+    setValue('city', attrs.city || '');
+    setValue('state_province', attrs.state_province || '');
+    setValue('country', attrs.country || '');
+    
+    setIsModalOpen(true);
+  };
+
+  useEffect(() => {
+    if (isModalOpen && !editingLeadId) {
+      const year = new Date().getFullYear();
+      const rand = Math.floor(1000 + Math.random() * 9000);
+      setValue('series', `CRM-LEAD-${year}-${rand}`);
+      
+      const ownerName = currentUser?.first_name 
+        ? `${currentUser.first_name} ${currentUser.last_name || ''}`.trim() 
+        : currentUser?.email || currentUser?.username || 'Unknown';
+      setValue('lead_owner', ownerName);
+    }
+  }, [isModalOpen, editingLeadId, setValue, currentUser]);
 
   const fetchCustomers = async () => {
     setLoading(true);
@@ -133,27 +199,34 @@ export default function PipelineLeads() {
           gender: values.gender,
           lead_potential: values.lead_potential,
           recontact_interval_days: values.recontact_interval_days,
-          request_type: values.request_type,
+          request_type: values.request_type === 'Other' ? values.request_type_other : values.request_type,
           type_of_lead: values.type_of_lead,
           whatsapp: values.whatsapp,
-          phone_ext: values.phone_ext,
+          fax: values.fax,
           annual_revenue: values.annual_revenue,
           territory: values.territory,
           no_of_employees: values.no_of_employees,
           industry: values.industry,
-          fax: values.fax,
           market_segment: values.market_segment,
           city: values.city,
           state_province: values.state_province,
           country: values.country,
         }
       };
-      await authFetch(`/workspaces/crm/customers`, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-      setFormSuccess('Lead registered successfully!');
-      setTimeout(() => { setIsModalOpen(false); fetchCustomers(); }, 1000);
+      if (editingLeadId) {
+        await authFetch(`/workspaces/crm/customers/${editingLeadId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
+        setFormSuccess('Lead updated successfully!');
+      } else {
+        await authFetch(`/workspaces/crm/customers`, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        setFormSuccess('Lead registered successfully!');
+      }
+      setTimeout(() => { setIsModalOpen(false); setEditingLeadId(null); fetchCustomers(); }, 1000);
     } catch (e: any) { setFormError(e.message); }
     finally { setSubmitting(false); }
   };
@@ -177,6 +250,7 @@ export default function PipelineLeads() {
 
   return (
     <WorkspaceLayout config={CRM_SIDEBAR}>
+      <div style={{ padding: '2rem', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
 
         {/* Header */}
@@ -196,7 +270,7 @@ export default function PipelineLeads() {
               <RefreshCw size={15} style={{ animation: loading ? 'spin 1.5s linear infinite' : 'none' }} />
               Refresh
             </button>
-            <button onClick={() => { reset(); setFormError(''); setFormSuccess(''); setIsModalOpen(true); }} style={{ 
+            <button onClick={() => { reset(); setEditingLeadId(null); setFormError(''); setFormSuccess(''); setIsModalOpen(true); }} style={{ 
               background: '#059669', color: '#ffffff', border: 'none', height: '40px', padding: '0 1.25rem',
               borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
               boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)'
@@ -253,6 +327,45 @@ export default function PipelineLeads() {
               </button>
             ))}
           </div>
+          {activeView === 'LIST' && (
+            <div style={{ position: 'relative' }}>
+              <button 
+                onClick={() => setShowColMenu(!showColMenu)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', height: '42px', width: '42px',
+                  background: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '8px',
+                  color: 'var(--text-main)', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                }}
+              >
+                <Eye size={16} />
+              </button>
+              {showColMenu && (
+                <div style={{ position: 'absolute', top: '48px', right: '0', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.5rem', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: '150px' }}>
+                  {[
+                    { id: 'company', label: 'COMPANY' },
+                    { id: 'contact', label: 'CONTACT' },
+                    { id: 'email', label: 'EMAIL' },
+                    { id: 'owner', label: 'LEAD OWNER' },
+                    { id: 'type', label: 'TYPE OF LEAD' },
+                    { id: 'status', label: 'STATUS' },
+                    { id: 'actions', label: 'ACTIONS' }
+                  ].map(col => (
+                    <label key={col.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px', fontSize: '0.8rem', color: 'var(--text-main)', cursor: 'pointer', fontWeight: 600 }}>
+                      <input 
+                        type="checkbox" 
+                        checked={visibleColumns.includes(col.id)} 
+                        onChange={(e) => {
+                          if (e.target.checked) setVisibleColumns(prev => [...prev, col.id]);
+                          else setVisibleColumns(prev => prev.filter(c => c !== col.id));
+                        }} 
+                      />
+                      {col.label}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {errorMsg && (
@@ -286,6 +399,7 @@ export default function PipelineLeads() {
                         padding: '1rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', transition: 'transform 0.2s, box-shadow 0.2s',
                         cursor: 'pointer'
                       }}
+                      onClick={() => openEditForm(c)}
                       onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.05)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.02)'; }}
                       >
@@ -334,28 +448,37 @@ export default function PipelineLeads() {
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-main)', borderBottom: '1px solid var(--border-color)' }}>
-                  <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>COMPANY</th>
-                  <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>CONTACT</th>
-                  <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>EMAIL</th>
-                  <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>STATUS</th>
-                  <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>ACTIONS</th>
+                  {visibleColumns.includes('company') && <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>COMPANY</th>}
+                  {visibleColumns.includes('contact') && <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>CONTACT</th>}
+                  {visibleColumns.includes('email') && <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>EMAIL</th>}
+                  {visibleColumns.includes('owner') && <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>LEAD OWNER</th>}
+                  {visibleColumns.includes('type') && <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>TYPE OF LEAD</th>}
+                  {visibleColumns.includes('status') && <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>STATUS</th>}
+                  {visibleColumns.includes('actions') && <th style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>ACTIONS</th>}
                 </tr>
               </thead>
               <tbody>
                 {customers.filter(c => c.lifecycle_status === 'LEAD' || c.lifecycle_status === 'INACTIVE').length === 0 ? (
-                  <tr><td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No leads found</td></tr>
+                  <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No leads found</td></tr>
                 ) : (
                   customers.filter(c => c.lifecycle_status === 'LEAD' || c.lifecycle_status === 'INACTIVE').map(c => (
-                    <tr key={c.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 600 }}>{c.company_name}</td>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{c.contact_name}</td>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{c.email}</td>
-                      <td style={{ padding: '1rem' }}><StatusPill status={c.lifecycle_status} /></td>
-                      <td style={{ padding: '1rem' }}>
+                    <tr key={c.id} 
+                        style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer', transition: 'background-color 0.15s' }}
+                        onClick={() => openEditForm(c)}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-card-hover)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      {visibleColumns.includes('company') && <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 600 }}>{c.company_name}</td>}
+                      {visibleColumns.includes('contact') && <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{c.contact_name}</td>}
+                      {visibleColumns.includes('email') && <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{c.email}</td>}
+                      {visibleColumns.includes('owner') && <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{(c as any).custom_attributes?.lead_owner || '-'}</td>}
+                      {visibleColumns.includes('type') && <td style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{(c as any).custom_attributes?.type_of_lead || '-'}</td>}
+                      {visibleColumns.includes('status') && <td style={{ padding: '1rem' }}><StatusPill status={c.lifecycle_status} /></td>}
+                      {visibleColumns.includes('actions') && <td style={{ padding: '1rem' }}>
                         {c.lifecycle_status === 'LEAD' && (
-                          <button onClick={() => updateStatus(c.id, 'OPPORTUNITY')} style={{ background: 'transparent', border: '1px solid #059669', color: '#059669', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>Convert to Deal</button>
+                          <button onClick={(e) => { e.stopPropagation(); updateStatus(c.id, 'OPPORTUNITY'); }} style={{ background: 'transparent', border: '1px solid #059669', color: '#059669', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>Convert to Deal</button>
                         )}
-                      </td>
+                      </td>}
                     </tr>
                   ))
                 )}
@@ -392,8 +515,8 @@ export default function PipelineLeads() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }}>
           <div style={{ background: 'var(--bg-main)', borderRadius: '8px', width: '100%', maxWidth: '900px', maxHeight: '95vh', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card)' }}>
-              <h3 style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '1.25rem' }}>Create Lead</h3>
-              <button type="button" onClick={() => setIsModalOpen(false)} style={{ background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '6px', borderRadius: '6px' }}><X size={16} /></button>
+              <h3 style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '1.25rem' }}>{editingLeadId ? 'Edit Lead' : 'Create Lead'}</h3>
+              <button type="button" onClick={() => { setIsModalOpen(false); setEditingLeadId(null); }} style={{ background: 'var(--bg-main)', border: '1px solid var(--border-color)', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: '6px', borderRadius: '6px' }}><X size={16} /></button>
             </div>
             
             <form onSubmit={handleSubmit(onSubmit)} style={{ overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', background: 'var(--bg-card)' }}>
@@ -406,7 +529,7 @@ export default function PipelineLeads() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem 2rem' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Series</label>
-                    <input type="text" {...register('series')} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-main)', fontSize: '0.85rem' }} />
+                    <input type="text" readOnly {...register('series')} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-muted)', fontSize: '0.85rem', cursor: 'not-allowed' }} />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Product Title</label>
@@ -414,7 +537,7 @@ export default function PipelineLeads() {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Lead Owner</label>
-                    <input type="text" {...register('lead_owner')} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-main)', fontSize: '0.85rem' }} />
+                    <input type="text" readOnly {...register('lead_owner')} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-muted)', fontSize: '0.85rem', cursor: 'not-allowed' }} />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Salutation</label>
@@ -456,14 +579,27 @@ export default function PipelineLeads() {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Request Type</label>
-                    <input type="text" {...register('request_type')} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-main)', fontSize: '0.85rem' }} />
+                    <select {...register('request_type')} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-main)', fontSize: '0.85rem' }}>
+                      <option value="">Select...</option>
+                      <option value="Product Enquiry">Product Enquiry</option>
+                      <option value="Request for Information">Request for Information</option>
+                      <option value="Suggestion">Suggestion</option>
+                      <option value="Other">Other</option>
+                    </select>
                   </div>
+                  {watchRequestType === 'Other' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Other Request Type *</label>
+                      <input type="text" {...register('request_type_other', { required: 'Required' })} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-main)', fontSize: '0.85rem' }} />
+                    </div>
+                  )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Type Of Lead</label>
                     <select {...register('type_of_lead')} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-main)', fontSize: '0.85rem' }}>
                       <option value="By Call">By Call</option>
-                      <option value="Website">Website</option>
-                      <option value="Referral">Referral</option>
+                      <option value="By Visit">By Visit</option>
+                      <option value="By Email">By Email</option>
+                      <option value="By Flyer">By Flyer</option>
                     </select>
                   </div>
                 </div>
@@ -490,8 +626,8 @@ export default function PipelineLeads() {
                     <input type="text" {...register('whatsapp')} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-main)', fontSize: '0.85rem' }} />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Phone Ext.</label>
-                    <input type="text" {...register('phone_ext')} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-main)', fontSize: '0.85rem' }} />
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Fax</label>
+                    <input type="text" {...register('fax')} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-main)', fontSize: '0.85rem' }} />
                   </div>
                 </div>
               </div>
@@ -524,10 +660,6 @@ export default function PipelineLeads() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Industry</label>
                     <input type="text" {...register('industry')} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-main)', fontSize: '0.85rem' }} />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Fax</label>
-                    <input type="text" {...register('fax')} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-main)', fontSize: '0.85rem' }} />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Market Segment</label>
@@ -566,6 +698,7 @@ export default function PipelineLeads() {
         </div>
       )}
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
     </WorkspaceLayout>
   );
 }
