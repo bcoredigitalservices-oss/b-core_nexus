@@ -35,7 +35,7 @@ const WORKSPACE_CATEGORIES = [
   {
     name: 'Finance',
     color: '#00f5a0',
-    keys: ['accounting', 'banking', 'taxes']
+    keys: ['accounting', 'invoicing', 'payments', 'banking', 'taxes', 'reports', 'budget', 'shares']
   },
   {
     name: 'Inventory',
@@ -75,7 +75,7 @@ const WORKSPACE_CATEGORIES = [
 ];
 
 export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: ProvisionUserModalProps) {
-  const { token, authFetch } = useAppContext();
+  const { token, authFetch, currentUser } = useAppContext();
 
   // Metadata context lists
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -87,7 +87,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [roleTier, setRoleTier] = useState<number>(4);
-  const [clearanceLevel, setClearanceLevel] = useState<number>(4);
+  const [designation, setDesignation] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [selectedWorkspaces, setSelectedWorkspaces] = useState<string[]>([]);
 
@@ -174,7 +174,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
           first_name: firstName.trim() || null,
           last_name: lastName.trim() || null,
           role_tier: roleTier,
-          clearance_level: clearanceLevel,
+          designation: designation.trim() || null,
           department_id: departmentId || null,
           workspace_strings: selectedWorkspaces
         })
@@ -189,7 +189,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
       setFirstName('');
       setLastName('');
       setRoleTier(4);
-      setClearanceLevel(4);
+      setDesignation('');
       setDepartmentId('');
       setSelectedWorkspaces([]);
     } catch (err: any) {
@@ -365,6 +365,8 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
                   onChange={(e) => setRoleTier(Number(e.target.value))}
                   disabled={submitting}
                 >
+                  <option value={0} disabled={currentUser?.role_tier > 0}>Tier 0 Superadmin</option>
+                  <option value={1} disabled={currentUser?.role_tier > 1}>Tier 1 Executive</option>
                   <option value={2}>Tier 2 Manager</option>
                   <option value={3}>Tier 3 Operator</option>
                   <option value={4}>Tier 4 Auditor</option>
@@ -374,17 +376,15 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
               <div>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>
                   <ShieldCheck size={14} />
-                  Clearance Level *
+                  Designation
                 </label>
-                <select 
-                  value={clearanceLevel} 
-                  onChange={(e) => setClearanceLevel(Number(e.target.value))}
+                <input 
+                  type="text"
+                  placeholder="e.g. Sales Manager"
+                  value={designation} 
+                  onChange={(e) => setDesignation(e.target.value)}
                   disabled={submitting}
-                >
-                  <option value={2}>Level 2 Clearance</option>
-                  <option value={3}>Level 3 Clearance</option>
-                  <option value={4}>Level 4 Clearance</option>
-                </select>
+                />
               </div>
             </div>
 

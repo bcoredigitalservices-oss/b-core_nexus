@@ -30,7 +30,7 @@ interface UserItem {
   first_name: string | null;
   last_name: string | null;
   role_tier: number;
-  clearance_level: number;
+  designation: string | null;
   is_active: boolean;
   department_id: string | null;
   functional_roles?: string[];
@@ -142,6 +142,7 @@ export default function Users() {
   const getClearanceBadge = (level: number) => {
     switch(level) {
       case 0:
+        return { label: 'Tier 0 Superadmin', color: '#9d4edd', bg: 'rgba(157, 78, 221, 0.12)', border: '1px solid rgba(157, 78, 221, 0.2)' };
       case 1:
         return { label: 'Tier 1 Executive', color: '#ff3366', bg: 'rgba(255, 51, 102, 0.12)', border: '1px solid rgba(255, 51, 102, 0.2)' };
       case 2:
@@ -249,14 +250,14 @@ export default function Users() {
               <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
                 <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email / Login Identity</th>
                 <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Full Name</th>
-                <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Clearance Level</th>
+                <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Designation</th>
                 <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Onboarding Status</th>
                 <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user) => {
-                const badge = getClearanceBadge(user.clearance_level || user.role_tier);
+                const badge = getClearanceBadge(user.role_tier);
                 
                 return (
                   <tr key={user.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
@@ -267,21 +268,27 @@ export default function Users() {
                       {user.first_name ? `${user.first_name} ${user.last_name || ''}` : <em style={{ opacity: 0.5 }}>Unconfigured</em>}
                     </td>
                     <td style={{ padding: '1rem 0.5rem' }}>
-                      <span 
-                        style={{
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          padding: '2px 8px',
-                          borderRadius: '6px',
-                          color: badge.color,
-                          backgroundColor: badge.bg,
-                          border: badge.border,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em'
-                        }}
-                      >
-                        {badge.label}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                          {user.designation || <em style={{ opacity: 0.5 }}>Unassigned</em>}
+                        </span>
+                        <span 
+                          style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            color: badge.color,
+                            backgroundColor: badge.bg,
+                            border: badge.border,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            alignSelf: 'flex-start'
+                          }}
+                        >
+                          {badge.label}
+                        </span>
+                      </div>
                     </td>
                     <td style={{ padding: '1rem 0.5rem' }}>
                       {user.is_active ? (

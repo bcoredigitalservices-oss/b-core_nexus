@@ -19,7 +19,7 @@ interface EditUserAccessModalProps {
     first_name: string | null;
     last_name: string | null;
     role_tier: number;
-    clearance_level: number;
+    designation: string | null;
     department_id: string | null;
     workspaces?: string[];
   } | null;
@@ -44,7 +44,7 @@ const WORKSPACE_CATEGORIES = [
   {
     name: 'Finance',
     color: '#00f5a0',
-    keys: ['accounting', 'banking', 'taxes']
+    keys: ['accounting', 'invoicing', 'payments', 'banking', 'taxes', 'reports', 'budget', 'shares']
   },
   {
     name: 'Inventory',
@@ -84,7 +84,7 @@ const WORKSPACE_CATEGORIES = [
 ];
 
 export default function EditUserAccessModal({ user, onClose, onSuccess }: EditUserAccessModalProps) {
-  const { token, authFetch } = useAppContext();
+  const { token, authFetch, currentUser } = useAppContext();
 
   // Metadata context lists
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -93,7 +93,7 @@ export default function EditUserAccessModal({ user, onClose, onSuccess }: EditUs
 
   // Form Field States
   const [roleTier, setRoleTier] = useState<number>(4);
-  const [clearanceLevel, setClearanceLevel] = useState<number>(4);
+  const [designation, setDesignation] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [selectedWorkspaceIds, setSelectedWorkspaceIds] = useState<string[]>([]);
 
@@ -132,7 +132,7 @@ export default function EditUserAccessModal({ user, onClose, onSuccess }: EditUs
   useEffect(() => {
     if (!user) return;
     setRoleTier(user.role_tier || 4);
-    setClearanceLevel(user.clearance_level || 4);
+    setDesignation(user.designation || '');
     setDepartmentId(user.department_id || '');
   }, [user]);
 
@@ -199,7 +199,7 @@ export default function EditUserAccessModal({ user, onClose, onSuccess }: EditUs
         method: 'PUT',
         body: JSON.stringify({
           role_tier: roleTier,
-          clearance_level: clearanceLevel,
+          designation: designation.trim() || null,
           department_id: departmentId || null,
           workspace_ids: selectedWorkspaceIds
         })
@@ -347,6 +347,8 @@ export default function EditUserAccessModal({ user, onClose, onSuccess }: EditUs
                   onChange={(e) => setRoleTier(Number(e.target.value))}
                   disabled={submitting}
                 >
+                  <option value={0} disabled={currentUser?.role_tier > 0}>Tier 0 Superadmin</option>
+                  <option value={1} disabled={currentUser?.role_tier > 1}>Tier 1 Executive</option>
                   <option value={2}>Tier 2 Manager</option>
                   <option value={3}>Tier 3 Operator</option>
                   <option value={4}>Tier 4 Auditor</option>
@@ -356,17 +358,15 @@ export default function EditUserAccessModal({ user, onClose, onSuccess }: EditUs
               <div>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>
                   <ShieldCheck size={14} />
-                  Clearance Level
+                  Designation
                 </label>
-                <select 
-                  value={clearanceLevel} 
-                  onChange={(e) => setClearanceLevel(Number(e.target.value))}
+                <input 
+                  type="text"
+                  placeholder="e.g. Sales Manager"
+                  value={designation} 
+                  onChange={(e) => setDesignation(e.target.value)}
                   disabled={submitting}
-                >
-                  <option value={2}>Level 2 Clearance</option>
-                  <option value={3}>Level 3 Clearance</option>
-                  <option value={4}>Level 4 Clearance</option>
-                </select>
+                />
               </div>
             </div>
 

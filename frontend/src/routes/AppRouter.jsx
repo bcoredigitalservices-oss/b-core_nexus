@@ -15,6 +15,7 @@ import EventEngineDashboard from '../pages/dashboards/EventEngineDashboard';
 import SystemSettingsDashboard from '../pages/settings/SystemSettingsDashboard';
 import OrganisationSetup from '../pages/settings/OrganisationSetup';
 import ExecutiveHome from '../pages/dashboards/ExecutiveHome';
+import AppLauncher from '../pages/dashboards/AppLauncher';
 import Departments from '../pages/iam/Departments';
 import Workspaces from '../pages/iam/Workspaces';
 import UsersPage from '../pages/iam/Users';
@@ -144,7 +145,8 @@ export function RoleBasedIndexRoute() {
   } else if (tier === 1) {
     return <ExecutiveHome />;
   } else {
-    return <Dashboard />;
+    // Tiers 2, 3, 4 all get the clean workspace launcher grid
+    return <AppLauncher />;
   }
 }
 

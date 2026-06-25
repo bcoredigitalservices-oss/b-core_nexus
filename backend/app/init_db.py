@@ -22,7 +22,7 @@ from app.workspaces.inventory.models import InventoryItem, Warehouse, StockLedge
 from app.workspaces.procurement.models import PurchaseReceipt, PurchaseReceiptItem
 from app.workspaces.crm.models import Customer, InteractionLog, SalesOrder, SalesOrderLine
 from app.workspaces.finance.models import Account, JournalEntry, JournalEntryLine
-from app.workspaces.hr.models import EmployeeRecord, LeaveRequest
+# from app.workspaces.hr.models import EmployeeRecord, LeaveRequest
 from app.workspaces.operations.models import Project, Task
 
 

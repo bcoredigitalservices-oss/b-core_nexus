@@ -33,8 +33,8 @@ class User(CoreModel):
     totp_secret: Mapped[str | None] = mapped_column(default=None, nullable=True)
     mfa_enabled: Mapped[bool] = mapped_column(default=False, nullable=False)
     
-    # Clearance Level (to differentiate Tier 2, Tier 3, Tier 4)
-    clearance_level: Mapped[int] = mapped_column(default=4, nullable=False)  # 2 = Tier 2, 3 = Tier 3, 4 = Tier 4
+    # Designation (e.g., 'Lead Developer', 'Sales Executive')
+    designation: Mapped[str | None] = mapped_column(nullable=True)
     
     # Department Link
     department_id: Mapped[uuid.UUID | None] = mapped_column(

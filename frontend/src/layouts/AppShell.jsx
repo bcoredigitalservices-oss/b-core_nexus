@@ -58,7 +58,7 @@ export default function AppShell() {
   return (
     <div className="appshell">
       {/* ── Sidebar ──────────────────────────────────────────────── */}
-      {!isWorkspaceAppRoute && (
+      {!isWorkspaceAppRoute && currentUser?.role_tier < 2 && (
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
@@ -70,8 +70,8 @@ export default function AppShell() {
       {/* ── Main Column (header + content) ───────────────────────── */}
       <div className={[
         'appshell-main',
-        !isMobile && !isWorkspaceAppRoute && 'appshell-main--desktop',
-        !isMobile && !isWorkspaceAppRoute && sidebarCollapsed && 'sidebar-is-collapsed',
+        !isMobile && (!isWorkspaceAppRoute && currentUser?.role_tier < 2) && 'appshell-main--desktop',
+        !isMobile && (!isWorkspaceAppRoute && currentUser?.role_tier < 2) && sidebarCollapsed && 'sidebar-is-collapsed',
       ].filter(Boolean).join(' ')}>
 
         {/* ── Top Header ─────────────────────────────────────────── */}
@@ -79,7 +79,7 @@ export default function AppShell() {
 
           {/* Left: hamburger (mobile) or brand spacer */}
           <div className="appshell-header__left">
-            {isMobile && (
+            {isMobile && currentUser?.role_tier < 2 && (
               <button
                 id="hamburger-menu-btn"
                 className="appshell-icon-btn"

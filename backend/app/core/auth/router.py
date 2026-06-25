@@ -581,7 +581,11 @@ async def list_users(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(min_tier=1))
 ):
-    result = await db.execute(select(User).order_by(User.email))
+    result = await db.execute(
+        select(User)
+        .where(User.role_tier >= current_user.role_tier)
+        .order_by(User.email)
+    )
     users = result.scalars().all()
     return users
 

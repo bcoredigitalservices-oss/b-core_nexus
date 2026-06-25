@@ -1,187 +1,128 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building, 
-  Package, 
-  Coins, 
+  Users,
+  LayoutGrid,
   Globe, 
-  Percent, 
-  FileText, 
-  Download, 
-  CheckCircle,
-  ExternalLink,
-  ChevronRight,
-  Plus,
-  X,
-  Loader2,
-  AlertCircle
+  Activity,
+  ArrowRight,
+  Shield,
+  Layers,
+  Server,
+  Zap,
+  Briefcase
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
-
-// ── Business KPI Definitions ────────────────────────────────────────────────
-interface KpiItem {
-  label: string;
-  value: string;
-  subtext: string;
-  icon: React.ReactNode;
-  color: string;
-  glowColor: string;
-}
-
-const BUSINESS_KPIS: KpiItem[] = [
-  {
-    label: 'Total Entities',
-    value: '8 Registered',
-    subtext: 'Subsidiaries, branches & warehouses',
-    icon: <Building size={24} />,
-    color: '#00f2fe',
-    glowColor: 'rgba(0, 242, 254, 0.15)',
-  },
-  {
-    label: 'Active Catalog Items',
-    value: '1,420 SKUs',
-    subtext: 'Across all active listings',
-    icon: <Package size={24} />,
-    color: '#00f5a0',
-    glowColor: 'rgba(0, 245, 160, 0.15)',
-  },
-  {
-    label: 'Base Currency',
-    value: 'USD / EUR',
-    subtext: 'Primary reporting currencies',
-    icon: <Coins size={24} />,
-    color: '#ffb703',
-    glowColor: 'rgba(255, 183, 3, 0.15)',
-  },
-];
-
-// Mock Business Entities
-const REGISTERED_ENTITIES = [
-  { id: '1', name: 'Nexus Logistics Global Ltd', type: 'Subsidiary', country: 'United Kingdom', status: 'Active', code: 'NEX-UK-01' },
-  { id: '2', name: 'Aether Parts Americas LLC', type: 'Branch', country: 'United States', status: 'Active', code: 'AETH-US-03' },
-  { id: '3', name: 'Main Terminal B Warehouse', type: 'Warehouse', country: 'Netherlands', status: 'Active', code: 'TERM-NL-02' },
-  { id: '4', name: 'B-Core Asia Operations', type: 'Subsidiary', country: 'Singapore', status: 'Active', code: 'BCOR-SG-09' },
-];
-
-// Mock Tax Ledger
-const TAX_REGULATIONS = [
-  { region: 'European Union', category: 'Standard Goods', rate: '20%', status: 'Compliant' },
-  { region: 'United Kingdom', category: 'Digital Services', rate: '20%', status: 'Compliant' },
-  { region: 'North America (NY)', category: 'Warehousing', rate: '8.875%', status: 'Compliant' },
-];
+import { useNavigate } from 'react-router-dom';
+import { 
+  PieChart, Pie, Cell, 
+  AreaChart, Area, 
+  BarChart, Bar, 
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+} from 'recharts';
 
 export default function ExecutiveDashboard() {
-  const { activeWorkspace, token } = useAppContext();
-  const [activeReportTab, setActiveReportTab] = useState<'financials' | 'operations' | 'compliance'>('financials');
-  
-  // Product Creator State
-  const [creatorOpen, setCreatorOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
-  
-  // Form fields state
-  const [title, setTitle] = useState('');
-  const [sku, setSku] = useState('');
-  const [uom, setUom] = useState('');
-  
-  // Dynamic fields state
-  const [batchNumber, setBatchNumber] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [tempControlled, setTempControlled] = useState(false);
-  const [vin, setVin] = useState('');
-  const [engineHours, setEngineHours] = useState('');
-  const [lastServiceDate, setLastServiceDate] = useState('');
-  const [description, setDescription] = useState('');
+  const { token, currentUser } = useAppContext();
+  const navigate = useNavigate();
 
-  const vertical = activeWorkspace?.industry_vertical || 'GENERAL_TRADING';
-  const features = activeWorkspace?.features || {};
+  // Data States
+  const [orgProfile, setOrgProfile] = useState<any>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Extract UOM choices and schema fields based on vertical
-  let uomChoices: string[] = [];
-  if (vertical === 'HEALTHCARE_LOGISTICS') {
-    uomChoices = features?.medicines?.uom_options || ['vials', 'mg', 'batches'];
-  } else if (vertical === 'HEAVY_MACHINERY') {
-    uomChoices = features?.vehicles?.uom_options || ['hours', 'km'];
-  } else {
-    uomChoices = features?.general?.uom_options || ['units', 'kg', 'boxes'];
-  }
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!token) return;
+      try {
+        const headers = { Authorization: `Bearer ${token}` };
+        
+        // Fetch all data in parallel
+        const [orgRes, usersRes, deptsRes, worksRes] = await Promise.all([
+          fetch(`${import.meta.env.VITE_API_URL}/api/v1/organization/profile`, { headers }),
+          fetch(`${import.meta.env.VITE_API_URL}/api/v1/iam/users`, { headers }),
+          fetch(`${import.meta.env.VITE_API_URL}/api/v1/iam/departments`, { headers }),
+          fetch(`${import.meta.env.VITE_API_URL}/api/v1/iam/workspaces`, { headers })
+        ]);
 
-  // Handle opening of Product Creator Form
-  const openProductCreator = () => {
-    // Reset form fields
-    setTitle('');
-    setSku('');
-    setUom(uomChoices[0] || '');
-    setBatchNumber('');
-    setExpiryDate('');
-    setTempControlled(false);
-    setVin('');
-    setEngineHours('');
-    setLastServiceDate('');
-    setDescription('');
-    setSuccessMsg('');
-    setErrorMsg('');
-    setCreatorOpen(true);
-  };
+        if (orgRes.ok) {
+          const orgData = await orgRes.json();
+          setOrgProfile(orgData);
+        }
+        
+        if (usersRes.ok) {
+          const userData = await usersRes.json();
+          setUsers(userData);
+        }
 
-  // Submit dynamic form
-  const handleCreateProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setSuccessMsg('');
-    setErrorMsg('');
+        if (deptsRes.ok) {
+          const deptsData = await deptsRes.json();
+          setDepartments(deptsData);
+        }
 
-    // Construct custom attributes based on Industry Vertical definition
-    const customAttributes: Record<string, any> = {
-      uom: uom,
-      vertical: vertical
+        if (worksRes.ok) {
+          const worksData = await worksRes.json();
+          setWorkspaces(worksData);
+        }
+
+      } catch (err) {
+        console.error("Failed to load dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    if (vertical === 'HEALTHCARE_LOGISTICS') {
-      customAttributes.batch_number = batchNumber;
-      customAttributes.expiry_date = expiryDate;
-      customAttributes.temperature_controlled = tempControlled;
-    } else if (vertical === 'HEAVY_MACHINERY') {
-      customAttributes.vin = vin;
-      customAttributes.engine_hours = parseFloat(engineHours) || 0;
-      customAttributes.last_service_date = lastServiceDate;
-    } else {
-      customAttributes.description = description;
-    }
+    fetchDashboardData();
+  }, [token]);
 
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/catalog`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({
-          title,
-          sku: sku.trim().toUpperCase(),
-          custom_attributes: customAttributes
-        })
-      });
+  // Transform Data for Charts
+  
+  // 1. Department Chart Data (Count users per department, simulated if empty)
+  const deptData = departments.length > 0 ? departments.map((d, i) => ({
+    name: d.name,
+    value: Math.floor(Math.random() * 20) + 5 // Simulated size if real counts aren't available
+  })) : [
+    { name: 'Engineering', value: 40 },
+    { name: 'Sales', value: 30 },
+    { name: 'Marketing', value: 20 },
+    { name: 'HR', value: 10 }
+  ];
+  const COLORS = ['#9d4edd', '#00f2fe', '#00f5a0', '#ffb703', '#ff0076'];
 
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.detail || 'Catalog item creation failed.');
-      }
+  // 2. Simulated System Health Activity (Last 7 Days)
+  const healthData = [
+    { name: 'Mon', requests: 4000, latency: 24 },
+    { name: 'Tue', requests: 3000, latency: 22 },
+    { name: 'Wed', requests: 2000, latency: 28 },
+    { name: 'Thu', requests: 2780, latency: 20 },
+    { name: 'Fri', requests: 1890, latency: 21 },
+    { name: 'Sat', requests: 2390, latency: 25 },
+    { name: 'Sun', requests: 3490, latency: 23 },
+  ];
 
-      setSuccessMsg(`Catalog Item ${sku.toUpperCase()} created successfully!`);
-      // Close after delay
-      setTimeout(() => {
-        setCreatorOpen(false);
-      }, 2000);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Server connection error.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  // 3. Workspace Status Data
+  const workspaceData = workspaces.length > 0 ? workspaces.map(w => ({
+    name: w.name || w.industry_vertical,
+    active: 1
+  })) : [
+    { name: 'CRM', active: 1 },
+    { name: 'HR', active: 1 },
+    { name: 'Finance', active: 1 },
+    { name: 'Inventory', active: 1 }
+  ];
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--text-muted)' }}>
+        <Activity size={32} className="animate-spin" style={{ marginRight: '1rem' }} />
+        Loading Organization Data...
+      </div>
+    );
+  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1400px', margin: '0 auto', paddingBottom: '2rem' }}>
       
       {/* Welcome & Overview Header Banner */}
       <div 
@@ -226,14 +167,14 @@ export default function ExecutiveDashboard() {
               boxShadow: '0 0 20px rgba(157, 78, 221, 0.2)'
             }}
           >
-            <Package size={32} color="#9d4edd" />
+            <Building size={32} color="#9d4edd" />
           </div>
           <div>
             <h1 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-display)', marginBottom: '0.4rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-              Business Overview & Reports
+              {orgProfile?.legal_name || 'Organization Dashboard'}
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: '600px', lineHeight: '1.5' }}>
-              Consolidated enterprise summaries, operating entity directories, multi-jurisdictional tax registries, and core organizational settings.
+              Welcome back, {currentUser?.username || 'Executive'}. Here is the live operating status of your organization, including department health and active workspaces.
             </p>
           </div>
         </div>
@@ -255,7 +196,7 @@ export default function ExecutiveDashboard() {
           }}
         >
           <Globe size={16} color="#ffb703" />
-          <span>Active Vertical: {vertical.replace('_', ' ')}</span>
+          <span>Currency: {orgProfile?.base_currency || 'USD'}</span>
         </div>
       </div>
 
@@ -267,610 +208,247 @@ export default function ExecutiveDashboard() {
           gap: '1.5rem' 
         }}
       >
-        {BUSINESS_KPIS.map((kpi) => (
-          <div 
-            key={kpi.label} 
-            className="glass-panel" 
-            style={{ 
-              padding: '1.75rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              minHeight: '140px',
-              position: 'relative',
-              overflow: 'hidden',
-              backgroundColor: 'var(--bg-main)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '14px'
-            }}
-          >
-            <div 
-              style={{
-                position: 'absolute',
-                top: '-20px',
-                right: '-20px',
-                width: '100px',
-                height: '100px',
-                borderRadius: '50%',
-                background: kpi.glowColor,
-                filter: 'blur(35px)',
-                pointerEvents: 'none'
-              }}
-            />
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 700 }}>
-                {kpi.label}
-              </span>
-              <span style={{ color: kpi.color, background: 'var(--bg-card-hover)', padding: '6px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                {kpi.icon}
-              </span>
+        <div className="glass-panel" style={{ padding: '1.75rem', position: 'relative', overflow: 'hidden', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 700 }}>Total Personnel</span>
+            <span style={{ color: '#00f2fe', background: 'var(--bg-card-hover)', padding: '6px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+              <Users size={20} />
+            </span>
+          </div>
+          <div style={{ marginTop: '1.5rem' }}>
+            <div style={{ fontSize: '2.2rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-main)', lineHeight: 1.1 }}>
+              {users.length}
             </div>
-            
-            <div style={{ marginTop: '1.5rem' }}>
-              <div style={{ fontSize: '2.2rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-main)', lineHeight: 1.1 }}>
-                {kpi.value}
-              </div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                {kpi.subtext}
-              </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              Registered IAM Users
             </div>
           </div>
-        ))}
+        </div>
+
+        <div className="glass-panel" style={{ padding: '1.75rem', position: 'relative', overflow: 'hidden', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 700 }}>Active Departments</span>
+            <span style={{ color: '#00f5a0', background: 'var(--bg-card-hover)', padding: '6px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+              <Layers size={20} />
+            </span>
+          </div>
+          <div style={{ marginTop: '1.5rem' }}>
+            <div style={{ fontSize: '2.2rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-main)', lineHeight: 1.1 }}>
+              {departments.length}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              Operational divisions
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-panel" style={{ padding: '1.75rem', position: 'relative', overflow: 'hidden', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 700 }}>Cluster Workspaces</span>
+            <span style={{ color: '#ffb703', background: 'var(--bg-card-hover)', padding: '6px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+              <LayoutGrid size={20} />
+            </span>
+          </div>
+          <div style={{ marginTop: '1.5rem' }}>
+            <div style={{ fontSize: '2.2rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-main)', lineHeight: 1.1 }}>
+              {workspaces.length}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              Provisioned & running
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Main Grid: Horizontal Sections */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem', alignItems: 'start' }}>
+      {/* Main Content Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem', alignItems: 'start' }}>
         
-        {/* Left Side: Directory and Reports */}
+        {/* Left Column: Charts */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
-          {/* Global Business Entities Directory */}
-          <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
-            <div 
-              style={{ 
-                padding: '1.25rem 1.75rem', 
-                borderBottom: '1px solid var(--border-color)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Building size={20} color="#00f2fe" />
-                <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)' }}>Global Business Entities</h2>
-              </div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--bg-card-hover)', padding: '4px 10px', borderRadius: '12px' }}>
-                Ledger Verified
-              </span>
-            </div>
-            
-            <div style={{ padding: '1.25rem 1.75rem' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
-                    <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Entity Legal Name</th>
-                    <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</th>
-                    <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Jurisdiction</th>
-                    <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Registration Code</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {REGISTERED_ENTITIES.map((ent) => (
-                    <tr key={ent.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '1rem 0.5rem', fontWeight: 600, color: 'var(--text-main)' }}>{ent.name}</td>
-                      <td style={{ padding: '1rem 0.5rem' }}>
-                        <span 
-                          style={{ 
-                            fontSize: '0.75rem', 
-                            padding: '3px 8px', 
-                            borderRadius: '6px', 
-                            background: ent.type === 'Subsidiary' ? 'rgba(157, 78, 221, 0.15)' : 'rgba(0, 242, 254, 0.15)', 
-                            color: ent.type === 'Subsidiary' ? '#c8b6ff' : '#00f2fe',
-                            fontWeight: 600
-                          }}
-                        >
-                          {ent.type}
-                        </span>
-                      </td>
-                      <td style={{ padding: '1rem 0.5rem', color: 'var(--text-muted)' }}>{ent.country}</td>
-                      <td style={{ padding: '1rem 0.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{ent.code}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Interactive Reports Hub */}
-          <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
-            <div 
-              style={{ 
-                padding: '1.25rem 1.75rem', 
-                borderBottom: '1px solid var(--border-color)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem'
-              }}
-            >
-              <FileText size={20} color="#9d4edd" />
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)' }}>Executive Reports Hub</h2>
-            </div>
-            
-            <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.1)' }}>
-              <button 
-                onClick={() => setActiveReportTab('financials')}
-                style={{
-                  flex: 1,
-                  padding: '1rem',
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: activeReportTab === 'financials' ? '2px solid #9d4edd' : '2px solid transparent',
-                  color: activeReportTab === 'financials' ? 'var(--text-main)' : 'var(--text-muted)',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                Financial Summaries
-              </button>
-              <button 
-                onClick={() => setActiveReportTab('operations')}
-                style={{
-                  flex: 1,
-                  padding: '1rem',
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: activeReportTab === 'operations' ? '2px solid #9d4edd' : '2px solid transparent',
-                  color: activeReportTab === 'operations' ? 'var(--text-main)' : 'var(--text-muted)',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                Operations Reports
-              </button>
-              <button 
-                onClick={() => setActiveReportTab('compliance')}
-                style={{
-                  flex: 1,
-                  padding: '1rem',
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: activeReportTab === 'compliance' ? '2px solid #9d4edd' : '2px solid transparent',
-                  color: activeReportTab === 'compliance' ? 'var(--text-main)' : 'var(--text-muted)',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                Tax & Compliance
-              </button>
-            </div>
-
-            <div style={{ padding: '1.5rem 1.75rem' }}>
-              {activeReportTab === 'financials' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card-hover)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                    <div>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>Q2 Consolidated Profit & Loss</h4>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Generated: June 2026 • Format: PDF</p>
-                    </div>
-                    <button className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Download size={14} /> Download
-                    </button>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card-hover)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                    <div>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>Global Ledger Balance Statement</h4>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Generated: May 2026 • Format: XLSX</p>
-                    </div>
-                    <button className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Download size={14} /> Download
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {activeReportTab === 'operations' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card-hover)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                    <div>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>Terminal Warehouse Capacity Report</h4>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Weekly log • Stock movements and locks</p>
-                    </div>
-                    <button className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <ExternalLink size={14} /> View
-                    </button>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card-hover)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                    <div>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>Catalog SKU Integrity Log</h4>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Validation scan across all active catalog listings</p>
-                    </div>
-                    <button className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <ExternalLink size={14} /> View
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {activeReportTab === 'compliance' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card-hover)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                    <div>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>Multi-Jurisdiction Tax Compliance Checklist</h4>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Ledger audit status • Standard EU & US codes</p>
-                    </div>
-                    <span style={{ fontSize: '0.75rem', color: '#00f5a0', background: 'rgba(0, 245, 160, 0.1)', padding: '4px 10px', borderRadius: '12px', border: '1px solid rgba(0, 245, 160, 0.2)' }}>
-                      Passed
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--bg-card-hover)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                    <div>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>System Access Governance Log</h4>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Audit log of Tier 2, 3, 4 privilege checks</p>
-                    </div>
-                    <button className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Download size={14} /> Export
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-        </div>
-
-        {/* Right Side: Quick Stats and Rules */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          
-          {/* Tax Regulation Overview */}
-          <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
-            <div 
-              style={{ 
-                padding: '1.25rem 1.5rem', 
-                borderBottom: '1px solid var(--border-color)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem'
-              }}
-            >
-              <Percent size={18} color="#ffb703" />
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>Regional Tax Rules</h3>
-            </div>
-            
-            <div style={{ padding: '1.25rem 1.5rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {TAX_REGULATIONS.map((tax, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: i < TAX_REGULATIONS.length - 1 ? '1px solid rgba(255, 255, 255, 0.04)' : 'none' }}>
-                    <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>{tax.region}</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>{tax.category}</div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffb703' }}>{tax.rate}</span>
-                      <CheckCircle size={14} color="#00f5a0" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions Panel */}
-          <div className="glass-panel" style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Package size={18} color="#00f2fe" />
-              Quick Operations
+          {/* System Health Chart */}
+          <div className="glass-panel" style={{ padding: '1.5rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Zap size={20} color="#00f2fe" />
+              System Activity & Health
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <button 
-                onClick={openProductCreator}
-                className="btn btn-primary" 
-                style={{ 
-                  justifyContent: 'space-between', 
-                  width: '100%', 
-                  padding: '0.8rem 1rem', 
-                  fontSize: '0.85rem',
-                  textAlign: 'left' 
-                }}
-              >
-                <span>Launch Product Creator</span>
-                <Plus size={16} />
-              </button>
-              <button 
-                className="btn btn-secondary" 
-                style={{ 
-                  justifyContent: 'space-between', 
-                  width: '100%', 
-                  padding: '0.8rem 1rem', 
-                  fontSize: '0.85rem',
-                  textAlign: 'left' 
-                }}
-              >
-                <span>Audit Department Access</span>
-                <ChevronRight size={16} color="var(--text-muted)" />
-              </button>
-              <button 
-                className="btn btn-secondary" 
-                style={{ 
-                  justifyContent: 'space-between', 
-                  width: '100%', 
-                  padding: '0.8rem 1rem', 
-                  fontSize: '0.85rem',
-                  textAlign: 'left' 
-                }}
-              >
-                <span>Configure Formats & Logo</span>
-                <ChevronRight size={16} color="var(--text-muted)" />
-              </button>
+            <div style={{ width: '100%', height: 300 }}>
+              <ResponsiveContainer>
+                <AreaChart data={healthData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorReq" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#9d4edd" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#9d4edd" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'var(--text-main)' }}
+                    itemStyle={{ color: 'var(--text-main)' }}
+                  />
+                  <Area type="monotone" dataKey="requests" stroke="#9d4edd" fillOpacity={1} fill="url(#colorReq)" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+            {/* Department Distribution */}
+            <div className="glass-panel" style={{ padding: '1.5rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Briefcase size={20} color="#ffb703" />
+                Department Spread
+              </h3>
+              <div style={{ width: '100%', height: 250 }}>
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={deptData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {deptData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'var(--text-main)' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Workspace Distribution */}
+            <div className="glass-panel" style={{ padding: '1.5rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Server size={20} color="#00f5a0" />
+                Workspace Provisioning
+              </h3>
+              <div style={{ width: '100%', height: 250 }}>
+                <ResponsiveContainer>
+                  <BarChart data={workspaceData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+                    <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'var(--text-main)' }}
+                      cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                    />
+                    <Bar dataKey="active" fill="#00f5a0" radius={[4, 4, 0, 0]} barSize={30} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
         </div>
 
-      </div>
-
-      {/* ── Product Creator Overlay/Modal ── */}
-      {creatorOpen && (
-        <div 
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(9, 13, 26, 0.8)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 999,
-            padding: '1.5rem'
-          }}
-        >
-          <div 
-            className="glass-panel" 
-            style={{ 
-              width: '100%', 
-              maxWidth: '520px', 
-              backgroundColor: 'var(--bg-main)', 
-              border: '1px solid rgba(157, 78, 221, 0.3)',
-              borderRadius: '16px',
-              padding: '2rem',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.5rem'
-            }}
-          >
-            {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                  {vertical === 'HEALTHCARE_LOGISTICS' ? 'Register Pharmaceutical Item' : 
-                   vertical === 'HEAVY_MACHINERY' ? 'Register Fleet Asset' : 'Register Product & Item'}
-                </h3>
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  Vertical: {vertical.replace('_', ' ')}
-                </p>
-              </div>
+        {/* Right Column: Shortcuts */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Quick Shortcuts */}
+          <div className="glass-panel" style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', padding: '1.5rem 1.5rem 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Shield size={20} color="#9d4edd" />
+              Administrative Shortcuts
+            </h3>
+            
+            <div style={{ padding: '1rem 1.5rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              
               <button 
-                onClick={() => setCreatorOpen(false)}
-                style={{
-                  background: 'var(--bg-card-hover)',
-                  border: 'none',
-                  color: 'var(--text-muted)',
+                onClick={() => navigate('/users')}
+                className="btn glass-panel" 
+                style={{ 
+                  justifyContent: 'space-between', 
+                  width: '100%', 
+                  padding: '1.2rem', 
+                  fontSize: '0.95rem',
+                  textAlign: 'left',
+                  border: '1px solid rgba(157, 78, 221, 0.3)',
+                  background: 'rgba(157, 78, 221, 0.05)',
                   cursor: 'pointer',
-                  padding: '6px',
-                  borderRadius: '50%',
+                  borderRadius: '12px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  transition: 'all 0.2s ease',
+                  color: 'var(--text-main)'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(157, 78, 221, 0.1)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(157, 78, 221, 0.05)'}
               >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Error / Success Banners */}
-            {successMsg && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.75rem 1rem', backgroundColor: 'rgba(0, 245, 160, 0.1)', border: '1px solid rgba(0, 245, 160, 0.2)', borderRadius: '8px', color: '#00f5a0', fontSize: '0.85rem' }}>
-                <CheckCircle size={16} />
-                <span>{successMsg}</span>
-              </div>
-            )}
-
-            {errorMsg && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.75rem 1rem', backgroundColor: 'rgba(255, 51, 102, 0.1)', border: '1px solid rgba(255, 51, 102, 0.2)', borderRadius: '8px', color: '#ff3366', fontSize: '0.85rem' }}>
-                <AlertCircle size={16} />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-
-            {/* Modal Form */}
-            <form onSubmit={handleCreateProduct} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              
-              {/* Product Title */}
-              <div>
-                <label>Item Name / Title</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder={vertical === 'HEALTHCARE_LOGISTICS' ? 'e.g. Paracetamol 500mg' : 
-                               vertical === 'HEAVY_MACHINERY' ? 'e.g. Caterpillar Excavator 320' : 'e.g. Steel Pipe'} 
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-
-              {/* SKU */}
-              <div>
-                <label>Unique SKU Code</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="e.g. SKU-100-AB" 
-                  value={sku}
-                  onChange={(e) => setSku(e.target.value)}
-                />
-              </div>
-
-              {/* Locked UOM Dropdown */}
-              <div>
-                <label>Unit of Measure (UOM)</label>
-                <select 
-                  value={uom} 
-                  onChange={(e) => setUom(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    backgroundColor: 'var(--bg-input)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    color: 'var(--text-main)',
-                    fontSize: '0.9rem'
-                  }}
-                >
-                  {uomChoices.map((choice) => (
-                    <option key={choice} value={choice}>{choice}</option>
-                  ))}
-                </select>
-                <p style={{ fontSize: '0.7rem', color: 'var(--accent-primary)', marginTop: '4px', fontWeight: 600 }}>
-                  Locked to active industry vertical: {vertical.replace('_', ' ')}
-                </p>
-              </div>
-
-              {/* ── Dynamic Fields ── */}
-              
-              {vertical === 'HEALTHCARE_LOGISTICS' && (
-                <>
-                  <div>
-                    <label>Batch Number</label>
-                    <input 
-                      type="text" 
-                      required
-                      placeholder="e.g. BATCH-994" 
-                      value={batchNumber}
-                      onChange={(e) => setBatchNumber(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label>Expiry Date</label>
-                    <input 
-                      type="date" 
-                      required
-                      value={expiryDate}
-                      onChange={(e) => setExpiryDate(e.target.value)}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '0.5rem' }}>
-                    <input 
-                      type="checkbox" 
-                      id="tempControlled" 
-                      checked={tempControlled}
-                      onChange={(e) => setTempControlled(e.target.checked)}
-                      style={{ width: 'auto', cursor: 'pointer' }}
-                    />
-                    <label htmlFor="tempControlled" style={{ margin: 0, textTransform: 'none', cursor: 'pointer' }}>
-                      Requires Cold Chain / Temperature Controlled
-                    </label>
-                  </div>
-                </>
-              )}
-
-              {vertical === 'HEAVY_MACHINERY' && (
-                <>
-                  <div>
-                    <label>VIN (Vehicle Identification Number)</label>
-                    <input 
-                      type="text" 
-                      required
-                      placeholder="e.g. 17-digit VIN code" 
-                      value={vin}
-                      onChange={(e) => setVin(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label>Current Engine Hours</label>
-                    <input 
-                      type="number" 
-                      required
-                      placeholder="e.g. 450" 
-                      value={engineHours}
-                      onChange={(e) => setEngineHours(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label>Last Service Date</label>
-                    <input 
-                      type="date" 
-                      value={lastServiceDate}
-                      onChange={(e) => setLastServiceDate(e.target.value)}
-                    />
-                  </div>
-                </>
-              )}
-
-              {vertical === 'GENERAL_TRADING' && (
-                <div>
-                  <label>Item Description</label>
-                  <textarea 
-                    placeholder="Enter description..." 
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      backgroundColor: 'var(--bg-input)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '8px',
-                      color: 'var(--text-main)',
-                      fontFamily: 'var(--font-body)',
-                      fontSize: '0.9rem',
-                      minHeight: '80px',
-                      resize: 'vertical'
-                    }}
-                  />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Users size={20} color="#9d4edd" />
+                  <span style={{ fontWeight: 600 }}>User Console</span>
                 </div>
-              )}
+                <ArrowRight size={18} color="var(--text-muted)" />
+              </button>
 
-              {/* Submit Buttons */}
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button 
-                  type="button" 
-                  className="btn btn-secondary" 
-                  style={{ flex: 1 }}
-                  onClick={() => setCreatorOpen(false)}
-                  disabled={submitting}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary" 
-                  style={{ flex: 1 }}
-                  disabled={submitting}
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 size={16} className="udg-spinner" />
-                      Saving...
-                    </>
-                  ) : (
-                    'Create Item'
-                  )}
-                </button>
-              </div>
+              <button 
+                onClick={() => navigate('/departments')}
+                className="btn glass-panel" 
+                style={{ 
+                  justifyContent: 'space-between', 
+                  width: '100%', 
+                  padding: '1.2rem', 
+                  fontSize: '0.95rem',
+                  textAlign: 'left',
+                  border: '1px solid rgba(0, 242, 254, 0.3)',
+                  background: 'rgba(0, 242, 254, 0.05)',
+                  cursor: 'pointer',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  transition: 'all 0.2s ease',
+                  color: 'var(--text-main)'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(0, 242, 254, 0.1)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(0, 242, 254, 0.05)'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Layers size={20} color="#00f2fe" />
+                  <span style={{ fontWeight: 600 }}>Departments & Mgmt</span>
+                </div>
+                <ArrowRight size={18} color="var(--text-muted)" />
+              </button>
 
-            </form>
+              <button 
+                onClick={() => navigate('/workspaces')}
+                className="btn glass-panel" 
+                style={{ 
+                  justifyContent: 'space-between', 
+                  width: '100%', 
+                  padding: '1.2rem', 
+                  fontSize: '0.95rem',
+                  textAlign: 'left',
+                  border: '1px solid rgba(0, 245, 160, 0.3)',
+                  background: 'rgba(0, 245, 160, 0.05)',
+                  cursor: 'pointer',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  transition: 'all 0.2s ease',
+                  color: 'var(--text-main)'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(0, 245, 160, 0.1)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(0, 245, 160, 0.05)'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <LayoutGrid size={20} color="#00f5a0" />
+                  <span style={{ fontWeight: 600 }}>Active Workspaces</span>
+                </div>
+                <ArrowRight size={18} color="var(--text-muted)" />
+              </button>
+
+            </div>
           </div>
+          
         </div>
-      )}
-
+      </div>
     </div>
   );
 }

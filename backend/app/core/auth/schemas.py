@@ -9,7 +9,7 @@ class UserBase(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     role_tier: int = Field(default=4, ge=0, le=4, description="0=Root, 1=Exec, 2=Dir, 3=Lead, 4=Exec")
-    clearance_level: int = Field(default=4, ge=0, le=4)
+    designation: Optional[str] = None
     custom_attributes: Dict[str, Any] = Field(default_factory=dict)
     functional_roles: list[str] = Field(default_factory=list)
     department_id: Optional[UUID] = None

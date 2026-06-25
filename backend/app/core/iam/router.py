@@ -56,12 +56,12 @@ class UserProvision(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     role_tier: int = Field(..., ge=2, le=4)
-    clearance_level: int = Field(..., ge=2, le=4)
+    designation: Optional[str] = None
     department_id: Optional[uuid.UUID] = None
     workspace_strings: List[str] = Field(default_factory=list)
 
 class AccessUpdate(BaseModel):
-    clearance_level: Optional[int] = Field(None, ge=2, le=4)
+    designation: Optional[str] = None
     workspace_ids: Optional[List[uuid.UUID]] = None
     role_tier: Optional[int] = Field(None, ge=2, le=4)
     department_id: Optional[uuid.UUID] = None
@@ -193,7 +193,7 @@ async def provision_user(
         first_name=payload.first_name,
         last_name=payload.last_name,
         role_tier=payload.role_tier,
-        clearance_level=payload.clearance_level,
+        designation=payload.designation,
         department_id=payload.department_id,
         invite_token=token,
         token_expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
@@ -238,7 +238,7 @@ async def provision_user(
         "user_id": user.id,
         "invite_token": token,
         "onboarding_url": onboarding_url,
-        "clearance_level": user.clearance_level,
+        "designation": user.designation,
         "role_tier": user.role_tier,
         "email_sent": email_dispatched
     }
@@ -259,8 +259,8 @@ async def update_user_access(
         )
         
     # Update properties
-    if payload.clearance_level is not None:
-        user.clearance_level = payload.clearance_level
+    if payload.designation is not None:
+        user.designation = payload.designation
     if payload.role_tier is not None:
         user.role_tier = payload.role_tier
     if payload.department_id is not None:
@@ -299,7 +299,7 @@ async def update_user_access(
     return {
         "status": "success",
         "user_id": user.id,
-        "clearance_level": user.clearance_level,
+        "designation": user.designation,
         "role_tier": user.role_tier,
         "workspace_ids": ws_ids,
         "department_id": user.department_id,

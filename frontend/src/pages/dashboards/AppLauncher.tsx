@@ -164,17 +164,7 @@ const DEPARTMENTS: DepartmentDefinition[] = [
       { key: 'website', label: 'Website', icon: <Globe size={20} />, route: '/workspaces/utilities/website', color: '#fb923c' },
     ],
   },
-  {
-    id: 'internals',
-    name: 'Internals',
-    description: 'System administration, IT controls, audit logs and platform configuration.',
-    accentColor: '#a3a3a3',
-    glowColor: 'rgba(163,163,163,0.14)',
-    workspaces: [
-      { key: 'internals', label: 'System Internals', icon: <Cpu size={20} />, route: '/workspaces/internals', color: '#a3a3a3' },
-      { key: 'cog', label: 'Configurations', icon: <Cog size={20} />, route: '/settings/config', color: '#a3a3a3' },
-    ],
-  },
+
 ];
 
 // ─── Live Clock Component ─────────────────────────────────────────────────────
@@ -322,7 +312,7 @@ function DepartmentCard({ dept, permittedWorkspaceKeys, onLaunch, isSuperUser }:
 
 // ─── Main ExecutiveHome Component ─────────────────────────────────────────────
 
-export default function ExecutiveHome() {
+export default function AppLauncher() {
   const { currentUser, activeWorkspace } = useAppContext();
   const navigate = useNavigate();
 
@@ -373,80 +363,13 @@ export default function ExecutiveHome() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1240px', margin: '0 auto' }}>
 
-        {/* ── Workspace Launcher Identity Banner ── */}
-        <div style={{
-          position: 'relative', overflow: 'hidden',
-          background: 'linear-gradient(135deg, rgba(157,78,221,0.1) 0%, rgba(0,242,254,0.04) 60%, rgba(0,245,160,0.04) 100%)',
-          border: '1px solid var(--border-color)', borderRadius: '20px',
-          padding: '2rem 2.5rem',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem',
-        }}>
-          {/* BG glows */}
-          <div style={{ position: 'absolute', top: '-60px', right: '-60px', width: '260px', height: '260px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(157,78,221,0.18) 0%, transparent 65%)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: '-40px', left: '8%', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,242,254,0.07) 0%, transparent 65%)', pointerEvents: 'none' }} />
-
-          {/* Left: Icon + User Identity */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', zIndex: 1 }}>
-            <div style={{
-              width: '58px', height: '58px', borderRadius: '16px',
-              background: 'rgba(157,78,221,0.18)', border: '1px solid rgba(157,78,221,0.35)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 24px rgba(157,78,221,0.25)',
-              fontSize: '1.5rem', fontWeight: 800, color: '#9d4edd', fontFamily: 'var(--font-display)',
-            }}>
-              {userName.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <p style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '0.15rem' }}>
-                Workspace Launcher
-              </p>
-              <h1 style={{
-                fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)',
-                fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', marginBottom: '0.2rem',
-              }}>
-                {userName}
-              </h1>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{
-                  fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
-                  backgroundColor: 'rgba(157,78,221,0.12)', color: 'var(--accent-primary)',
-                  border: '1px solid rgba(157,78,221,0.25)',
-                }}>
-                  {roleTierLabel[roleTier] || `Tier ${roleTier}`}
-                </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  · {orgName}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Live clock */}
-          <div style={{ zIndex: 1 }}>
-            <LiveClock />
-          </div>
-        </div>
-
-        {/* ── Section Header ── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '4px', height: '22px', background: 'linear-gradient(180deg, #9d4edd, #00f2fe)', borderRadius: '2px' }} />
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
-              Departmental Workspaces
-            </h2>
-          </div>
-          {isSuperUser && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: '6px',
-              fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
-              padding: '4px 12px', borderRadius: '20px',
-              backgroundColor: 'rgba(157,78,221,0.12)', color: 'var(--accent-primary)',
-              border: '1px solid rgba(157,78,221,0.25)',
-            }}>
-              <ShieldCheck size={11} />
-              Global Access — Tier {roleTier}
-            </span>
-          )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
+            Welcome back, {userName}
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            Select an application module below to begin your work.
+          </p>
         </div>
 
         {/* ── Department Cards Grid ── */}

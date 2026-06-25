@@ -90,25 +90,13 @@ export default function Workspaces() {
     }
   };
 
-  // Define potential workspace applications
-  const availableApps = [
-    {
-      identifier: 'spedex_hub',
-      name: 'SpedEx Logistics Hub',
-      description: 'Medical batch logistics, cold chain temperature logs, and delivery corridors.',
-      icon: <Truck size={24} />,
-      alignedVertical: 'HEALTHCARE_LOGISTICS',
-      accentColor: '#00f5a0'
-    },
-    {
-      identifier: 'fleet_motion',
-      name: 'B-Core Motion Fleet Management',
-      description: 'Heavy machinery tracking, vehicle service schedules, and equipment hour logging.',
-      icon: <Wrench size={24} />,
-      alignedVertical: 'HEAVY_MACHINERY',
-      accentColor: '#ffb703'
-    }
-  ];
+  const getWorkspaceDetails = (identifier: string) => {
+    // We can add a simple hash to generate deterministic colors or just use a default
+    return {
+      icon: <CheckCircle size={24} />,
+      accentColor: '#00f2fe'
+    };
+  };
 
   if (loading) {
     return (
@@ -182,21 +170,18 @@ export default function Workspaces() {
           Workspace Application Modules
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
-          {availableApps.map((app) => {
-            const dbRecord = dbWorkspaces.find(w => w.identifier === app.identifier);
-            const isActive = dbRecord?.status === 'Active';
-            const isUpdating = updatingId === app.identifier;
-            const isAligned = vertical === app.alignedVertical;
+          {dbWorkspaces.map((dbRecord) => {
+            const isActive = dbRecord.status === 'Active';
+            const isUpdating = updatingId === dbRecord.identifier;
+            const details = getWorkspaceDetails(dbRecord.identifier);
 
             return (
               <div 
-                key={app.identifier}
+                key={dbRecord.identifier}
                 className="glass-panel"
                 style={{
                   background: 'var(--bg-card)',
-                  border: isAligned 
-                    ? `1px solid ${app.accentColor}40` 
-                    : '1px solid rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
                   borderRadius: '16px',
                   padding: '2rem',
                   display: 'flex',
@@ -206,28 +191,6 @@ export default function Workspaces() {
                   position: 'relative'
                 }}
               >
-                {/* Aligned Badge */}
-                {isAligned && (
-                  <span 
-                    style={{
-                      position: 'absolute',
-                      top: '12px',
-                      right: '12px',
-                      fontSize: '0.65rem',
-                      fontWeight: 800,
-                      backgroundColor: `${app.accentColor}20`,
-                      color: app.accentColor,
-                      border: `1px solid ${app.accentColor}30`,
-                      padding: '3px 8px',
-                      borderRadius: '12px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em'
-                    }}
-                  >
-                    Vertical Aligned
-                  </span>
-                )}
-
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                     <div 
@@ -236,23 +199,23 @@ export default function Workspaces() {
                         border: '1px solid var(--border-color)',
                         padding: '10px',
                         borderRadius: '10px',
-                        color: app.accentColor
+                        color: details.accentColor
                       }}
                     >
-                      {app.icon}
+                      {details.icon}
                     </div>
                     <div>
                       <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                        {app.name}
+                        {dbRecord.name}
                       </h4>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                        ID: {app.identifier}
+                        ID: {dbRecord.identifier}
                       </span>
                     </div>
                   </div>
 
-                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: '1.4', marginBottom: '1.5rem' }}>
-                    {app.description}
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.5 }}>
+                    System application module ready for provisioning.
                   </p>
                 </div>
 
@@ -277,7 +240,7 @@ export default function Workspaces() {
 
                   {/* Toggle Switch */}
                   <button
-                    onClick={() => handleToggleWorkspace(app.identifier, app.name, isActive)}
+                    onClick={() => handleToggleWorkspace(dbRecord.identifier, dbRecord.name, isActive)}
                     disabled={isUpdating}
                     style={{
                       background: 'transparent',
