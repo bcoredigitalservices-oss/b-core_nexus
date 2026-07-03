@@ -44,9 +44,9 @@ class Department(CoreModel):
     parent_id = Column(UUID(as_uuid=True), ForeignKey('departments.id', ondelete='CASCADE'), nullable=True)
 
     # Relationships
-    members: Mapped[list["User"]] = relationship(
-        "User", 
-        foreign_keys="[User.department_id]", 
+    members: Mapped[list["EmployeeProfile"]] = relationship(
+        "EmployeeProfile", 
+        foreign_keys="[EmployeeProfile.department_id]", 
         back_populates="department"
     )
     manager: Mapped["User | None"] = relationship(

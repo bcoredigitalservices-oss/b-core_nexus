@@ -29,10 +29,9 @@ from app.core.auth.security import (
     create_temp_token,
     create_invite_token,
     get_current_user,
-    require_role,
-    RoleTierChecker,
     SECRET_KEY,
-    ALGORITHM
+    ALGORITHM,
+    RequiresPermission
 )
 from app.core.auth.totp import (
     generate_totp_secret,
@@ -94,7 +93,7 @@ async def invite_user(
     payload: UserInviteRequest,
     request: Request,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(min_tier=1))
+    current_user: User = Depends(RequiresPermission("user:invite"))
 ):
     # Check if user exists
     result = await db.execute(select(User).filter(User.email == payload.email))
@@ -105,23 +104,23 @@ async def invite_user(
             detail="User already exists"
         )
     
-    # Generate secure 64-character URL-safe random string
-    token = secrets.token_urlsafe(48)
+    # Verify role exists
+    from app.models.user import Role
+    role_res = await db.execute(select(Role).where(Role.id == payload.role_id))
+    role = role_res.scalars().first()
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid role ID provided"
+        )
     
-    new_user = User(
+    # Generate secure JWT invitation token
+    token = create_invite_token(
         email=payload.email,
+        role_id=payload.role_id,
         first_name=payload.first_name,
-        last_name=payload.last_name,
-        role_tier=1,  # Strict: default to 1 (Executive Admin)
-        is_active=False,
-        invite_token=token,
-        token_expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
-        hashed_password=None,
-        mfa_enabled=False
+        last_name=payload.last_name
     )
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
     
     # Resolve dynamic frontend URL
     import os
@@ -159,33 +158,30 @@ async def onboard_verify(
     payload: OnboardVerifyRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(User).where(User.invite_token == payload.token))
-    user = result.scalars().first()
-    
-    if not user:
+    try:
+        decoded = jwt.decode(payload.token, SECRET_KEY, algorithms=[ALGORITHM])
+        if decoded.get("type") != "invite":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid token type"
+            )
+        email = decoded.get("sub")
+    except JWTError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired token"
         )
         
-    if user.is_active:
+    result = await db.execute(select(User).filter(User.email == email))
+    existing_user = result.scalars().first()
+    if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Account has already been claimed/activated"
         )
-        
-    expires_at = user.token_expires_at
-    if expires_at is not None:
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
-        if expires_at < datetime.now(timezone.utc):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Onboarding token has expired"
-            )
             
     return {
-        "email": user.email
+        "email": email
     }
 
 
@@ -194,41 +190,69 @@ async def onboard_password(
     payload: OnboardPasswordRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(User).where(User.invite_token == payload.token))
-    user = result.scalars().first()
-    
-    if not user:
+    try:
+        decoded = jwt.decode(payload.token, SECRET_KEY, algorithms=[ALGORITHM])
+        if decoded.get("type") != "invite":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid token type"
+            )
+        email = decoded.get("sub")
+        role_id_str = decoded.get("role_id")
+        first_name = decoded.get("first_name")
+        last_name = decoded.get("last_name")
+    except JWTError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired token"
         )
         
-    expires_at = user.token_expires_at
-    if expires_at is not None:
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
-        if expires_at < datetime.now(timezone.utc):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Onboarding token has expired"
-            )
-            
-    # Hash and save new password
-    user.hashed_password = pwd_context.hash(payload.new_password)
+    # Verify user does not already exist
+    result = await db.execute(select(User).filter(User.email == email))
+    existing_user = result.scalars().first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Account has already been claimed/activated"
+        )
+
+    # Verify role exists
+    from app.models.user import Role, EmployeeProfile, user_roles
+    import uuid
+    role_uuid = uuid.UUID(role_id_str)
+    role_res = await db.execute(select(Role).where(Role.id == role_uuid))
+    role = role_res.scalars().first()
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Designated role not found"
+        )
+        
+    # Create the User record
+    new_user = User(
+        email=email,
+        password_hash=pwd_context.hash(payload.new_password),
+        mfa_secret=generate_totp_secret(),
+        mfa_enabled=False,
+        is_active=True
+    )
+    db.add(new_user)
+    await db.flush() # flush to generate new_user.id
     
-    # Generate TOTP secret and save to user
-    user.totp_secret = generate_totp_secret()
+    # Create empty linked EmployeeProfile record
+    profile = EmployeeProfile(
+        user_id=new_user.id,
+        first_name=first_name,
+        last_name=last_name
+    )
+    db.add(profile)
     
-    # Set active and clear invite token
-    user.is_active = True
-    user.invite_token = None
-    user.token_expires_at = None
-    user.mfa_enabled = False
-    
-    db.add(user)
+    # Map the user to the role in the user_roles junction table
+    await db.execute(user_roles.insert().values(user_id=new_user.id, role_id=role.id))
     await db.commit()
     
     return {"status": "success", "message": "Password configured successfully"}
+
 
 @auth_router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def register_user(payload: UserRegisterRequest, db: AsyncSession = Depends(get_db)):
@@ -240,12 +264,9 @@ async def register_user(payload: UserRegisterRequest, db: AsyncSession = Depends
                 detail="Invalid token type."
             )
         email = decoded.get("sub")
-        role_tier = decoded.get("target_role_tier")
-        if email is None or role_tier is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Token payload is missing required claims."
-            )
+        role_id_str = decoded.get("role_id")
+        first_name = decoded.get("first_name")
+        last_name = decoded.get("last_name")
     except JWTError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -261,14 +282,36 @@ async def register_user(payload: UserRegisterRequest, db: AsyncSession = Depends
             detail="Email already registered"
         )
     
+    from app.models.user import Role, EmployeeProfile, user_roles
+    import uuid
+    role_uuid = uuid.UUID(role_id_str)
+    role_res = await db.execute(select(Role).where(Role.id == role_uuid))
+    role = role_res.scalars().first()
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Role not found"
+        )
+
     hashed_password = pwd_context.hash(payload.password)
     new_user = User(
         email=email,
-        hashed_password=hashed_password,
-        role_tier=role_tier,
+        password_hash=hashed_password,
+        mfa_secret=generate_totp_secret(),
+        mfa_enabled=False,
         is_active=True
     )
     db.add(new_user)
+    await db.flush()
+
+    profile = EmployeeProfile(
+        user_id=new_user.id,
+        first_name=first_name,
+        last_name=last_name
+    )
+    db.add(profile)
+
+    await db.execute(user_roles.insert().values(user_id=new_user.id, role_id=role.id))
     await db.commit()
     await db.refresh(new_user)
     return new_user
@@ -351,7 +394,7 @@ async def login(
                 detail="Invalid verification code"
             )
     
-    access_token = create_access_token(data={"sub": str(user.id), "role_tier": user.role_tier})
+    access_token = await create_access_token(data={"sub": str(user.id)}, db=db)
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
     
     response.set_cookie(
@@ -390,7 +433,7 @@ async def verify_totp(
     if not verify_totp_code(user.totp_secret, payload.code):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid verification code")
         
-    access_token = create_access_token(data={"sub": str(user.id), "role_tier": user.role_tier})
+    access_token = await create_access_token(data={"sub": str(user.id)}, db=db)
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
     
     response.set_cookie(
@@ -495,8 +538,8 @@ async def login_for_access_token(
                 detail="Invalid verification code"
             )
             
-    access_token = create_access_token(
-        data={"sub": str(user.id), "role_tier": user.role_tier}
+    access_token = await create_access_token(
+        data={"sub": str(user.id)}, db=db
     )
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
     return {
@@ -554,7 +597,7 @@ async def refresh_token(
             detail="User not found or inactive"
         )
         
-    new_access_token = create_access_token(data={"sub": str(user.id), "role_tier": user.role_tier})
+    new_access_token = await create_access_token(data={"sub": str(user.id)}, db=db)
     new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
     
     response.set_cookie(
@@ -579,11 +622,10 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 @auth_router.get("/users", response_model=list[UserRead])
 async def list_users(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(min_tier=1))
+    current_user: User = Depends(RequiresPermission("user:read"))
 ):
     result = await db.execute(
         select(User)
-        .where(User.role_tier >= current_user.role_tier)
         .order_by(User.email)
     )
     users = result.scalars().all()
@@ -593,7 +635,7 @@ async def list_users(
 async def revoke_user_session(
     user_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(min_tier=1))
+    current_user: User = Depends(RequiresPermission("user:write"))
 ):
     import uuid
     try:

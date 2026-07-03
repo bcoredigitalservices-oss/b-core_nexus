@@ -8,7 +8,7 @@ from app.database import get_db
 from app.core.system.models import InstanceProfile
 from app.core.system.schemas import InstanceProfileCreate, InstanceProfileRead
 from app.core.auth.models import User
-from app.core.auth.security import SECRET_KEY, ALGORITHM, require_role, get_current_user
+from app.core.auth.security import SECRET_KEY, ALGORITHM, RequiresPermission, get_current_user
 from app.core.exceptions import InstanceAlreadyInitializedError, InsufficientClearanceError
 import time
 
@@ -46,8 +46,9 @@ async def initialize_instance(
         if not user or not user.is_active:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
             
-        if user.role_tier != 0:
-            raise InsufficientClearanceError("Only System Admins (Tier 0) can modify initialization configurations.")
+        is_admin = any(role.name == "admin" for role in user.roles)
+        if not is_admin:
+            raise InsufficientClearanceError("Only System Admins can modify initialization configurations.")
             
         # Update existing profile
         existing_profile.organization_name = payload.organization_name
@@ -75,7 +76,7 @@ async def initialize_instance(
 @system_router.get("/health")
 async def system_health(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(min_tier=0))
+    current_user: User = Depends(RequiresPermission("system:admin"))
 ):
     from sqlalchemy import func
     
@@ -115,7 +116,7 @@ async def system_health(
 async def toggle_system_module(
     module_key: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(min_tier=0))
+    current_user: User = Depends(RequiresPermission("system:admin"))
 ):
     # Fetch the InstanceProfile
     result = await db.execute(select(InstanceProfile))
@@ -153,7 +154,7 @@ async def toggle_system_module(
 @system_router.get("/profile", response_model=InstanceProfileRead)
 async def get_system_profile(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(min_tier=0))
+    current_user: User = Depends(RequiresPermission("system:admin"))
 ):
     result = await db.execute(select(InstanceProfile))
     profile = result.scalars().first()
@@ -167,7 +168,6 @@ import asyncio
 import shutil
 from sqlalchemy.orm import joinedload
 from datetime import datetime, timezone
-from app.core.events.models import EventLog
 from app.core.system.telemetry import redis_client, memory_requests, memory_errors
 
 async def get_cpu_usage_percent():
@@ -220,7 +220,7 @@ def get_disk_usage():
         return 100 * 1024 * 1024 * 1024, 20 * 1024 * 1024 * 1024, 80 * 1024 * 1024 * 1024
 
 @system_router.get("/telemetry/hardware")
-async def get_hardware_telemetry(current_user: User = Depends(require_role(min_tier=0))):
+async def get_hardware_telemetry(current_user: User = Depends(RequiresPermission("system:admin"))):
     cpu_percent = await get_cpu_usage_percent()
     total_ram, used_ram = get_ram_info()
     total_disk, used_disk, free_disk = get_disk_usage()
@@ -236,7 +236,7 @@ async def get_hardware_telemetry(current_user: User = Depends(require_role(min_t
     }
 
 @system_router.get("/telemetry/traffic")
-async def get_traffic_telemetry(current_user: User = Depends(require_role(min_tier=0))):
+async def get_traffic_telemetry(current_user: User = Depends(RequiresPermission("system:admin"))):
     current_bucket = int(time.time() / 60)
     buckets = [current_bucket - i for i in range(59, -1, -1)]
     
@@ -276,31 +276,9 @@ async def get_traffic_telemetry(current_user: User = Depends(require_role(min_ti
 
 @system_router.get("/telemetry/pulse")
 async def get_pulse_telemetry(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(min_tier=0))
+    current_user: User = Depends(RequiresPermission("system:admin"))
 ):
-    query = (
-        select(EventLog)
-        .options(joinedload(EventLog.creator))
-        .order_by(EventLog.created_at.desc())
-        .limit(5)
-    )
-    result = await db.execute(query)
-    events = result.scalars().all()
-    
-    return [
-        {
-            "id": str(event.id),
-            "entity_id": str(event.entity_id),
-            "entity_type": event.entity_type,
-            "event_type": event.event_type,
-            "payload": event.payload,
-            "created_by": str(event.created_by),
-            "created_by_email": event.creator.email if event.creator else None,
-            "created_at": event.created_at.isoformat()
-        }
-        for event in events
-    ]
+    return []
 
 from fastapi import Body
 
@@ -348,7 +326,7 @@ async def update_personal_preferences(
 async def update_global_preferences(
     payload: dict = Body(...),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(min_tier=1))
+    current_user: User = Depends(RequiresPermission("system:write"))
 ):
     result = await db.execute(select(InstanceProfile))
     profile = result.scalars().first()

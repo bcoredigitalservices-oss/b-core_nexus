@@ -4,39 +4,23 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Core imports
-from app.core.events.router import manager as event_manager
 from app.core.auth.router import router as auth_router
 from app.core.auth.bootstrapper import init_router
-from app.core.directory.router import router as directory_router
-from app.core.catalog.router import router as catalog_router
-from app.core.events.router import router as events_router
 from app.core.system.router import router as system_router
-from app.core.shell.router import router as shell_router
-from app.core.workspace.router import router as workspace_router
 from app.core.organization.router import router as organization_router
 from app.core.iam.router import router as iam_router
-from app.workspaces.inventory.router import core_router as inventory_router
-from app.workspaces.procurement.router import router as procurement_router
-from app.core.workspace.registry import init_workspaces
 
 # ─── Eagerly import core models
 from app.models.organization import Department, Organization  # noqa: F401
 from app.models.user import User, UserWorkspace  # noqa: F401
 
-# ─── Dynamically import workspace models to ensure mapper relationships configure
-from app.core.workspace.loader import load_workspace_models
-load_workspace_models()
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Connect WebSockets to Redis Pub/Sub if available
-    await event_manager.startup()
     from app.core.system.telemetry import init_redis_client, close_redis_client
     await init_redis_client()
     yield
     # Shutdown: Clean up connections
     await close_redis_client()
-    await event_manager.shutdown()
     # Stop logging listener thread cleanly
     try:
         listener.stop()
@@ -273,69 +257,9 @@ async def context_and_logging_middleware(request: Request, call_next):
 # 1. Mount Immutable Core Layer
 app.include_router(init_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
-app.include_router(directory_router, prefix="/api/v1")
-app.include_router(catalog_router, prefix="/api/v1")
-app.include_router(events_router, prefix="/api/v1")
 app.include_router(system_router, prefix="/api/v1")
-app.include_router(shell_router, prefix="/api/v1")
-app.include_router(workspace_router, prefix="/api/v1")
 app.include_router(organization_router, prefix="/api/v1")
 app.include_router(iam_router, prefix="/api/v1")
-app.include_router(inventory_router, prefix="/api/v1")
-app.include_router(procurement_router, prefix="/api/v1")
-
-# 2. Mount Pluggable Workspace Layer
-# Registers all entries in WORKSPACE_REGISTRY under /api/v1/workspaces/<name>
-init_workspaces(app)
-
-
-from typing import Optional
-import json
-from fastapi import WebSocket, WebSocketDisconnect, Query
-from jose import jwt
-from app.config import settings
-from app.core.events.websocket import ws_manager
-from app.database import AsyncSessionLocal
-from sqlalchemy.future import select
-from app.core.auth.models import User
-
-@app.websocket("/api/v1/stream")
-async def global_ws_stream(
-    websocket: WebSocket,
-    token: Optional[str] = Query(None),
-    workspace: Optional[str] = Query(None)
-):
-    if not token:
-        await websocket.close(code=4003, reason="Token query parameter required")
-        return
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            raise Exception("Invalid sub")
-    except Exception:
-        await websocket.close(code=4003, reason="Invalid credentials")
-        return
-
-    async with AsyncSessionLocal() as db:
-        result = await db.execute(select(User).filter(User.id == user_id))
-        user = result.scalars().first()
-        if not user or not user.is_active:
-            await websocket.close(code=4003, reason="User not active")
-            return
-
-    await ws_manager.connect(websocket, user_id=user_id, workspace=workspace)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            try:
-                msg_payload = json.loads(data)
-                if msg_payload.get("type") == "subscribe":
-                    ws_manager.update_workspace(websocket, msg_payload.get("workspace"))
-            except Exception:
-                pass
-    except WebSocketDisconnect:
-        ws_manager.disconnect(websocket)
 
 @app.get("/")
 async def root():

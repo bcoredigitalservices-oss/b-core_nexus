@@ -53,7 +53,7 @@ class UserInviteRequest(BaseModel):
     email: str
     first_name: str
     last_name: str
-    role_tier: int = Field(default=1, ge=0, le=4)
+    role_id: UUID
 
 class OnboardVerifyRequest(BaseModel):
     token: str
