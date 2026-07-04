@@ -208,87 +208,48 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
   };
 
   return (
-    <div 
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        backdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 999,
-        padding: '1.5rem'
-      }}
-    >
-      <div 
-        className="glass-panel" 
-        style={{ 
-          width: '100%', 
-          maxWidth: '600px', 
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          backgroundColor: 'var(--bg-card)', 
-          border: '1px solid var(--border-color)',
-          borderRadius: '16px',
-          padding: '2rem',
-          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1.5rem',
-          position: 'relative'
-        }}
-      >
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-[999] p-6">
+      <div className="glass-panel w-full max-w-[600px] max-h-[90vh] overflow-y-auto bg-card border border-color rounded-2xl p-8 shadow-xl flex flex-col gap-6 relative">
         {/* Close Button */}
         <button 
           onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '1.5rem',
-            right: '1.5rem',
-            background: 'var(--bg-card-hover)',
-            border: '1px solid var(--border-color)',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-            padding: '6px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.2s ease'
-          }}
+          className="absolute top-6 right-6 bg-card-hover border border-color text-text-muted cursor-pointer p-1.5 rounded-full flex items-center justify-center transition-all duration-200 hover:text-text-main hover:border-accent-primary"
         >
           <X size={16} />
         </button>
 
         {/* Header */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-display)', margin: 0 }}>
-            <FileSpreadsheet size={20} color="var(--accent-primary)" />
+        <div className="flex flex-col gap-1.5 border-b border-color pb-4">
+          <h3 className="text-[1.25rem] font-extrabold text-text-main flex items-center gap-2 font-display m-0">
+            <FileSpreadsheet size={20} className="text-accent-primary" />
             Bulk Import CSV
           </h3>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+          <p className="text-[0.8rem] text-text-muted m-0">
             Upload a .csv file containing columns: SKU, Name, Type, UOM to register items in bulk.
           </p>
         </div>
 
         {errorMsg && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.75rem 1rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', color: 'var(--accent-danger)', fontSize: '0.85rem' }}>
+          <div className="flex items-center gap-2 py-3 px-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-[0.85rem]">
             <AlertCircle size={16} />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {importResult && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '1rem', backgroundColor: importResult.errors.length > 0 ? 'rgba(245, 158, 11, 0.08)' : 'rgba(16, 185, 129, 0.08)', border: importResult.errors.length > 0 ? '1px solid rgba(245, 158, 11, 0.2)' : '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '8px', fontSize: '0.85rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: importResult.errors.length > 0 ? 'var(--accent-warning)' : 'var(--accent-green)' }}>
+          <div className={`flex flex-col gap-2 p-4 rounded-lg text-[0.85rem] border ${
+            importResult.errors.length > 0 ? 'bg-amber-500/5 border-amber-500/20' : 'bg-emerald-500/5 border-emerald-500/20'
+          }`}>
+            <div className={`flex items-center gap-1.5 font-bold ${
+              importResult.errors.length > 0 ? 'text-amber-500' : 'text-[#00f5a0]'
+            }`}>
               <CheckCircle2 size={16} />
               <span>Import Completed: {importResult.imported_count} item(s) created!</span>
             </div>
             {importResult.errors.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '6px' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Duplicate/Error details:</span>
-                <ul style={{ maxHeight: '100px', overflowY: 'auto', paddingLeft: '1.25rem', color: 'var(--accent-danger)', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div className="flex flex-col gap-1 mt-1.5">
+                <span className="text-[0.75rem] font-semibold text-text-muted">Duplicate/Error details:</span>
+                <ul className="max-h-[100px] overflow-y-auto pl-5 text-red-400 text-[0.75rem] flex flex-col gap-0.5 list-disc">
                   {importResult.errors.map((err, idx) => <li key={idx}>{err}</li>)}
                 </ul>
               </div>
@@ -296,61 +257,38 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {/* File select / Drag & Drop Zone */}
           <div 
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={triggerFileSelect}
-            style={{
-              border: `2px dashed ${isDragging ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-              borderRadius: '12px',
-              padding: '2.5rem 1.5rem',
-              textAlign: 'center',
-              cursor: 'pointer',
-              backgroundColor: isDragging ? 'rgba(99, 91, 255, 0.04)' : 'var(--bg-card-hover)',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.75rem'
-            }}
+            className={`border-2 border-dashed rounded-xl py-10 px-6 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-3 ${
+              isDragging ? 'border-accent-primary bg-accent-primary/5' : 'border-color bg-card-hover'
+            }`}
           >
             <input 
               type="file" 
               ref={fileInputRef}
               accept=".csv"
-              style={{ display: 'none' }}
+              className="hidden"
               onChange={handleFileSelect}
             />
 
-            <Upload size={32} color={isDragging ? 'var(--accent-primary)' : 'var(--text-muted)'} />
+            <Upload size={32} className={isDragging ? 'text-accent-primary' : 'text-text-muted'} />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>
+            <div className="flex flex-col gap-1">
+              <span className="text-[0.9rem] font-bold">
                 {file ? 'File selected' : 'Drag & drop your CSV file here'}
               </span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <span className="text-[0.75rem] text-text-muted">
                 {file ? file.name : 'or click to browse local files'}
               </span>
             </div>
 
             {file && (
-              <div 
-                style={{ 
-                  marginTop: '0.5rem', 
-                  fontSize: '0.75rem', 
-                  color: 'var(--accent-primary)',
-                  backgroundColor: 'rgba(99, 91, 255, 0.1)',
-                  padding: '4px 10px',
-                  borderRadius: '100px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
+              <div className="mt-2 text-[0.75rem] text-accent-primary bg-accent-primary/10 py-1 px-2.5 rounded-full flex items-center gap-1.5">
                 <FileText size={12} />
                 <span>{parsedItems.length} items parsed</span>
               </div>
@@ -359,15 +297,15 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
 
           {/* Template Info / Instructions */}
           {!file && (
-            <div style={{ backgroundColor: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '1rem', fontSize: '0.75rem' }}>
-              <div style={{ fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <FileSpreadsheet size={14} color="var(--accent-primary)" />
+            <div className="bg-card-hover border border-color rounded-lg p-4 text-[0.75rem]">
+              <div className="font-bold mb-1.5 flex items-center gap-1">
+                <FileSpreadsheet size={14} className="text-accent-primary" />
                 CSV Format Instructions
               </div>
-              <p style={{ margin: '0 0 8px 0', color: 'var(--text-muted)' }}>
+              <p className="m-0 mb-2 text-text-muted leading-relaxed">
                 The CSV file must contain a header row. Columns mapped: **SKU**, **Name**, **Type** (e.g. stock, service, raw_material, consumable), and **UOM** (e.g. Nos, Kg, L, Box, Hr).
               </p>
-              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', backgroundColor: 'var(--bg-input)', padding: '6px 8px', borderRadius: '4px', border: '1px solid var(--border-color)', whiteSpace: 'pre' }}>
+              <div className="font-mono text-text-muted bg-input p-2 rounded border border-color leading-relaxed overflow-x-auto whitespace-pre">
 {`SKU,Name,Type,UOM
 ITEM-101,Wrench Tool,stock,Nos
 ITEM-102,Standard Shipping,service,Hr
@@ -378,37 +316,29 @@ ITEM-103,Lubricating Gel,consumable,L`}
 
           {/* Parsed items preview list */}
           {file && parsedItems.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Import Preview (Showing up to 3 items)</span>
-              <div 
-                style={{ 
-                  border: '1px solid var(--border-color)', 
-                  borderRadius: '8px', 
-                  overflow: 'hidden', 
-                  fontSize: '0.75rem',
-                  backgroundColor: 'var(--bg-input)'
-                }}
-              >
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[0.75rem] font-bold text-text-muted">Import Preview (Showing up to 3 items)</span>
+              <div className="border border-color rounded-lg overflow-hidden text-[0.75rem] bg-input">
+                <table className="w-full border-collapse text-left">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card-hover)' }}>
-                      <th style={{ padding: '6px 10px', fontWeight: 600 }}>SKU</th>
-                      <th style={{ padding: '6px 10px', fontWeight: 600 }}>Name</th>
-                      <th style={{ padding: '6px 10px', fontWeight: 600 }}>Type</th>
-                      <th style={{ padding: '6px 10px', fontWeight: 600 }}>UOM</th>
+                    <tr className="border-b border-color bg-card-hover text-text-muted">
+                      <th className="py-2 px-3.5 font-semibold">SKU</th>
+                      <th className="py-2 px-3.5 font-semibold">Name</th>
+                      <th className="py-2 px-3.5 font-semibold">Type</th>
+                      <th className="py-2 px-3.5 font-semibold">UOM</th>
                     </tr>
                   </thead>
                   <tbody>
                     {parsedItems.slice(0, 3).map((item, idx) => (
-                      <tr key={idx} style={{ borderBottom: idx < 2 ? '1px solid var(--border-color)' : 'none' }}>
-                        <td style={{ padding: '6px 10px', fontFamily: 'var(--font-mono)' }}>{item.sku}</td>
-                        <td style={{ padding: '6px 10px' }}>{item.name}</td>
-                        <td style={{ padding: '6px 10px' }}>
-                          <span className="badge badge-t3" style={{ fontSize: '0.65rem', textTransform: 'uppercase' }}>
+                      <tr key={idx} className={idx < 2 ? 'border-b border-color' : ''}>
+                        <td className="py-2 px-3.5 font-mono">{item.sku}</td>
+                        <td className="py-2 px-3.5">{item.name}</td>
+                        <td className="py-2 px-3.5">
+                          <span className="badge badge-t3 text-[0.65rem] uppercase">
                             {item.catalog_type}
                           </span>
                         </td>
-                        <td style={{ padding: '6px 10px' }}>{item.default_uom}</td>
+                        <td className="py-2 px-3.5">{item.default_uom}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -418,11 +348,10 @@ ITEM-103,Lubricating Gel,consumable,L`}
           )}
 
           {/* Modal Action Buttons */}
-          <div style={{ display: 'flex', gap: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
+          <div className="flex gap-4 border-t border-color pt-5">
             <button 
               type="button" 
-              className="btn btn-secondary" 
-              style={{ flex: 1 }}
+              className="btn btn-secondary flex-1" 
               onClick={onClose}
               disabled={submitting}
             >
@@ -430,8 +359,7 @@ ITEM-103,Lubricating Gel,consumable,L`}
             </button>
             <button 
               type="submit" 
-              className="btn btn-primary" 
-              style={{ flex: 1 }}
+              className="btn btn-primary flex-1" 
               disabled={submitting || parsedItems.length === 0}
             >
               {submitting ? 'Importing...' : `Import ${parsedItems.length} Item(s)`}
@@ -442,3 +370,4 @@ ITEM-103,Lubricating Gel,consumable,L`}
     </div>
   );
 }
+

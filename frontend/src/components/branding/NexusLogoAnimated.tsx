@@ -92,8 +92,8 @@ export default function NexusLogoAnimated({
         height="auto"
         role="img"
         aria-label="B-Core Nexus logo"
-        className={className}
-        style={{ display: 'block', position: 'relative', zIndex: 1, ...style }}
+        className={`block relative z-[1] ${className}`}
+        style={style}
       >
         <title>B-Core Nexus</title>
 

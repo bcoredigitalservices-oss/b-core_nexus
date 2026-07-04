@@ -127,9 +127,9 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-        <Loader2 className="udg-spinner" size={24} />
-        <span style={{ marginLeft: '10px' }}>Loading workspace context...</span>
+      <div className="flex justify-center items-center py-12 text-text-muted">
+        <Loader2 className="animate-spin" size={24} />
+        <span className="ml-2.5">Loading workspace context...</span>
       </div>
     );
   }
@@ -137,53 +137,27 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
   // Render Onboarding Invite Success Screen
   if (inviteLink) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', textAlign: 'center', padding: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', color: '#00f5a0' }}>
+      <div className="flex flex-col gap-6 text-center p-4">
+        <div className="flex justify-center text-[#00f5a0]">
           <CheckCircle2 size={48} />
         </div>
         <div>
-          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+          <h3 className="text-[1.2rem] font-extrabold text-text-main mb-2">
             User Provisioned Successfully!
           </h3>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
+          <p className="text-[0.82rem] text-text-muted m-0">
             A zero-knowledge invitation token has been generated. Send the secure claim URL below to the user:
           </p>
         </div>
 
-        <div 
-          style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            padding: '1rem',
-            borderRadius: '10px',
-            fontSize: '0.8rem',
-            fontFamily: 'var(--font-mono)',
-            wordBreak: 'break-all',
-            color: 'var(--accent-primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px'
-          }}
-        >
+        <div className="bg-card border border-color p-4 rounded-xl text-[0.8rem] font-mono break-all text-accent-primary flex items-center justify-between gap-3">
           <span>{inviteLink}</span>
           <button 
             type="button" 
             onClick={handleCopy}
-            style={{
-              background: 'var(--bg-card-hover)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-main)',
-              padding: '6px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}
+            className="bg-card-hover border border-color text-text-main p-1.5 rounded-lg cursor-pointer flex items-center justify-center flex-shrink-0 hover:border-accent-primary hover:text-text-main"
           >
-            {copied ? <Check size={14} color="#00f5a0" /> : <Copy size={14} />}
+            {copied ? <Check size={14} className="text-[#00f5a0]" /> : <Copy size={14} />}
           </button>
         </div>
 
@@ -191,8 +165,7 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
           onClick={() => {
             onSuccess();
           }} 
-          className="btn btn-primary"
-          style={{ marginTop: '0.5rem' }}
+          className="btn btn-primary mt-2"
         >
           Return to Ledger
         </button>
@@ -201,10 +174,10 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       
       {errorMsg && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.75rem 1rem', backgroundColor: 'rgba(255, 51, 102, 0.1)', border: '1px solid rgba(255, 51, 102, 0.2)', borderRadius: '8px', color: '#ff3366', fontSize: '0.85rem' }}>
+        <div className="flex items-center gap-2 py-3 px-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-[0.85rem]">
           <AlertCircle size={16} />
           <span>{errorMsg}</span>
         </div>
@@ -212,13 +185,13 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
 
       {/* Email Address */}
       <div>
-        <label>Operator Email Address</label>
-        <div style={{ position: 'relative' }}>
-          <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+        <label className="block text-[0.75rem] text-text-muted font-semibold mb-1.5">Operator Email Address</label>
+        <div className="relative flex items-center">
+          <Mail size={16} className="absolute left-3 text-text-muted" />
           <input 
             type="email" 
             required 
-            style={{ paddingLeft: '38px' }}
+            className="pl-[38px] w-full"
             placeholder="e.g. employee@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -227,14 +200,14 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
       </div>
 
       {/* Name Details */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label>First Name</label>
-          <div style={{ position: 'relative' }}>
-            <UserIcon size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <label className="block text-[0.75rem] text-text-muted font-semibold mb-1.5">First Name</label>
+          <div className="relative flex items-center">
+            <UserIcon size={16} className="absolute left-3 text-text-muted" />
             <input 
               type="text" 
-              style={{ paddingLeft: '38px' }}
+              className="pl-[38px] w-full"
               placeholder="First Name"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
@@ -242,12 +215,12 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
           </div>
         </div>
         <div>
-          <label>Last Name</label>
-          <div style={{ position: 'relative' }}>
-            <UserIcon size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <label className="block text-[0.75rem] text-text-muted font-semibold mb-1.5">Last Name</label>
+          <div className="relative flex items-center">
+            <UserIcon size={16} className="absolute left-3 text-text-muted" />
             <input 
               type="text" 
-              style={{ paddingLeft: '38px' }}
+              className="pl-[38px] w-full"
               placeholder="Last Name"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
@@ -258,19 +231,11 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
 
       {/* Clearance Level / Role */}
       <div>
-        <label>Clearance Level Assignment</label>
+        <label className="block text-[0.75rem] text-text-muted font-semibold mb-1.5">Clearance Level Assignment</label>
         <select 
           value={clearanceLevel} 
           onChange={(e) => setClearanceLevel(Number(e.target.value))}
-          style={{
-            width: '100%',
-            padding: '0.75rem 1rem',
-            backgroundColor: 'var(--bg-input)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '8px',
-            color: 'var(--text-main)',
-            fontSize: '0.9rem'
-          }}
+          className="w-full py-3 px-4 bg-input border border-color rounded-lg text-text-main text-[0.9rem] outline-none"
         >
           <option value={2}>Tier 2 Manager (Directional Operations)</option>
           <option value={3}>Tier 3 Operator (Operational Leadership)</option>
@@ -280,22 +245,13 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
 
       {/* Department Assignment */}
       <div>
-        <label>Department / Node Assignment</label>
-        <div style={{ position: 'relative' }}>
-          <Network size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+        <label className="block text-[0.75rem] text-text-muted font-semibold mb-1.5">Department / Node Assignment</label>
+        <div className="relative flex items-center">
+          <Network size={16} className="absolute left-3 text-text-muted" />
           <select 
             value={departmentId} 
             onChange={(e) => setDepartmentId(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '0.75rem 1rem',
-              paddingLeft: '38px',
-              backgroundColor: 'var(--bg-input)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              color: 'var(--text-main)',
-              fontSize: '0.9rem'
-            }}
+            className="w-full py-3 pr-4 pl-10 bg-input border border-color rounded-lg text-text-main text-[0.9rem] outline-none"
           >
             <option value="">-- Unassigned / Independent Operator --</option>
             {departments.map((dept) => (
@@ -309,49 +265,30 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
 
       {/* Workspace Access Multi-Select */}
       <div>
-        <label style={{ display: 'block', marginBottom: '8px' }}>
+        <label className="block text-[0.75rem] text-text-muted font-semibold mb-2">
           Authorized Workspaces (Active Only)
         </label>
         {activeWorkspaces.length === 0 ? (
-          <div style={{ padding: '12px', backgroundColor: 'rgba(255, 183, 3, 0.05)', border: '1px solid rgba(255, 183, 3, 0.15)', borderRadius: '8px', fontSize: '0.78rem', color: '#ffb703', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="p-3 bg-amber-500/5 border border-amber-500/15 rounded-lg text-[0.78rem] text-amber-500 flex items-center gap-2">
             <Cpu size={14} />
             <span>No Active Workspaces registered. Toggles are locked.</span>
           </div>
         ) : (
-          <div 
-            style={{
-              maxHeight: '120px',
-              overflowY: 'auto',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              padding: '10px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-              backgroundColor: 'var(--bg-input)'
-            }}
-          >
+          <div className="max-h-[120px] overflow-y-auto border border-color rounded-lg p-2.5 flex flex-col gap-2 bg-input">
             {activeWorkspaces.map((ws) => (
               <label 
                 key={ws.id} 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '8px', 
-                  fontSize: '0.82rem', 
-                  cursor: 'pointer',
-                  padding: '4px 6px',
-                  borderRadius: '4px',
-                  backgroundColor: selectedWorkspaces.includes(ws.id) ? 'rgba(157, 78, 221, 0.08)' : 'transparent'
-                }}
+                className={`flex items-center gap-2 text-[0.82rem] cursor-pointer py-1 px-2 rounded transition-all duration-150 ${
+                  selectedWorkspaces.includes(ws.id) ? 'bg-accent-primary/8' : 'transparent'
+                }`}
               >
                 <input 
                   type="checkbox"
                   checked={selectedWorkspaces.includes(ws.id)}
                   onChange={() => handleToggleWorkspace(ws.id)}
-                  style={{ cursor: 'pointer' }}
+                  className="cursor-pointer accent-accent-primary"
                 />
-                <span style={{ color: selectedWorkspaces.includes(ws.id) ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                <span className={selectedWorkspaces.includes(ws.id) ? 'text-text-main font-semibold' : 'text-text-muted'}>
                   {ws.name}
                 </span>
               </label>
@@ -361,11 +298,10 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
       </div>
 
       {/* Form Actions */}
-      <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+      <div className="flex gap-4 mt-4">
         <button 
           type="button" 
-          className="btn btn-secondary" 
-          style={{ flex: 1 }}
+          className="btn btn-secondary flex-1" 
           onClick={onCancel}
           disabled={submitting}
         >
@@ -373,13 +309,12 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
         </button>
         <button 
           type="submit" 
-          className="btn btn-primary" 
-          style={{ flex: 1 }}
+          className="btn btn-primary flex-1 flex items-center justify-center gap-1.5" 
           disabled={submitting}
         >
           {submitting ? (
             <>
-              <Loader2 size={16} className="udg-spinner" />
+              <Loader2 size={16} className="animate-spin" />
               Provisioning...
             </>
           ) : (

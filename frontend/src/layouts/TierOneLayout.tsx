@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  Menu, Database, Server, User, ChevronDown, Bell, LogOut, Settings, 
-  MessageSquare, Send, X, ShieldAlert, LayoutGrid 
+  Database, Server, User, ChevronDown, Bell, LogOut, Settings, 
+  MessageSquare, Send, X, LayoutGrid 
 } from 'lucide-react';
 import TierOneSidebar from '../components/navigation/TierOneSidebar';
 import { useAppContext } from '../context/AppContext';
@@ -24,8 +24,12 @@ export default function TierOneLayout() {
   const isWorkspaceAppRoute = (location.pathname.startsWith('/workspace/') || location.pathname.startsWith('/workspaces/')) && !isHub;
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // Desktop sidebar expand/collapse now lives here (not buried inside the
+  // sidebar component) so the header and any future layout math can react to
+  // it too — mirrors the pattern used by AppShell/Sidebar for Tier 2.
+  const [sidebarExpanded, setSidebarExpanded] = useState(true);
   
   // Active Chat states
   const [chatOpen, setChatOpen] = useState(true);
@@ -60,11 +64,7 @@ export default function TierOneLayout() {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (!mobile) setMobileSidebarOpen(false);
-    };
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -107,323 +107,110 @@ export default function TierOneLayout() {
 
   if (isBooting) {
     return (
-      <div 
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          backgroundColor: 'var(--bg-card)',
-          color: 'var(--text-main)',
-          gap: '1.5rem'
-        }}
-      >
-        <div className="appshell-boot__spinner" style={{ borderTopColor: '#9d4edd', width: '40px', height: '40px' }} />
-        <p style={{ fontSize: '0.95rem', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>Initialising Tier 1 Executive Workspace…</p>
+      <div className="flex flex-col items-center justify-center h-screen bg-card text-text-main gap-6">
+        <div className="appshell-boot__spinner border-t-[#9d4edd] w-10 h-10" />
+        <p className="text-[0.95rem] tracking-[0.05em] text-text-muted">Initialising Tier 1 Executive Workspace…</p>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)' }}>
-      
-      {/* Mobile sidebar overlay */}
-      {isMobile && mobileSidebarOpen && (
-        <div 
-          onClick={() => setMobileSidebarOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.4)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 40
-          }}
+    <div className="flex h-screen w-screen overflow-hidden bg-main text-text-main">
+
+      {!isWorkspaceAppRoute && (
+        <TierOneSidebar
+          isExpanded={sidebarExpanded}
+          onToggle={() => setSidebarExpanded(v => !v)}
         />
       )}
 
-      {/* Sidebar (sticky left) */}
-      {!isWorkspaceAppRoute && (
-        <div 
-          style={{
-            display: isMobile && !mobileSidebarOpen ? 'none' : 'block',
-            position: isMobile ? 'fixed' : 'relative',
-            top: 0,
-            bottom: 0,
-            left: 0,
-            zIndex: 50,
-            height: '100vh',
-            boxShadow: isMobile ? '4px 0 24px rgba(0,0,0,0.5)' : 'none'
-          }}
-        >
-          <TierOneSidebar />
-        </div>
-      )}
-
-      {/* Main Content & Chat Container (right) */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      <div className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
         
-        {/* Top Header */}
-        <header 
-          style={{
-            height: '64px',
-            backgroundColor: 'var(--bg-card)',
-            borderBottom: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 2rem',
-            zIndex: 30
-          }}
-        >
-          {/* Left Side: Mobile Menu Button & Status */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            {isMobile && (
-              <button 
-                onClick={() => setMobileSidebarOpen(true)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer',
-                  padding: '6px',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
-              >
-                <Menu size={20} />
-              </button>
-            )}
-
-            {/* Workspace Hub Button */}
+        <header className="h-16 bg-header border-b border-color flex items-center justify-between px-8 z-30 shrink-0">
+          <div className="flex items-center gap-4">
             <button
               id="header-hub-btn-t1"
               onClick={() => navigate('/workspace')}
-              style={{
-                display: isMobile ? 'none' : 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                color: 'var(--text-muted)',
-                background: 'var(--bg-card-hover)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                padding: '5px 12px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                marginRight: '0.75rem'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--text-main)';
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.borderColor = 'var(--border-color)';
-              }}
+              className={`items-center gap-1.5 text-[0.75rem] font-bold text-text-muted bg-card-hover border border-color rounded-lg py-1.5 px-3 cursor-pointer transition-all duration-200 mr-3 hover:text-text-main hover:border-black/20 ${
+                isMobile ? 'hidden' : 'flex'
+              }`}
             >
               <LayoutGrid size={13} />
               <span>Workspace Hub</span>
             </button>
 
-            {/* API Connectivity Badge */}
-            <div 
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: isApiLive ? 'var(--accent-green)' : 'var(--text-muted)',
-                background: isApiLive ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-card-hover)',
-                padding: '4px 10px',
-                borderRadius: '12px',
-                border: `1px solid ${isApiLive ? 'rgba(16, 185, 129, 0.2)' : 'var(--border-color)'}`
-              }}
-            >
+            <div className={`flex items-center gap-1.5 text-[0.75rem] font-semibold py-1 px-2.5 rounded-full border ${
+              isApiLive 
+                ? 'text-accent-green bg-accent-green/10 border-accent-green/20' 
+                : 'text-text-muted bg-card-hover border-color'
+            }`}>
               {isApiLive ? <Database size={13} /> : <Server size={13} />}
               <span>{isApiLive ? 'Live Connection' : 'Sandbox mode'}</span>
             </div>
           </div>
 
-          {/* Center Title */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '0.05em', fontFamily: 'var(--font-display)' }}>
+          <div className="flex items-center">
+            <span className="text-[0.875rem] font-bold text-text-main tracking-wider font-display">
               BUSINESS OPERATIONS CENTRE
             </span>
           </div>
 
-          {/* Right Side Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="flex items-center gap-4">
             
-            {/* Active Chat Toggle Button */}
             <button
               onClick={() => setChatOpen(!chatOpen)}
-              style={{
-                background: chatOpen ? 'var(--bg-card-hover)' : 'transparent',
-                border: 'none',
-                color: chatOpen ? 'var(--accent-primary)' : 'var(--text-muted)',
-                cursor: 'pointer',
-                padding: '8px',
-                borderRadius: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s ease',
-                outline: 'none'
-              }}
+              className={`border-none cursor-pointer p-2 rounded-lg flex items-center justify-center transition-all duration-200 focus:outline-none ${
+                chatOpen ? 'bg-card-hover text-accent-primary' : 'bg-transparent text-text-muted hover:text-text-main'
+              }`}
               title={chatOpen ? 'Hide Active Chat' : 'Show Active Chat'}
             >
               <MessageSquare size={18} />
             </button>
 
-            {/* Notification Indicator */}
-            <button 
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                padding: '8px',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
+            <button className="bg-transparent border-none text-text-muted cursor-pointer p-2 relative flex items-center justify-center hover:text-text-main">
               <Bell size={18} />
-              <span 
-                style={{
-                  position: 'absolute',
-                  top: '6px',
-                  right: '6px',
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  backgroundColor: '#EF4444'
-                }}
-              />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-accent-danger" />
             </button>
 
-            {/* Profile Selector */}
-            <div style={{ position: 'relative' }}>
+            <div className="relative">
               <button
                 onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen); }}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  color: 'var(--text-main)',
-                  textAlign: 'left'
-                }}
+                className="bg-transparent border-none flex items-center gap-2 cursor-pointer text-text-main text-left"
               >
-                <div 
-                  style={{
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    backgroundColor: 'var(--bg-card-hover)',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--accent-primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: '0.8rem'
-                  }}
-                >
+                <div className="w-7 h-7 rounded-full bg-card-hover border border-color text-accent-primary flex items-center justify-center font-bold text-[0.8rem]">
                   {currentUser?.email?.[0]?.toUpperCase() ?? <User size={13} />}
                 </div>
-                <div style={{ display: isMobile ? 'none' : 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                <div className={`flex flex-col ${isMobile ? 'hidden' : 'flex'}`}>
+                  <span className="text-[0.8rem] font-semibold text-text-main leading-tight">
                     {currentUser?.full_name || currentUser?.email?.split('@')[0]}
                   </span>
-                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                  <span className="text-[0.65rem] text-text-muted leading-tight">
                     Tier 1 Executive
                   </span>
                 </div>
-                <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
+                <ChevronDown size={14} className="text-text-muted" />
               </button>
 
               {dropdownOpen && (
-                <div 
-                  style={{
-                    position: 'absolute',
-                    right: 0,
-                    marginTop: '8px',
-                    width: '180px',
-                    backgroundColor: 'var(--bg-card)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                    padding: '4px 0',
-                    zIndex: 100
-                  }}
-                >
+                <div className="absolute right-0 mt-2 w-[180px] bg-card border border-color rounded-lg shadow-lg py-1 z-[100]">
                   <button
                     onClick={() => navigate('/settings/profile')}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      width: '100%',
-                      padding: '8px 12px',
-                      background: 'transparent',
-                      border: 'none',
-                      color: 'var(--text-muted)',
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                    className="flex items-center gap-2 w-full py-2 px-3 bg-transparent border-none text-text-muted text-[0.8rem] cursor-pointer text-left transition-colors duration-150 hover:text-text-main"
                   >
                     <User size={14} />
                     <span>My Profile</span>
                   </button>
                   <button
                     onClick={() => navigate('/settings/config')}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      width: '100%',
-                      padding: '8px 12px',
-                      background: 'transparent',
-                      border: 'none',
-                      color: 'var(--text-muted)',
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                    className="flex items-center gap-2 w-full py-2 px-3 bg-transparent border-none text-text-muted text-[0.8rem] cursor-pointer text-left transition-colors duration-150 hover:text-text-main"
                   >
                     <Settings size={14} />
                     <span>System Settings</span>
                   </button>
-                  <div style={{ borderTop: '1px solid var(--border-color)', margin: '4px 0' }} />
+                  <div className="border-t border-color my-1" />
                   <button
                     onClick={handleLogout}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      width: '100%',
-                      padding: '8px 12px',
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#EF4444',
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#F87171'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = '#EF4444'}
+                    className="flex items-center gap-2 w-full py-2 px-3 bg-transparent border-none text-accent-danger text-[0.8rem] cursor-pointer text-left transition-colors duration-150 hover:text-red-400"
                   >
                     <LogOut size={14} />
                     <span>Logout</span>
@@ -434,133 +221,64 @@ export default function TierOneLayout() {
           </div>
         </header>
 
-        {/* Inner layout with main content and right-side chat */}
-        <div style={{ flex: 1, display: 'flex', position: 'relative', overflow: 'hidden' }}>
+        <div className="flex-1 flex relative overflow-hidden">
           
-          {/* Scrollable Main Content */}
           <main 
-            style={{ 
-              flex: 1, 
-              overflow: 'hidden',
-              padding: isWorkspaceAppRoute ? '0' : '2rem',
-              background: 'var(--bg-main)',
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: 0,
-            }}
+            className={`flex-1 overflow-hidden bg-main flex flex-col min-h-0 ${
+              isWorkspaceAppRoute ? 'p-0' : (isMobile ? 'p-8 pb-[76px]' : 'p-8')
+            }`}
           >
-            <div style={isWorkspaceAppRoute ? { flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' } : { flex: 1, overflowY: 'auto' }}>
+            <div className={isWorkspaceAppRoute ? 'flex-1 overflow-hidden flex flex-col' : 'flex-1 overflow-y-auto'}>
               <Outlet />
             </div>
           </main>
 
-          {/* Right-Side "Active Chat" Panel */}
           <div 
+            className="flex flex-col h-full z-25 relative transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
             style={{
               width: chatOpen ? '280px' : '0px',
               opacity: chatOpen ? 1 : 0,
               visibility: chatOpen ? 'visible' : 'hidden',
-              background: 'var(--bg-surface)',
+              backgroundColor: 'var(--bg-card)',
               borderLeft: chatOpen ? '1px solid var(--border-color)' : 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-              transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, visibility 0.2s',
-              zIndex: 25,
-              position: 'relative',
-              boxShadow: chatOpen ? '-4px 0 20px rgba(0,0,0,0.2)' : 'none',
+              boxShadow: chatOpen ? '-4px 0 20px rgba(0,0,0,0.06)' : 'none',
             }}
           >
-            {/* Chat Header */}
-            <div 
-              style={{
-                padding: '0.875rem 1rem',
-                borderBottom: '1px solid var(--border-color)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                background: 'var(--bg-card)',
-              }}
-            >
+            <div className="py-3.5 px-4 border-b border-color flex items-center justify-between bg-card">
               <div>
-                <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)' }}>Active Chat</h3>
-                <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Real-time team communication</p>
+                <h3 className="text-[0.9rem] font-bold text-text-main">Active Chat</h3>
+                <p className="text-[0.65rem] text-text-muted">Real-time team communication</p>
               </div>
               <button 
                 onClick={() => setChatOpen(false)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '4px'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                className="bg-transparent border-none text-text-muted cursor-pointer p-1.5 flex items-center justify-center rounded transition-colors duration-150 hover:text-text-main"
               >
                 <X size={16} />
               </button>
             </div>
 
-            {/* Chat Message Stream */}
-            <div 
-              style={{
-                flex: 1,
-                overflowY: 'auto',
-                padding: '1rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
-                scrollbarWidth: 'thin'
-              }}
-            >
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 scrollbar-thin">
               {chatMessages.map((msg) => (
-                <div key={msg.id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                <div key={msg.id} className="flex gap-2 items-start">
                   <div 
-                    style={{
-                      width: '28px',
-                      height: '28px',
-                      borderRadius: '50%',
-                      backgroundColor: msg.avatarColor,
-                      color: 'var(--accent-primary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 700,
-                      fontSize: '0.75rem',
-                      flexShrink: 0,
-                      border: '1px solid var(--border-color)'
-                    }}
+                    className="w-7 h-7 rounded-full text-accent-primary flex items-center justify-center font-bold text-[0.75rem] shrink-0 border border-color"
+                    style={{ backgroundColor: msg.avatarColor }}
                   >
                     {msg.sender[0]}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-baseline mb-0.5">
+                      <span className="text-[0.75rem] font-semibold text-text-main overflow-hidden text-overflow-ellipsis white-space-nowrap">
                         {msg.sender}
                       </span>
-                      <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginLeft: '4px' }}>
+                      <span className="text-[0.6rem] text-text-muted ml-1">
                         {msg.timestamp}
                       </span>
                     </div>
-                    <span 
-                      style={{ 
-                        display: 'inline-block', 
-                        fontSize: '0.65rem', 
-                        color: 'var(--accent-primary)', 
-                        fontWeight: 600, 
-                        marginBottom: '4px', 
-                        textTransform: 'uppercase', 
-                        letterSpacing: '0.02em' 
-                      }}
-                    >
+                    <span className="inline-block text-[0.65rem] text-accent-primary font-semibold mb-1 uppercase tracking-wider">
                       {msg.role}
                     </span>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-main)', lineHeight: '1.4', wordBreak: 'break-word' }}>
+                    <p className="text-[0.75rem] text-text-main leading-relaxed break-words">
                       {msg.message}
                     </p>
                   </div>
@@ -569,56 +287,27 @@ export default function TierOneLayout() {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Chat Input Box */}
             <form 
               onSubmit={handleSendChat}
-              style={{
-                padding: '0.875rem 1rem',
-                borderTop: '1px solid rgba(255,255,255,0.07)',
-                background: 'rgba(255,255,255,0.02)',
-              }}
+              className="py-3.5 px-4 border-t border-color bg-card bg-opacity-20"
             >
-              <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
+              <div className="flex gap-2 relative">
                 <input 
                   type="text" 
                   placeholder="Send a message..." 
                   value={chatInput} 
                   onChange={(e) => setChatInput(e.target.value)}
-                  style={{
-                    backgroundColor: 'var(--bg-input)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    color: 'var(--text-main)',
-                    fontSize: '0.75rem',
-                    padding: '8px 32px 8px 10px',
-                    height: '34px'
-                  }}
+                  className="w-full bg-input border border-color rounded-lg text-text-main text-[0.75rem] py-2 pl-2.5 pr-8 h-[34px] focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary"
                 />
                 <button 
                   type="submit"
-                  style={{
-                    position: 'absolute',
-                    right: '6px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'transparent',
-                    border: 'none',
-                    color: chatInput.trim() ? '#9d4edd' : 'var(--text-muted)',
-                    cursor: chatInput.trim() ? 'pointer' : 'default',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '4px'
-                  }}
-                  disabled={!chatInput.trim()}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-transparent border-none text-accent-primary cursor-pointer flex items-center p-1 hover:text-text-main"
                 >
                   <Send size={14} />
                 </button>
               </div>
             </form>
-
           </div>
-
         </div>
       </div>
     </div>

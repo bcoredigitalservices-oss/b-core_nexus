@@ -17,7 +17,7 @@ export default function DynamicFieldRenderer({ schema, register, errors }: Dynam
   if (!schema || schema.length === 0) return null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+    <div className="flex flex-col gap-4 my-2">
       {schema.map((field) => {
         const label = field.name
           .split('_')
@@ -28,21 +28,13 @@ export default function DynamicFieldRenderer({ schema, register, errors }: Dynam
 
         return (
           <div key={field.name}>
-            <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main, #ffffff)' }}>
+            <label className="block mb-1.5 text-[0.85rem] font-semibold text-text-main">
               {label} *
             </label>
             {field.type === 'select' ? (
               <select
                 {...register(fieldKey, { required: `${label} is required` })}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem 1rem',
-                  backgroundColor: 'var(--bg-input, #1E293B)',
-                  border: '1px solid var(--border-color, rgba(255,255,255,0.08))',
-                  borderRadius: '8px',
-                  color: 'var(--text-main, #ffffff)',
-                  fontSize: '0.9rem',
-                }}
+                className="w-full py-3 px-4 bg-input border border-color rounded-lg text-text-main text-[0.9rem] outline-none transition-all duration-200 focus:ring-2 focus:ring-accent-primary/20"
               >
                 <option value="">Select option...</option>
                 {field.options?.map((opt) => (
@@ -56,19 +48,11 @@ export default function DynamicFieldRenderer({ schema, register, errors }: Dynam
                 type={field.type === 'number' ? 'number' : 'text'}
                 placeholder={`Enter ${label.toLowerCase()}...`}
                 {...register(fieldKey, { required: `${label} is required` })}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem 1rem',
-                  backgroundColor: 'var(--bg-input, #1E293B)',
-                  border: '1px solid var(--border-color, rgba(255,255,255,0.08))',
-                  borderRadius: '8px',
-                  color: 'var(--text-main, #ffffff)',
-                  fontSize: '0.9rem',
-                }}
+                className="w-full py-3 px-4 bg-input border border-color rounded-lg text-text-main text-[0.9rem] outline-none transition-all duration-200 focus:ring-2 focus:ring-accent-primary/20"
               />
             )}
             {errors.custom_attributes && (errors.custom_attributes as any)[field.name] && (
-              <p style={{ color: '#ff3366', fontSize: '0.75rem', marginTop: '4px' }}>
+              <p className="text-[#ff3366] text-[0.75rem] mt-1">
                 {(errors.custom_attributes as any)[field.name].message}
               </p>
             )}

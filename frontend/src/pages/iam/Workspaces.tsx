@@ -100,49 +100,27 @@ export default function Workspaces() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px', color: 'var(--text-muted)', gap: '1rem' }}>
-        <Loader2 className="udg-spinner" size={32} />
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-text-muted gap-4">
+        <Loader2 className="animate-spin" size={32} />
         <span>Syncing workspace clusters...</span>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="flex flex-col gap-8 w-full max-w-[1200px] mx-auto p-4">
       
       {/* Header */}
-      <div 
-        style={{
-          background: 'linear-gradient(135deg, rgba(157, 78, 221, 0.08) 0%, rgba(0, 242, 254, 0.03) 100%)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '16px',
-          padding: '1.75rem 2rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1.5rem'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div 
-            style={{
-              background: 'rgba(0, 242, 254, 0.15)',
-              border: '1px solid rgba(0, 242, 254, 0.3)',
-              borderRadius: '12px',
-              padding: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <Building2 size={24} color="#00f2fe" />
+      <div className="bg-gradient-to-br from-[#9d4edd]/8 to-[#00f2fe]/3 border border-color rounded-2xl py-7 px-8 flex justify-between items-center flex-wrap gap-6">
+        <div className="flex items-center gap-4">
+          <div className="bg-[#00f2fe]/15 border border-[#00f2fe]/30 rounded-xl p-2.5 flex items-center justify-center">
+            <Building2 size={24} className="text-[#00f2fe]" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.2rem', fontFamily: 'var(--font-display)' }}>
+            <h1 className="text-[1.5rem] font-extrabold text-text-main font-display mb-1">
               Corporate Workspace Registry
             </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            <p className="text-text-muted text-[0.85rem]">
               Authorize active workspace applications to define access scopes for Tier 2, 3, and 4 users.
             </p>
           </div>
@@ -151,14 +129,14 @@ export default function Workspaces() {
 
       {/* Notifications */}
       {successMsg && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '1rem', backgroundColor: 'rgba(0, 245, 160, 0.1)', border: '1px solid rgba(0, 245, 160, 0.2)', borderRadius: '12px', color: '#00f5a0', fontSize: '0.88rem' }}>
+        <div className="flex items-center gap-2 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[#00f5a0] text-[0.88rem]">
           <CheckCircle size={16} />
           <span>{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '1rem', backgroundColor: 'rgba(255, 51, 102, 0.1)', border: '1px solid rgba(255, 51, 102, 0.2)', borderRadius: '12px', color: '#ff3366', fontSize: '0.88rem' }}>
+        <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-[#ff3366] text-[0.88rem]">
           <AlertCircle size={16} />
           <span>{errorMsg}</span>
         </div>
@@ -166,10 +144,10 @@ export default function Workspaces() {
 
       {/* Grid of Workspaces */}
       <div>
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.25rem' }}>
+        <h2 className="text-[1.1rem] font-bold text-text-main mb-5">
           Workspace Application Modules
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {dbWorkspaces.map((dbRecord) => {
             const isActive = dbRecord.status === 'Active';
             const isUpdating = updatingId === dbRecord.identifier;
@@ -178,62 +156,35 @@ export default function Workspaces() {
             return (
               <div 
                 key={dbRecord.identifier}
-                className="glass-panel"
-                style={{
-                  background: 'var(--bg-card)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '16px',
-                  padding: '2rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  minHeight: '230px',
-                  position: 'relative'
-                }}
+                className="glass-panel bg-card border border-white/8 rounded-2xl p-8 flex flex-col justify-between min-h-[230px] relative"
               >
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                    <div 
-                      style={{
-                        background: 'var(--bg-card-hover)',
-                        border: '1px solid var(--border-color)',
-                        padding: '10px',
-                        borderRadius: '10px',
-                        color: details.accentColor
-                      }}
-                    >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="bg-card-hover border border-color p-2.5 rounded-lg" style={{ color: details.accentColor }}>
                       {details.icon}
                     </div>
                     <div>
-                      <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                      <h4 className="text-[1.05rem] font-bold text-text-main">
                         {dbRecord.name}
                       </h4>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      <span className="text-[0.72rem] text-text-muted">
                         ID: {dbRecord.identifier}
                       </span>
                     </div>
                   </div>
 
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.5 }}>
+                  <p className="text-text-muted text-[0.85rem] leading-relaxed">
                     System application module ready for provisioning.
                   </p>
                 </div>
 
                 {/* Activation Control Footer */}
-                <div 
-                  style={{
-                    borderTop: '1px solid var(--border-color)',
-                    paddingTop: '1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: isActive ? '#00f5a0' : 'var(--text-muted)' }}>
+                <div className="border-t border-color pt-4 flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className={`text-[0.78rem] font-semibold ${isActive ? 'text-[#00f5a0]' : 'text-text-muted'}`}>
                       {isActive ? 'Operational / Active' : 'Offline / Inactive'}
                     </span>
-                    <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                    <span className="text-[0.65rem] text-text-muted">
                       {dbRecord ? 'Registered in DB' : 'Not Registered'}
                     </span>
                   </div>
@@ -242,22 +193,16 @@ export default function Workspaces() {
                   <button
                     onClick={() => handleToggleWorkspace(dbRecord.identifier, dbRecord.name, isActive)}
                     disabled={isUpdating}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: isUpdating ? 'not-allowed' : 'pointer',
-                      color: isActive ? '#00f5a0' : 'var(--text-muted)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: 0
-                    }}
+                    className={`bg-transparent border-none p-0 flex items-center ${
+                      isActive ? 'text-[#00f5a0]' : 'text-text-muted'
+                    } ${isUpdating ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                   >
                     {isUpdating ? (
-                      <Loader2 className="udg-spinner" size={28} />
+                      <Loader2 className="animate-spin" size={28} />
                     ) : isActive ? (
                       <ToggleRight size={36} />
                     ) : (
-                      <ToggleLeft size={36} style={{ opacity: 0.5 }} />
+                      <ToggleLeft size={36} className="opacity-50" />
                     )}
                   </button>
                 </div>
@@ -268,23 +213,13 @@ export default function Workspaces() {
       </div>
 
       {/* Safety Warning */}
-      <div 
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: '12px',
-          background: 'rgba(255, 183, 3, 0.05)',
-          border: '1px solid rgba(255, 183, 3, 0.15)',
-          padding: '1rem 1.25rem',
-          borderRadius: '12px'
-        }}
-      >
-        <ShieldAlert size={18} color="#ffb703" style={{ flexShrink: 0, marginTop: '2px' }} />
+      <div className="flex items-start gap-3 bg-amber-500/5 border border-amber-500/15 p-4 rounded-xl">
+        <ShieldAlert size={18} className="text-[#ffb703] flex-shrink-0 mt-0.5" />
         <div>
-          <h5 style={{ fontSize: '0.85rem', color: '#ffb703', fontWeight: 700, margin: '0 0 4px 0' }}>
+          <h5 className="text-[0.85rem] text-[#ffb703] font-bold mb-1">
             System Administration Security Notice
           </h5>
-          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+          <p className="m-0 text-[0.75rem] text-text-muted leading-relaxed">
             Activating a workspace initiates dynamic routing pathways and allows local site managers to assign operator user clearance scopes. Ensure alignment with organization operations framework before toggling workspace states.
           </p>
         </div>

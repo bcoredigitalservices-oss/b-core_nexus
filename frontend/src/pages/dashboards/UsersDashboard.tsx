@@ -30,71 +30,19 @@ export default function UsersDashboard() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
-      <style>{`
-        .udg-th--actions, .udg-td--actions {
-          display: none !important;
-        }
-        .btn-revoke {
-          background: rgba(239, 68, 68, 0.12);
-          border: 1px solid rgba(239, 68, 68, 0.25);
-          color: #f87171;
-          padding: 6px 12px;
-          border-radius: 6px;
-          font-size: 0.75rem;
-          cursor: pointer;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          transition: all 0.2s ease;
-          font-weight: 600;
-        }
-        .btn-revoke:hover:not(:disabled) {
-          background: rgba(239, 68, 68, 0.22);
-          border-color: rgba(239, 68, 68, 0.45);
-          transform: translateY(-1px);
-        }
-        .btn-revoke:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-      `}</style>
-
+    <div className="flex flex-col gap-8 w-full max-w-[1200px] mx-auto">
+      
       {/* Header Banner */}
-      <div 
-        style={{
-          background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.05) 0%, rgba(157, 78, 221, 0.05) 100%)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '14px',
-          padding: '1.75rem 2rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1.5rem',
-          position: 'relative',
-          overflow: 'hidden'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', zIndex: 1 }}>
-          <div 
-            style={{
-              background: 'rgba(0, 242, 254, 0.1)',
-              border: '1px solid rgba(0, 242, 254, 0.2)',
-              borderRadius: '12px',
-              padding: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <Users size={28} color="var(--accent-blue)" />
+      <div className="bg-gradient-to-br from-[#00f2fe]/5 to-[#9d4edd]/5 border border-color rounded-2xl py-7 px-8 flex justify-between items-center flex-wrap gap-6 relative overflow-hidden">
+        <div className="flex items-center gap-5 z-10">
+          <div className="bg-[#00f2fe]/10 border border-[#00f2fe]/20 rounded-xl p-3 flex items-center justify-center">
+            <Users size={28} className="text-accent-blue" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-display)', marginBottom: '0.3rem', fontWeight: 700 }}>
+            <h1 className="text-[1.6rem] font-bold text-text-main font-display mb-1">
               User Administration
             </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            <p className="text-text-muted text-[0.875rem]">
               Manage registered users and active network sessions.
             </p>
           </div>
@@ -102,28 +50,19 @@ export default function UsersDashboard() {
 
         {/* Provision button in header */}
         <button 
-          className="btn btn-primary" 
+          className="btn btn-primary z-10" 
           onClick={() => setIsProvisionModalOpen(true)}
-          style={{ zIndex: 1 }}
         >
           + Provision User
         </button>
       </div>
 
-      <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden' }}>
-        <div 
-          style={{ 
-            padding: '1.25rem 1.5rem', 
-            borderBottom: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem'
-          }}
-        >
-          <Users size={20} color="var(--accent-blue)" />
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Identity & Access</h2>
+      <div className="glass-panel p-0 overflow-hidden">
+        <div className="py-5 px-6 border-b border-color flex items-center gap-3">
+          <Users size={20} className="text-accent-blue" />
+          <h2 className="text-[1.1rem] font-semibold text-text-main">Identity & Access</h2>
         </div>
-        <div style={{ padding: '1.25rem' }}>
+        <div className="p-5">
           <UniversalDataGrid
             key={gridKey}
             endpointUrl="/api/v1/auth/users"
@@ -137,7 +76,7 @@ export default function UsersDashboard() {
                 label: 'Name',
                 render: (_: any, row: any) => {
                   const fullName = [row.first_name, row.last_name].filter(Boolean).join(' ');
-                  return fullName || <em style={{ opacity: 0.5 }}>Unconfigured</em>;
+                  return fullName || <em className="opacity-50">Unconfigured</em>;
                 }
               },
               {
@@ -160,7 +99,7 @@ export default function UsersDashboard() {
                       Level {value}
                     </span>
                   ) : (
-                    <em style={{ opacity: 0.5 }}>N/A</em>
+                    <em className="opacity-50">N/A</em>
                   )
                 )
               },
@@ -188,19 +127,17 @@ export default function UsersDashboard() {
                 key: 'revoke_session',
                 label: 'Control',
                 render: (_: any, row: any) => (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="btn btn-secondary"
-                      style={{ padding: '6px 10px', fontSize: '0.75rem', height: '28px', display: 'inline-flex', alignItems: 'center' }}
+                      className="btn btn-secondary py-1.5 px-2.5 text-[0.75rem] h-7 inline-flex items-center"
                       onClick={() => setEditingUser(row)}
                     >
                       ✏️ Edit Access
                     </button>
                     {row.is_active ? (
                       <button
-                        className="btn-revoke"
-                        style={{ height: '28px', display: 'inline-flex', alignItems: 'center' }}
+                        className="bg-red-500/10 border border-red-500/25 text-red-400 py-1 px-3 h-7 rounded-lg text-[0.75rem] cursor-pointer inline-flex items-center gap-1.5 transition-all duration-200 font-semibold hover:bg-red-500/20 hover:border-red-500/45 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() => handleRevoke(row.id)}
                         disabled={revokingUser === row.id}
                       >
@@ -208,8 +145,8 @@ export default function UsersDashboard() {
                         {revokingUser === row.id ? 'Revoking...' : 'Revoke Session'}
                       </button>
                     ) : (
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-                        <Unlock size={12} style={{ opacity: 0.5 }} />
+                      <span className="text-text-muted text-[0.75rem] inline-flex items-center gap-1 font-semibold">
+                        <Unlock size={12} className="opacity-50" />
                         Revoked
                       </span>
                     )}
