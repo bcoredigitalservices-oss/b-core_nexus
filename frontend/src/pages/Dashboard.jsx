@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Database, Users, Package, Shield } from 'lucide-react';
+import { Activity, Database, Users, Package, Shield, ArrowUpRight } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Link } from 'react-router-dom';
 
@@ -14,34 +14,41 @@ export default function Dashboard() {
   const { navigationMatrix, currentUser, isApiLive } = useAppContext();
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-
+    <div className="flex flex-col gap-8">
       {/* Welcome banner */}
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(0,242,254,0.08) 0%, rgba(157,78,221,0.08) 100%)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '14px',
-        padding: '1.75rem 2rem',
-      }}>
-        <h1 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-display)', marginBottom: '0.3rem' }}>
+      <div className="rounded-[14px] border border-[var(--border-color)] bg-gradient-to-br from-[rgba(0,242,254,0.08)] to-[rgba(157,78,221,0.08)] px-8 py-7">
+        <h1 className="mb-1 font-[family-name:var(--font-display)] text-2xl">
           Welcome back{currentUser?.full_name ? `, ${currentUser.full_name}` : ''}
         </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          B-Core Nexus Headless ERP — {isApiLive ? '🟢 API Connected' : '🟡 Sandbox Mode'}
+        <p className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+          B-Core Nexus Headless ERP
+          <span className="inline-flex items-center gap-1.5">
+            <span className="relative flex h-2 w-2">
+              {isApiLive && (
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--accent-green)] opacity-75" />
+              )}
+              <span
+                className="relative inline-flex h-2 w-2 rounded-full"
+                style={{ backgroundColor: isApiLive ? 'var(--accent-green)' : 'var(--accent-warning)' }}
+              />
+            </span>
+            {isApiLive ? 'API Connected' : 'Sandbox Mode'}
+          </span>
         </p>
       </div>
 
       {/* Stats grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-        {STAT_CARDS.map(card => (
-          <div key={card.label} className="glass-panel" style={{ padding: '1.25rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+        {STAT_CARDS.map((card) => (
+          <div
+            key={card.label}
+            className="glass-panel p-5 transition-transform duration-200 hover:-translate-y-0.5"
+          >
+            <div className="mb-3 flex items-center gap-3">
               <span style={{ color: card.color }}>{card.icon}</span>
-              <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>
-                {card.label}
-              </span>
+              <span className="text-xs uppercase tracking-wider text-[var(--text-muted)]">{card.label}</span>
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: card.color }}>
+            <div className="font-[family-name:var(--font-display)] text-[1.6rem] font-extrabold" style={{ color: card.color }}>
               {card.value}
             </div>
           </div>
@@ -51,18 +58,13 @@ export default function Dashboard() {
       {/* Quick actions from matrix */}
       {navigationMatrix.quick_actions?.length > 0 && (
         <div className="glass-panel">
-          <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>
-            <Activity size={16} style={{ verticalAlign: 'middle', marginRight: '0.4rem' }} />
+          <h3 className="mb-4 flex items-center gap-1.5 text-base">
+            <Activity size={16} />
             Quick Actions
           </h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
-            {navigationMatrix.quick_actions.map(action => (
-              <Link
-                key={action.path}
-                to={action.path}
-                className="btn btn-secondary"
-                style={{ fontSize: '0.82rem', padding: '0.5rem 1rem' }}
-              >
+          <div className="flex flex-wrap gap-2.5">
+            {navigationMatrix.quick_actions.map((action) => (
+              <Link key={action.path} to={action.path} className="btn btn-secondary px-4 py-2 text-[0.82rem]">
                 {action.label}
               </Link>
             ))}
@@ -72,45 +74,23 @@ export default function Dashboard() {
 
       {/* Sidebar navigation shortcuts */}
       <div className="glass-panel">
-        <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>
-          <Shield size={16} style={{ verticalAlign: 'middle', marginRight: '0.4rem' }} />
+        <h3 className="mb-4 flex items-center gap-1.5 text-base">
+          <Shield size={16} />
           Workspace Modules
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.75rem' }}>
-          {navigationMatrix.sidebar_links.map(link => (
+        <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
+          {navigationMatrix.sidebar_links.map((link) => (
             <Link
               key={link.path}
               to={link.path}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.6rem',
-                padding: '0.75rem 1rem',
-                borderRadius: '10px',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-card-hover)',
-                color: 'var(--text-muted)',
-                textDecoration: 'none',
-                fontSize: '0.875rem',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(0,242,254,0.06)';
-                e.currentTarget.style.color = 'var(--text-main)';
-                e.currentTarget.style.borderColor = 'rgba(0,242,254,0.3)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.borderColor = 'var(--border-color)';
-              }}
+              className="group flex items-center justify-between gap-2 rounded-[10px] border border-[var(--border-color)] bg-[var(--bg-card-hover)] px-4 py-3 text-sm text-[var(--text-muted)] no-underline transition-all duration-200 hover:border-[rgba(0,242,254,0.3)] hover:bg-[rgba(0,242,254,0.06)] hover:text-[var(--text-main)]"
             >
               {link.label}
+              <ArrowUpRight size={14} className="opacity-0 transition-opacity duration-200 group-hover:opacity-70" />
             </Link>
           ))}
         </div>
       </div>
-
     </div>
   );
 }

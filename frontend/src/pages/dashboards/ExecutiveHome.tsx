@@ -193,23 +193,12 @@ function LiveClock() {
   const day = time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          fontFamily: 'var(--font-mono, monospace)',
-          fontSize: '1.5rem',
-          fontWeight: 700,
-          color: 'var(--text-main)',
-          letterSpacing: '0.04em',
-        }}
-      >
-        <Clock size={16} color="var(--text-muted)" />
-        {hh}<span style={{ opacity: 0.5, animation: 'blink 1s step-end infinite' }}>:</span>{mm}<span style={{ opacity: 0.5, animation: 'blink 1s step-end infinite' }}>:</span><span style={{ color: '#00f5a0' }}>{ss}</span>
+    <div className="flex flex-col items-end gap-0.5">
+      <div className="flex items-center gap-1.5 font-mono text-[1.5rem] font-bold text-text-main tracking-wider">
+        <Clock size={16} className="text-text-muted" />
+        {hh}<span className="opacity-50 animate-[blink_1s_step-end_infinite]">:</span>{mm}<span className="opacity-50 animate-[blink_1s_step-end_infinite]">:</span><span className="text-[#00f5a0]">{ss}</span>
       </div>
-      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', letterSpacing: '0.03em' }}>{day}</span>
+      <span className="text-[0.72rem] text-text-muted tracking-wide">{day}</span>
     </div>
   );
 }
@@ -231,58 +220,58 @@ function DepartmentCard({ dept, permittedWorkspaceKeys, onLaunch, isSuperUser }:
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      className="relative overflow-hidden rounded-[18px] p-6 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
       style={{
-        position: 'relative',
-        overflow: 'hidden',
         background: 'var(--bg-card)',
-        border: hovered ? `1px solid ${dept.accentColor}50` : '1px solid rgba(255,255,255,0.07)',
-        borderRadius: '18px',
-        padding: '1.5rem',
-        transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
+        border: hovered ? `1px solid ${dept.accentColor}50` : '1px solid var(--border-color)',
         boxShadow: hovered
           ? `0 12px 40px rgba(0,0,0,0.25), 0 0 30px ${dept.glowColor}`
-          : '0 4px 20px rgba(0,0,0,0.15)',
+          : '0 4px 20px rgba(0,0,0,0.03)',
       }}
     >
       {/* Corner glow */}
-      <div style={{
-        position: 'absolute', top: '-40px', right: '-40px', width: '120px', height: '120px',
-        borderRadius: '50%', background: `radial-gradient(circle, ${dept.glowColor} 0%, transparent 70%)`,
-        filter: 'blur(10px)', pointerEvents: 'none', opacity: hovered ? 1 : 0.5, transition: 'opacity 0.3s',
-      }} />
+      <div 
+        className="absolute -top-10 -right-10 w-[120px] h-[120px] rounded-full pointer-events-none filter blur-[10px]"
+        style={{
+          background: `radial-gradient(circle, ${dept.glowColor} 0%, transparent 70%)`,
+          opacity: hovered ? 1 : 0.5,
+          transition: 'opacity 0.3s',
+        }} 
+      />
 
       {/* Bottom accent bar */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px',
-        background: `linear-gradient(90deg, transparent, ${dept.accentColor}70, transparent)`,
-        opacity: hovered ? 1 : 0, transition: 'opacity 0.3s',
-      }} />
+      <div 
+        className="absolute bottom-0 left-0 right-0 h-[2px] transition-opacity duration-300"
+        style={{
+          background: `linear-gradient(90deg, transparent, ${dept.accentColor}70, transparent)`,
+          opacity: hovered ? 1 : 0,
+        }} 
+      />
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+      <div className="flex items-start justify-between mb-5">
         <div>
-          <h3 style={{
-            fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)',
-            fontFamily: 'var(--font-display)', marginBottom: '0.3rem', letterSpacing: '-0.02em',
-          }}>
+          <h3 className="text-[1.05rem] font-bold text-text-main font-display mb-1 tracking-tight">
             {dept.name}
           </h3>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.45, maxWidth: '240px' }}>
+          <p className="text-[0.75rem] text-text-muted leading-relaxed max-w-[240px]">
             {dept.description}
           </p>
         </div>
-        <span style={{
-          fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
-          padding: '3px 9px', borderRadius: '20px',
-          backgroundColor: `${dept.accentColor}14`, color: dept.accentColor,
-          border: `1px solid ${dept.accentColor}30`, whiteSpace: 'nowrap',
-        }}>
+        <span 
+          className="text-[0.68rem] font-bold uppercase tracking-wider py-1 px-2.5 rounded-full whitespace-nowrap border"
+          style={{
+            backgroundColor: `${dept.accentColor}14`, 
+            color: dept.accentColor,
+            borderColor: `${dept.accentColor}30`,
+          }}
+        >
           {dept.workspaces.length} modules
         </span>
       </div>
 
       {/* Workspace icon grid */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+      <div className="flex flex-wrap gap-2.5">
         {dept.workspaces.map((ws) => {
           const permitted = isSuperUser || permittedWorkspaceKeys.includes(ws.key);
           const isHov = hoveredWs === ws.key;
@@ -295,23 +284,21 @@ function DepartmentCard({ dept, permittedWorkspaceKeys, onLaunch, isSuperUser }:
               onClick={() => permitted && onLaunch(ws.route, ws.key)}
               onMouseEnter={() => setHoveredWs(ws.key)}
               onMouseLeave={() => setHoveredWs(null)}
+              className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all duration-200 min-w-[64px] border relative"
               style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px',
-                padding: '10px 12px', borderRadius: '12px', cursor: permitted ? 'pointer' : 'not-allowed',
-                background: isHov && permitted ? `${ws.color}18` : 'rgba(255,255,255,0.03)',
-                border: isHov && permitted ? `1px solid ${ws.color}50` : '1px solid rgba(255,255,255,0.06)',
-                color: permitted ? (isHov ? ws.color : 'var(--text-muted)') : 'rgba(255,255,255,0.18)',
-                transition: 'all 0.2s',
+                cursor: permitted ? 'pointer' : 'not-allowed',
+                background: isHov && permitted ? `${ws.color}18` : 'var(--bg-main)',
+                borderColor: isHov && permitted ? `${ws.color}50` : 'var(--border-color)',
+                color: permitted ? (isHov ? ws.color : 'var(--text-muted)') : 'var(--text-muted)',
+                opacity: permitted ? 1 : 0.35,
                 transform: isHov && permitted ? 'translateY(-2px)' : 'translateY(0)',
-                opacity: permitted ? 1 : 0.4,
-                minWidth: '64px',
               }}
             >
-              <span style={{ color: 'inherit' }}>{ws.icon}</span>
-              <span style={{ fontSize: '0.62rem', fontWeight: 600, textAlign: 'center', letterSpacing: '0.01em', whiteSpace: 'nowrap' }}>
+              <span className="color-inherit">{ws.icon}</span>
+              <span className="text-[0.62rem] font-bold text-center tracking-wide whitespace-nowrap">
                 {ws.label}
               </span>
-              {!permitted && <Lock size={8} style={{ position: 'absolute', bottom: '6px', right: '6px', opacity: 0.4 }} />}
+              {!permitted && <Lock size={8} className="absolute bottom-1.5 right-1.5 opacity-40" />}
             </button>
           );
         })}
@@ -371,50 +358,31 @@ export default function ExecutiveHome() {
         .dept-grid > *:nth-child(8) { animation-delay: 0.32s; }
       `}</style>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1240px', margin: '0 auto' }}>
+      <div className="flex flex-col gap-8 w-full max-w-[1240px] mx-auto">
 
         {/* ── Workspace Launcher Identity Banner ── */}
-        <div style={{
-          position: 'relative', overflow: 'hidden',
-          background: 'linear-gradient(135deg, rgba(157,78,221,0.1) 0%, rgba(0,242,254,0.04) 60%, rgba(0,245,160,0.04) 100%)',
-          border: '1px solid var(--border-color)', borderRadius: '20px',
-          padding: '2rem 2.5rem',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem',
-        }}>
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#9d4edd]/10 via-[#00f2fe]/5 to-[#00f5a0]/5 border border-color rounded-[20px] py-8 px-10 flex justify-between items-center flex-wrap gap-6">
           {/* BG glows */}
-          <div style={{ position: 'absolute', top: '-60px', right: '-60px', width: '260px', height: '260px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(157,78,221,0.18) 0%, transparent 65%)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: '-40px', left: '8%', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,242,254,0.07) 0%, transparent 65%)', pointerEvents: 'none' }} />
+          <div className="absolute -top-[60px] -right-[60px] w-[260px] h-[260px] rounded-full bg-[radial-gradient(circle,rgba(157,78,221,0.18)_0%,transparent_65%)] pointer-events-none filter blur-xl" />
+          <div className="absolute -bottom-[40px] left-[8%] w-[180px] h-[180px] rounded-full bg-[radial-gradient(circle,rgba(0,242,254,0.07)_0%,transparent_65%)] pointer-events-none filter blur-xl" />
 
           {/* Left: Icon + User Identity */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', zIndex: 1 }}>
-            <div style={{
-              width: '58px', height: '58px', borderRadius: '16px',
-              background: 'rgba(157,78,221,0.18)', border: '1px solid rgba(157,78,221,0.35)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 24px rgba(157,78,221,0.25)',
-              fontSize: '1.5rem', fontWeight: 800, color: '#9d4edd', fontFamily: 'var(--font-display)',
-            }}>
+          <div className="flex items-center gap-5 z-10">
+            <div className="w-[58px] h-[58px] rounded-2xl bg-[#9d4edd]/18 border border-[#9d4edd]/35 flex items-center justify-center shadow-[0_0_24px_rgba(157,78,221,0.25)] text-[1.5rem] font-extrabold text-[#9d4edd] font-display">
               {userName.charAt(0).toUpperCase()}
             </div>
             <div>
-              <p style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '0.15rem' }}>
+              <p className="text-[0.7rem] uppercase tracking-wider text-text-muted font-bold mb-0.5">
                 Workspace Launcher
               </p>
-              <h1 style={{
-                fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)',
-                fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', marginBottom: '0.2rem',
-              }}>
+              <h1 className="text-[1.5rem] font-extrabold text-text-main font-display tracking-tight mb-1">
                 {userName}
               </h1>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{
-                  fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
-                  backgroundColor: 'rgba(157,78,221,0.12)', color: 'var(--accent-primary)',
-                  border: '1px solid rgba(157,78,221,0.25)',
-                }}>
+              <div className="flex items-center gap-2">
+                <span className="text-[0.72rem] font-bold py-0.5 px-2.5 rounded-full bg-[#9d4edd]/12 text-accent-primary border border-[#9d4edd]/25">
                   {roleTierLabel[roleTier] || `Tier ${roleTier}`}
                 </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <span className="text-[0.75rem] text-text-muted">
                   · {orgName}
                 </span>
               </div>
@@ -422,27 +390,21 @@ export default function ExecutiveHome() {
           </div>
 
           {/* Right: Live clock */}
-          <div style={{ zIndex: 1 }}>
+          <div className="z-10">
             <LiveClock />
           </div>
         </div>
 
         {/* ── Section Header ── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '4px', height: '22px', background: 'linear-gradient(180deg, #9d4edd, #00f2fe)', borderRadius: '2px' }} />
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-5.5 bg-gradient-to-b from-[#9d4edd] to-[#00f2fe] rounded-sm" />
+            <h2 className="text-[1.1rem] font-bold text-text-main font-display">
               Departmental Workspaces
             </h2>
           </div>
           {isSuperUser && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: '6px',
-              fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
-              padding: '4px 12px', borderRadius: '20px',
-              backgroundColor: 'rgba(157,78,221,0.12)', color: 'var(--accent-primary)',
-              border: '1px solid rgba(157,78,221,0.25)',
-            }}>
+            <span className="inline-flex items-center gap-1.5 text-[0.72rem] font-bold uppercase tracking-wider py-1 px-3 rounded-full bg-[#9d4edd]/12 text-accent-primary border border-[#9d4edd]/25">
               <ShieldCheck size={11} />
               Global Access — Tier {roleTier}
             </span>
@@ -450,14 +412,7 @@ export default function ExecutiveHome() {
         </div>
 
         {/* ── Department Cards Grid ── */}
-        <div
-          className="dept-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
-            gap: '1.5rem',
-          }}
-        >
+        <div className="dept-grid grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] gap-6">
           {DEPARTMENTS.map((dept) => (
             <DepartmentCard
               key={dept.id}
@@ -471,15 +426,10 @@ export default function ExecutiveHome() {
 
         {/* ── Access Hint Footer ── */}
         {!isSuperUser && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '10px',
-            padding: '1rem 1.5rem', borderRadius: '12px',
-            background: 'rgba(255,183,3,0.06)', border: '1px solid rgba(255,183,3,0.15)',
-            fontSize: '0.82rem', color: 'var(--text-muted)',
-          }}>
-            <Lock size={14} color="#ffb703" />
+          <div className="flex items-center gap-2.5 py-4 px-6 rounded-xl bg-[#ffb703]/5 border border-[#ffb703]/15 text-[0.82rem] text-text-muted">
+            <Lock size={14} className="text-[#ffb703]" />
             <span>
-              <strong style={{ color: '#ffb703' }}>Limited access.</strong>{' '}
+              <strong className="text-[#ffb703]">Limited access.</strong>{' '}
               Some workspace modules may be restricted. Contact your Tier 1 Executive Administrator to request additional access.
             </span>
           </div>

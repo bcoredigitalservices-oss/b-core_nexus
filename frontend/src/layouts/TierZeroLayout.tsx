@@ -37,243 +37,112 @@ export default function TierZeroLayout() {
 
   if (isBooting) {
     return (
-      <div 
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          backgroundColor: 'var(--bg-card)',
-          color: 'var(--text-main)',
-          gap: '1.5rem'
-        }}
-      >
-        <div className="appshell-boot__spinner" style={{ borderTopColor: '#00A0DF', width: '40px', height: '40px' }} />
-        <p style={{ fontSize: '0.95rem', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>Initialising Tier 0 Admin Workspace…</p>
+      <div className="flex flex-col items-center justify-center h-screen bg-card text-text-main gap-6">
+        <div className="appshell-boot__spinner border-t-[#00A0DF] w-10 h-10" />
+        <p className="text-[0.95rem] tracking-[0.05em] text-text-muted">Initialising Tier 0 Admin Workspace…</p>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)' }}>
+    <div className="flex h-screen w-screen overflow-hidden bg-main text-text-main">
       
       {/* Mobile sidebar overlay */}
       {isMobile && mobileSidebarOpen && (
         <div 
           onClick={() => setMobileSidebarOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.4)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 40
-          }}
+          className="fixed inset-0 bg-black/40 backdrop-blur-[4px] z-40"
         />
       )}
 
       {/* Sidebar (sticky left) */}
       <div 
-        style={{
-          display: isMobile && !mobileSidebarOpen ? 'none' : 'block',
-          position: isMobile ? 'fixed' : 'relative',
-          top: 0,
-          bottom: 0,
-          left: 0,
-          zIndex: 50,
-          height: '100vh',
-          boxShadow: isMobile ? '4px 0 24px rgba(0,0,0,0.5)' : 'none'
-        }}
+        className={`h-screen z-50 transition-all duration-300 ${
+          isMobile ? 'fixed' : 'relative'
+        } ${
+          isMobile && !mobileSidebarOpen ? 'hidden' : 'block'
+        } ${
+          isMobile ? 'shadow-2xl' : 'shadow-none'
+        }`}
       >
         <AdminSidebar />
       </div>
 
       {/* Main Content Area (right) */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         
         {/* Top Header */}
-        <header 
-          style={{
-            height: '64px',
-            backgroundColor: 'var(--bg-main)',
-            borderBottom: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 2rem',
-            zIndex: 30
-          }}
-        >
+        <header className="h-16 bg-header border-b border-color flex items-center justify-between px-8 z-30 flex-shrink-0">
           {/* Left Side: Mobile Menu Button & Status */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="flex items-center gap-4">
             {isMobile && (
               <button 
                 onClick={() => setMobileSidebarOpen(true)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer',
-                  padding: '6px',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
+                className="bg-transparent border-none text-text-muted cursor-pointer p-1.5 flex items-center"
               >
                 <Menu size={20} />
               </button>
             )}
 
             {/* API Connectivity Badge */}
-            <div 
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: isApiLive ? 'var(--accent-green)' : 'var(--text-muted)',
-                background: isApiLive ? 'rgba(0, 245, 160, 0.05)' : 'rgba(255, 255, 255, 0.03)',
-                padding: '4px 10px',
-                borderRadius: '12px',
-                border: `1px solid ${isApiLive ? 'rgba(0, 245, 160, 0.2)' : 'rgba(255, 255, 255, 0.08)'}`
-              }}
-            >
+            <div className={`flex items-center gap-1.5 text-[0.75rem] font-semibold py-1 px-2.5 rounded-full border ${
+              isApiLive 
+                ? 'text-accent-green bg-accent-green/10 border-accent-green/20' 
+                : 'text-text-muted bg-card-hover border-color'
+            }`}>
               {isApiLive ? <Database size={13} /> : <Server size={13} />}
               <span>{isApiLive ? 'Live Connection' : 'Sandbox mode'}</span>
             </div>
           </div>
 
           {/* Center Title */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
+          <div className="flex items-center">
+            <span className="text-[0.875rem] font-semibold text-text-muted tracking-wider">
               STRUCTURAL ENGINE CONTROL
             </span>
           </div>
 
           {/* Right Side Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div className="flex items-center gap-5">
             {/* Notification Indicator */}
-            <button 
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                padding: '6px',
-                position: 'relative'
-              }}
-            >
+            <button className="bg-transparent border-none text-text-muted cursor-pointer p-1.5 relative flex items-center justify-center hover:text-text-main">
               <Bell size={18} />
-              <span 
-                style={{
-                  position: 'absolute',
-                  top: '6px',
-                  right: '6px',
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  backgroundColor: '#EF4444'
-                }}
-              />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-accent-danger" />
             </button>
 
             {/* Profile Selector */}
-            <div style={{ position: 'relative' }}>
+            <div className="relative">
               <button
                 onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen); }}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  color: 'var(--text-main)',
-                  textAlign: 'left'
-                }}
+                className="bg-transparent border-none flex items-center gap-2 cursor-pointer text-text-main text-left"
               >
-                <div 
-                  style={{
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    backgroundColor: 'rgba(0, 160, 223, 0.15)',
-                    border: '1px solid rgba(0, 160, 223, 0.3)',
-                    color: '#00A0DF',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: '0.8rem'
-                  }}
-                >
+                <div className="w-7 h-7 rounded-full bg-[#00A0DF]/10 border border-[#00A0DF]/30 text-[#00A0DF] flex items-center justify-center font-bold text-[0.8rem]">
                   {currentUser?.email?.[0]?.toUpperCase() ?? <User size={13} />}
                 </div>
-                <div style={{ display: isMobile ? 'none' : 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                <div className={`flex flex-col ${isMobile ? 'hidden' : 'flex'}`}>
+                  <span className="text-[0.8rem] font-semibold text-text-main leading-tight">
                     {currentUser?.full_name || currentUser?.email?.split('@')[0]}
                   </span>
-                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                  <span className="text-[0.65rem] text-text-muted leading-tight">
                     Tier 0 Root
                   </span>
                 </div>
-                <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
+                <ChevronDown size={14} className="text-text-muted" />
               </button>
 
               {dropdownOpen && (
-                <div 
-                  style={{
-                    position: 'absolute',
-                    right: 0,
-                    marginTop: '8px',
-                    width: '180px',
-                    backgroundColor: 'var(--bg-card)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
-                    padding: '4px 0',
-                    zIndex: 100
-                  }}
-                >
+                <div className="absolute right-0 mt-2 w-[180px] bg-card border border-color rounded-lg shadow-lg py-1 z-[100]">
                   <button
                     onClick={() => navigate('/settings/config')}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      width: '100%',
-                      padding: '8px 12px',
-                      background: 'transparent',
-                      border: 'none',
-                      color: 'var(--text-muted)',
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                    className="flex items-center gap-2 w-full py-2 px-3 bg-transparent border-none text-text-muted text-[0.8rem] cursor-pointer text-left transition-colors duration-150 hover:text-text-main"
                   >
                     <Settings size={14} />
                     <span>System Settings</span>
                   </button>
-                  <div style={{ borderTop: '1px solid var(--border-color)', margin: '4px 0' }} />
+                  <div className="border-t border-color my-1" />
                   <button
                     onClick={handleLogout}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      width: '100%',
-                      padding: '8px 12px',
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#EF4444',
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#F87171'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = '#EF4444'}
+                    className="flex items-center gap-2 w-full py-2 px-3 bg-transparent border-none text-accent-danger text-[0.8rem] cursor-pointer text-left transition-colors duration-150 hover:text-red-400"
                   >
                     <LogOut size={14} />
                     <span>Logout</span>
@@ -285,14 +154,7 @@ export default function TierZeroLayout() {
         </header>
 
         {/* Scrollable Main Content */}
-        <main 
-          style={{ 
-            flex: 1, 
-            overflowY: 'auto', 
-            padding: '2rem',
-            background: 'var(--bg-main)'
-          }}
-        >
+        <main className="flex-1 overflow-y-auto p-8 bg-main">
           <Outlet />
         </main>
       </div>

@@ -11,7 +11,7 @@
  *   </WorkspaceLayout>
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
 
@@ -42,7 +42,6 @@ interface WorkspaceLayoutProps {
 export default function WorkspaceLayout({ config, children }: WorkspaceLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [hoverBack, setHoverBack] = useState(false);
 
   const { accentColor, workspaceName, navItems, icon } = config;
   const isPlural = location.pathname.startsWith('/workspaces');
@@ -59,75 +58,28 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
   };
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        height: '100%',
-        width: '100%',
-        overflow: 'hidden',
-        background: 'var(--bg-main)',
-      }}
-    >
+    <div className="flex h-full w-full overflow-hidden bg-[var(--bg-main)]">
       {/* ── Workspace Localized Sidebar ── */}
-      <aside
-        style={{
-          width: '230px',
-          flexShrink: 0,
-          backgroundColor: 'var(--bg-card)',
-          borderRight: '1px solid var(--border-color)',
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          overflowY: 'auto',
-        }}
-      >
+      <aside className="flex h-full w-[230px] shrink-0 flex-col overflow-y-auto border-r border-[var(--border-color)] bg-[var(--bg-card)]">
         {/* Back-to-Home button */}
         <button
           id="ws-back-to-home"
           onClick={() => navigate('/')}
-          onMouseEnter={() => setHoverBack(true)}
-          onMouseLeave={() => setHoverBack(false)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            margin: '1rem 0.875rem 0.5rem',
-            padding: '8px 10px',
-            background: hoverBack ? 'var(--bg-card-hover)' : 'transparent',
-            border: '1px solid var(--border-color)',
-            borderRadius: '8px',
-            color: hoverBack ? 'var(--text-main)' : 'var(--text-muted)',
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            textAlign: 'left',
-          }}
           aria-label="Back to App Grid"
+          className="mx-3.5 mt-4 mb-2 flex items-center gap-2 rounded-lg border border-[var(--border-color)] px-2.5 py-2 text-left text-xs font-semibold text-[var(--text-muted)] transition-all duration-200 hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-main)]"
         >
           <ArrowLeft size={13} />
           <span>Back to App Grid</span>
         </button>
 
         {/* Workspace Header */}
-        <div
-          style={{
-            padding: '0.875rem 1rem 1rem',
-            borderBottom: '1px solid var(--border-color)',
-            marginBottom: '0.5rem',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="mb-2 border-b border-[var(--border-color)] px-4 pb-4 pt-3.5">
+          <div className="flex items-center gap-2.5">
             <div
+              className="flex h-9 w-9 items-center justify-center rounded-[10px] border"
               style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '10px',
                 background: `linear-gradient(135deg, ${accentColor}25, ${accentColor}0A)`,
-                border: `1px solid ${accentColor}35`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                borderColor: `${accentColor}35`,
                 color: accentColor,
               }}
             >
@@ -135,26 +87,12 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
             </div>
             <div>
               <p
-                style={{
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  color: accentColor,
-                  marginBottom: '2px',
-                }}
+                className="mb-0.5 text-[0.65rem] font-bold uppercase tracking-[0.08em]"
+                style={{ color: accentColor }}
               >
                 Workspace
               </p>
-              <h2
-                style={{
-                  fontSize: '0.9rem',
-                  fontWeight: 800,
-                  color: 'var(--text-main)',
-                  fontFamily: 'var(--font-display)',
-                  letterSpacing: '-0.01em',
-                }}
-              >
+              <h2 className="font-[family-name:var(--font-display)] text-[0.9rem] font-extrabold tracking-[-0.01em] text-[var(--text-main)]">
                 {workspaceName}
               </h2>
             </div>
@@ -162,15 +100,7 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
         </div>
 
         {/* Nav Items */}
-        <nav
-          style={{
-            flex: 1,
-            padding: '0.25rem 0.625rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '2px',
-          }}
-        >
+        <nav className="flex flex-1 flex-col gap-0.5 px-2.5 py-1">
           {navItems.map((item) => {
             const active = isActive(item);
             const fullPath = item.subPath ? `${basePath}/${item.subPath}` : basePath;
@@ -180,78 +110,44 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
                 key={item.label}
                 id={`ws-nav-${item.subPath || 'dashboard'}`}
                 onClick={() => navigate(fullPath)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '9px 12px',
-                  borderRadius: '8px',
-                  background: active
-                    ? `linear-gradient(90deg, ${accentColor}18, ${accentColor}06)`
-                    : 'transparent',
-                  border: active
-                    ? `1px solid ${accentColor}30`
-                    : '1px solid transparent',
-                  color: active ? 'var(--text-main)' : 'var(--text-muted)',
-                  fontSize: '0.82rem',
-                  fontWeight: active ? 700 : 500,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  width: '100%',
-                  transition: 'all 0.18s ease',
-                  position: 'relative',
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.color = 'var(--text-main)';
-                    e.currentTarget.style.background = 'var(--bg-card-hover)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.color = 'var(--text-muted)';
-                    e.currentTarget.style.background = 'transparent';
-                  }
-                }}
+                className={`relative flex w-full items-center gap-2.5 rounded-lg border px-3 py-[9px] text-left text-[0.82rem] transition-all duration-[180ms] ${
+                  active
+                    ? 'border-transparent font-bold text-[var(--text-main)]'
+                    : 'border-transparent font-medium text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-main)]'
+                }`}
+                style={
+                  active
+                    ? {
+                        background: `linear-gradient(90deg, ${accentColor}18, ${accentColor}06)`,
+                        borderColor: `${accentColor}30`,
+                      }
+                    : undefined
+                }
               >
                 {/* Active left-bar accent */}
                 {active && (
                   <div
-                    style={{
-                      position: 'absolute',
-                      left: '-0.625rem',
-                      top: '20%',
-                      bottom: '20%',
-                      width: '3px',
-                      borderRadius: '0 2px 2px 0',
-                      background: accentColor,
-                    }}
+                    className="absolute bottom-[20%] left-[-0.625rem] top-[20%] w-[3px] rounded-r-[2px]"
+                    style={{ background: accentColor }}
                   />
                 )}
 
                 <span
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    color: active ? accentColor : 'inherit',
-                    transition: 'color 0.18s',
-                  }}
+                  className="flex items-center transition-colors duration-[180ms]"
+                  style={{ color: active ? accentColor : 'inherit' }}
                 >
                   {item.icon}
                 </span>
 
-                <span style={{ flex: 1 }}>{item.label}</span>
+                <span className="flex-1">{item.label}</span>
 
                 {item.badge !== undefined && (
                   <span
+                    className="rounded-[10px] border px-1.5 py-0.5 text-[0.65rem] font-bold"
                     style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      padding: '2px 6px',
-                      borderRadius: '10px',
                       background: `${accentColor}20`,
                       color: accentColor,
-                      border: `1px solid ${accentColor}30`,
+                      borderColor: `${accentColor}30`,
                     }}
                   >
                     {item.badge}
@@ -266,14 +162,7 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
       </aside>
 
       {/* ── Main Content Area ── */}
-      <main
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '2rem',
-          background: 'var(--bg-main)',
-        }}
-      >
+      <main className="flex-1 overflow-y-auto bg-[var(--bg-main)] p-8">
         {children || <Outlet />}
       </main>
     </div>

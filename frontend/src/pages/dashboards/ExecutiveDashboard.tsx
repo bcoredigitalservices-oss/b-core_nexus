@@ -114,146 +114,94 @@ export default function ExecutiveDashboard() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--text-muted)' }}>
-        <Activity size={32} className="animate-spin" style={{ marginRight: '1rem' }} />
+      <div className="flex justify-center items-center h-full text-text-muted">
+        <Activity size={32} className="animate-spin mr-4" />
         Loading Organization Data...
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1400px', margin: '0 auto', paddingBottom: '2rem' }}>
+    <div className="flex flex-col gap-8 w-full max-w-[1400px] mx-auto pb-8">
       
       {/* Welcome & Overview Header Banner */}
-      <div 
-        style={{
-          background: 'linear-gradient(135deg, rgba(157, 78, 221, 0.08) 0%, rgba(0, 242, 254, 0.03) 100%)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '16px',
-          padding: '2rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1.5rem',
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: '0 4px 30px rgba(0, 0, 0, 0.2)'
-        }}
-      >
+      <div className="bg-gradient-to-br from-[#9d4edd]/8 to-[#00f2fe]/3 border border-color rounded-2xl py-8 px-10 flex justify-between items-center flex-wrap gap-6 relative overflow-hidden shadow-lg">
         <div 
+          className="absolute -top-1/5 -right-1/10 w-[300px] h-[300px] rounded-full pointer-events-none"
           style={{
-            position: 'absolute',
-            top: '-20%',
-            right: '-10%',
-            width: '300px',
-            height: '300px',
-            borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(157, 78, 221, 0.15) 0%, rgba(0,0,0,0) 70%)',
-            pointerEvents: 'none'
           }}
         />
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', zIndex: 1 }}>
-          <div 
-            style={{
-              background: 'rgba(157, 78, 221, 0.15)',
-              border: '1px solid rgba(157, 78, 221, 0.3)',
-              borderRadius: '14px',
-              padding: '1rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 0 20px rgba(157, 78, 221, 0.2)'
-            }}
-          >
-            <Building size={32} color="#9d4edd" />
+        <div className="flex items-center gap-6 z-10">
+          <div className="bg-[#9d4edd]/15 border border-[#9d4edd]/30 rounded-2xl p-4 flex items-center justify-center shadow-[0_0_20px_rgba(157, 78, 221, 0.2)]">
+            <Building size={32} className="text-[#9d4edd]" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-display)', marginBottom: '0.4rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+            <h1 className="text-[1.8rem] font-bold text-text-main font-display mb-1.5 tracking-tight">
               {orgProfile?.legal_name || 'Organization Dashboard'}
             </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: '600px', lineHeight: '1.5' }}>
+            <p className="text-text-muted text-[0.9rem] max-w-[600px] leading-relaxed">
               Welcome back, {currentUser?.username || 'Executive'}. Here is the live operating status of your organization, including department health and active workspaces.
             </p>
           </div>
         </div>
         
         {/* Dynamic Vertical Badge */}
-        <div 
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.6rem',
-            background: 'var(--bg-card)',
-            padding: '0.6rem 1.2rem',
-            borderRadius: '24px',
-            border: '1px solid rgba(157, 78, 221, 0.3)',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            zIndex: 1,
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-          }}
-        >
-          <Globe size={16} color="#ffb703" />
+        <div className="flex items-center gap-2.5 bg-card py-2 px-5 rounded-full border border-[#9d4edd]/30 text-[0.85rem] font-semibold z-10 shadow-md">
+          <Globe size={16} className="text-[#ffb703]" />
           <span>Currency: {orgProfile?.base_currency || 'USD'}</span>
         </div>
       </div>
 
       {/* KPI Cards Row */}
-      <div 
-        style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-          gap: '1.5rem' 
-        }}
-      >
-        <div className="glass-panel" style={{ padding: '1.75rem', position: 'relative', overflow: 'hidden', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 700 }}>Total Personnel</span>
-            <span style={{ color: '#00f2fe', background: 'var(--bg-card-hover)', padding: '6px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+        <div className="glass-panel p-7 relative overflow-hidden bg-main border border-color rounded-2xl">
+          <div className="flex justify-between items-start">
+            <span className="text-[0.8rem] uppercase tracking-wider text-text-muted font-bold">Total Personnel</span>
+            <span className="text-[#00f2fe] bg-card-hover p-1.5 rounded-lg border border-color">
               <Users size={20} />
             </span>
           </div>
-          <div style={{ marginTop: '1.5rem' }}>
-            <div style={{ fontSize: '2.2rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-main)', lineHeight: 1.1 }}>
+          <div className="mt-6">
+            <div className="text-[2.2rem] font-extrabold font-display text-text-main leading-none">
               {users.length}
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+            <div className="text-[0.78rem] text-text-muted mt-2">
               Registered IAM Users
             </div>
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '1.75rem', position: 'relative', overflow: 'hidden', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 700 }}>Active Departments</span>
-            <span style={{ color: '#00f5a0', background: 'var(--bg-card-hover)', padding: '6px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+        <div className="glass-panel p-7 relative overflow-hidden bg-main border border-color rounded-2xl">
+          <div className="flex justify-between items-start">
+            <span className="text-[0.8rem] uppercase tracking-wider text-text-muted font-bold">Active Departments</span>
+            <span className="text-[#00f5a0] bg-card-hover p-1.5 rounded-lg border border-color">
               <Layers size={20} />
             </span>
           </div>
-          <div style={{ marginTop: '1.5rem' }}>
-            <div style={{ fontSize: '2.2rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-main)', lineHeight: 1.1 }}>
+          <div className="mt-6">
+            <div className="text-[2.2rem] font-extrabold font-display text-text-main leading-none">
               {departments.length}
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+            <div className="text-[0.78rem] text-text-muted mt-2">
               Operational divisions
             </div>
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '1.75rem', position: 'relative', overflow: 'hidden', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 700 }}>Cluster Workspaces</span>
-            <span style={{ color: '#ffb703', background: 'var(--bg-card-hover)', padding: '6px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+        <div className="glass-panel p-7 relative overflow-hidden bg-main border border-color rounded-2xl">
+          <div className="flex justify-between items-start">
+            <span className="text-[0.8rem] uppercase tracking-wider text-text-muted font-bold">Cluster Workspaces</span>
+            <span className="text-[#ffb703] bg-card-hover p-1.5 rounded-lg border border-color">
               <LayoutGrid size={20} />
             </span>
           </div>
-          <div style={{ marginTop: '1.5rem' }}>
-            <div style={{ fontSize: '2.2rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-main)', lineHeight: 1.1 }}>
+          <div className="mt-6">
+            <div className="text-[2.2rem] font-extrabold font-display text-text-main leading-none">
               {workspaces.length}
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+            <div className="text-[0.78rem] text-text-muted mt-2">
               Provisioned & running
             </div>
           </div>
@@ -261,19 +209,19 @@ export default function ExecutiveDashboard() {
       </div>
 
       {/* Main Content Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem', alignItems: 'start' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start w-full">
         
         {/* Left Column: Charts */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="flex flex-col gap-8 w-full">
           
           {/* System Health Chart */}
-          <div className="glass-panel" style={{ padding: '1.5rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Zap size={20} color="#00f2fe" />
+          <div className="glass-panel p-6 bg-main border border-color rounded-2xl w-full">
+            <h3 className="text-[1.1rem] font-bold text-text-main mb-6 flex items-center gap-2">
+              <Zap size={20} className="text-[#00f2fe]" />
               System Activity & Health
             </h3>
-            <div style={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer>
+            <div className="w-full h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={healthData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorReq" x1="0" y1="0" x2="0" y2="1">
@@ -293,15 +241,15 @@ export default function ExecutiveDashboard() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
             {/* Department Distribution */}
-            <div className="glass-panel" style={{ padding: '1.5rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Briefcase size={20} color="#ffb703" />
+            <div className="glass-panel p-6 bg-main border border-color rounded-2xl w-full">
+              <h3 className="text-[1.1rem] font-bold text-text-main mb-6 flex items-center gap-2">
+                <Briefcase size={20} className="text-[#ffb703]" />
                 Department Spread
               </h3>
-              <div style={{ width: '100%', height: 250 }}>
-                <ResponsiveContainer>
+              <div className="w-full h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={deptData}
@@ -326,13 +274,13 @@ export default function ExecutiveDashboard() {
             </div>
 
             {/* Workspace Distribution */}
-            <div className="glass-panel" style={{ padding: '1.5rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Server size={20} color="#00f5a0" />
+            <div className="glass-panel p-6 bg-main border border-color rounded-2xl w-full">
+              <h3 className="text-[1.1rem] font-bold text-text-main mb-6 flex items-center gap-2">
+                <Server size={20} className="text-[#00f5a0]" />
                 Workspace Provisioning
               </h3>
-              <div style={{ width: '100%', height: 250 }}>
-                <ResponsiveContainer>
+              <div className="w-full h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={workspaceData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
                     <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
@@ -349,99 +297,48 @@ export default function ExecutiveDashboard() {
         </div>
 
         {/* Right Column: Shortcuts */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="flex flex-col gap-8 w-full">
           
           {/* Quick Shortcuts */}
-          <div className="glass-panel" style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '1.5rem', padding: '1.5rem 1.5rem 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Shield size={20} color="#9d4edd" />
+          <div className="glass-panel bg-main border border-color rounded-2xl w-full">
+            <h3 className="text-[1.1rem] font-bold text-text-main mb-6 p-6 pb-0 flex items-center gap-2">
+              <Shield size={20} className="text-[#9d4edd]" />
               Administrative Shortcuts
             </h3>
             
-            <div style={{ padding: '1rem 1.5rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="p-6 pt-0 flex flex-col gap-4">
               
               <button 
                 onClick={() => navigate('/users')}
-                className="btn glass-panel" 
-                style={{ 
-                  justifyContent: 'space-between', 
-                  width: '100%', 
-                  padding: '1.2rem', 
-                  fontSize: '0.95rem',
-                  textAlign: 'left',
-                  border: '1px solid rgba(157, 78, 221, 0.3)',
-                  background: 'rgba(157, 78, 221, 0.05)',
-                  cursor: 'pointer',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  transition: 'all 0.2s ease',
-                  color: 'var(--text-main)'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(157, 78, 221, 0.1)'}
-                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(157, 78, 221, 0.05)'}
+                className="btn glass-panel justify-between w-full p-5 text-[0.95rem] text-left border border-[#9d4edd]/30 bg-[#9d4edd]/5 cursor-pointer rounded-xl flex items-center transition-all duration-200 text-text-main hover:bg-[#9d4edd]/10"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div className="flex items-center gap-3">
                   <Users size={20} color="#9d4edd" />
-                  <span style={{ fontWeight: 600 }}>User Console</span>
+                  <span className="font-semibold">User Console</span>
                 </div>
-                <ArrowRight size={18} color="var(--text-muted)" />
+                <ArrowRight size={18} className="text-text-muted" />
               </button>
 
               <button 
                 onClick={() => navigate('/departments')}
-                className="btn glass-panel" 
-                style={{ 
-                  justifyContent: 'space-between', 
-                  width: '100%', 
-                  padding: '1.2rem', 
-                  fontSize: '0.95rem',
-                  textAlign: 'left',
-                  border: '1px solid rgba(0, 242, 254, 0.3)',
-                  background: 'rgba(0, 242, 254, 0.05)',
-                  cursor: 'pointer',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  transition: 'all 0.2s ease',
-                  color: 'var(--text-main)'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(0, 242, 254, 0.1)'}
-                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(0, 242, 254, 0.05)'}
+                className="btn glass-panel justify-between w-full p-5 text-[0.95rem] text-left border border-[#00f2fe]/30 bg-[#00f2fe]/5 cursor-pointer rounded-xl flex items-center transition-all duration-200 text-text-main hover:bg-[#00f2fe]/10"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div className="flex items-center gap-3">
                   <Layers size={20} color="#00f2fe" />
-                  <span style={{ fontWeight: 600 }}>Departments & Mgmt</span>
+                  <span className="font-semibold">Departments & Mgmt</span>
                 </div>
-                <ArrowRight size={18} color="var(--text-muted)" />
+                <ArrowRight size={18} className="text-text-muted" />
               </button>
 
               <button 
                 onClick={() => navigate('/workspaces')}
-                className="btn glass-panel" 
-                style={{ 
-                  justifyContent: 'space-between', 
-                  width: '100%', 
-                  padding: '1.2rem', 
-                  fontSize: '0.95rem',
-                  textAlign: 'left',
-                  border: '1px solid rgba(0, 245, 160, 0.3)',
-                  background: 'rgba(0, 245, 160, 0.05)',
-                  cursor: 'pointer',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  transition: 'all 0.2s ease',
-                  color: 'var(--text-main)'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(0, 245, 160, 0.1)'}
-                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(0, 245, 160, 0.05)'}
+                className="btn glass-panel justify-between w-full p-5 text-[0.95rem] text-left border border-[#00f5a0]/30 bg-[#00f5a0]/5 cursor-pointer rounded-xl flex items-center transition-all duration-200 text-text-main hover:bg-[#00f5a0]/10"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div className="flex items-center gap-3">
                   <LayoutGrid size={20} color="#00f5a0" />
-                  <span style={{ fontWeight: 600 }}>Active Workspaces</span>
+                  <span className="font-semibold">Active Workspaces</span>
                 </div>
-                <ArrowRight size={18} color="var(--text-muted)" />
+                <ArrowRight size={18} className="text-text-muted" />
               </button>
 
             </div>

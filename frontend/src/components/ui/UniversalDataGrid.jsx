@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Plus, Eye, Pencil, Loader2, AlertCircle, DatabaseZap, ChevronUp, ChevronDown } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
-import './UniversalDataGrid.css';
 
 /**
  * Column definition:
@@ -25,19 +24,18 @@ import './UniversalDataGrid.css';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function deepGet(obj, key) {
-  // Supports dot-notation keys e.g. "custom_attributes.region"
   return key.split('.').reduce((acc, k) => acc?.[k], obj);
 }
 
 function highlight(text, query) {
   if (!query || !text) return text;
-  const str   = String(text);
-  const idx   = str.toLowerCase().indexOf(query.toLowerCase());
+  const str = String(text);
+  const idx = str.toLowerCase().indexOf(query.toLowerCase());
   if (idx === -1) return str;
   return (
     <>
       {str.slice(0, idx)}
-      <mark className="udg-highlight">{str.slice(idx, idx + query.length)}</mark>
+      <mark className="bg-accent-primary/15 text-accent-primary rounded px-0.5">{str.slice(idx, idx + query.length)}</mark>
       {str.slice(idx + query.length)}
     </>
   );
@@ -64,17 +62,16 @@ export default function UniversalDataGrid({
   const [search,      setSearch]      = useState('');
   const [page,        setPage]        = useState(1);
   const [sortKey,     setSortKey]     = useState(null);
-  const [sortDir,     setSortDir]     = useState('asc'); // 'asc' | 'desc'
+  const [sortDir,     setSortDir]     = useState('asc');
 
   const searchRef   = useRef(null);
   const abortRef    = useRef(null);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
-    // Cancel any in-flight request
     abortRef.current?.abort();
-    const controller  = new AbortController();
-    abortRef.current  = controller;
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     setLoading(true);
     setError(null);
@@ -94,10 +91,9 @@ export default function UniversalDataGrid({
       }
 
       const json = await res.json();
-      // Accept either a bare array or { items: [], total: n } envelope
       setData(Array.isArray(json) ? json : (json.items ?? json.data ?? []));
     } catch (err) {
-      if (err.name === 'AbortError') return; // silently discard cancelled fetches
+      if (err.name === 'AbortError') return;
       setError(err.message ?? 'Unknown error');
     } finally {
       setLoading(false);
@@ -134,7 +130,6 @@ export default function UniversalDataGrid({
   const totalPages  = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paginated   = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  // Reset to page 1 on search change
   useEffect(() => { setPage(1); }, [search, sortKey, sortDir]);
 
   // ── Sort handler ───────────────────────────────────────────────────────────
@@ -151,33 +146,36 @@ export default function UniversalDataGrid({
   const renderCell = (row, col) => {
     const raw = deepGet(row, col.key);
     if (col.render) return col.render(raw, row);
-    if (raw === null || raw === undefined) return <span className="udg-null">—</span>;
+    if (raw === null || raw === undefined) return <span className="text-text-muted opacity-60 italic">—</span>;
     if (typeof raw === 'boolean') {
       return (
-        <span className={`udg-bool udg-bool--${raw ? 'true' : 'false'}`}>
+        <span className={`inline-flex py-1 px-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wider ${
+          raw 
+            ? 'bg-emerald-500/10 text-accent-green border border-emerald-500/20' 
+            : 'bg-main text-text-muted border border-color'
+        }`}>
           {raw ? 'Yes' : 'No'}
         </span>
       );
     }
     if (typeof raw === 'object') {
-      return <code className="udg-json">{JSON.stringify(raw)}</code>;
+      return <code className="font-mono text-xs text-accent-primary bg-accent-primary/5 py-1 px-2 rounded">{JSON.stringify(raw)}</code>;
     }
     return highlight(String(raw), search);
   };
 
   const SortIcon = ({ colKey }) => {
-    if (sortKey !== colKey) return <ChevronUp size={12} className="udg-sort-idle" />;
+    if (sortKey !== colKey) return <ChevronUp size={12} className="opacity-30" />;
     return sortDir === 'asc'
-      ? <ChevronUp   size={12} className="udg-sort-active" />
-      : <ChevronDown size={12} className="udg-sort-active" />;
+      ? <ChevronUp   size={12} className="text-accent-primary" />
+      : <ChevronDown size={12} className="text-accent-primary" />;
   };
 
-  // ── States ─────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className={`udg-root ${className}`}>
-        <div className="udg-state udg-state--loading">
-          <Loader2 size={28} className="udg-spinner" />
+      <div className={`flex flex-col gap-0 bg-card border border-color rounded-xl overflow-hidden font-body shadow-[0_4px_15px_rgba(0,0,0,0.03)] ${className}`}>
+        <div className="flex flex-col items-center justify-center gap-3 py-16 px-8 text-[0.95rem] text-text-muted">
+          <Loader2 size={28} className="animate-spin text-accent-primary" />
           <p>Loading {title}…</p>
         </div>
       </div>
@@ -186,11 +184,11 @@ export default function UniversalDataGrid({
 
   if (error) {
     return (
-      <div className={`udg-root ${className}`}>
-        <div className="udg-state udg-state--error">
+      <div className={`flex flex-col gap-0 bg-card border border-color rounded-xl overflow-hidden font-body shadow-[0_4px_15px_rgba(0,0,0,0.03)] ${className}`}>
+        <div className="flex flex-col items-center justify-center gap-3 py-16 px-8 text-[0.95rem] text-accent-danger">
           <AlertCircle size={28} />
           <p>{error}</p>
-          <button className="udg-retry-btn" onClick={fetchData}>
+          <button className="py-2 px-5 rounded-lg border border-red-500/40 bg-red-500/10 text-accent-danger text-[13px] font-semibold cursor-pointer transition-all duration-200 hover:bg-red-500/20" onClick={fetchData}>
             Retry
           </button>
         </div>
@@ -198,29 +196,28 @@ export default function UniversalDataGrid({
     );
   }
 
-  // ── Full render ────────────────────────────────────────────────────────────
   return (
-    <div className={`udg-root ${className}`}>
+    <div className={`flex flex-col gap-0 bg-card border border-color rounded-xl overflow-hidden font-body shadow-[0_4px_15px_rgba(0,0,0,0.03)] ${className}`}>
 
       {/* ── Action Bar ────────────────────────────────────────────────────── */}
-      <div className="udg-toolbar">
-        <div className="udg-toolbar__left">
-          {title && <h2 className="udg-title">{title}</h2>}
-          <span className="udg-count">
+      <div className="flex items-center justify-between gap-4 p-4 md:py-4 md:px-6 border-b border-color flex-wrap bg-card">
+        <div className="flex items-baseline gap-3 flex-wrap">
+          {title && <h2 className="font-display text-[17px] font-extrabold text-text-main m-0 tracking-tight">{title}</h2>}
+          <span className="text-xs font-mono bg-main py-0.5 px-2 rounded-full text-text-muted">
             {filtered.length} {filtered.length === 1 ? 'record' : 'records'}
             {search && ` matching "${search}"`}
           </span>
         </div>
 
-        <div className="udg-toolbar__right">
+        <div className="flex items-center gap-3 flex-wrap">
           {/* Search */}
-          <div className="udg-search-wrap">
-            <Search size={14} className="udg-search-icon" aria-hidden="true" />
+          <div className="relative flex items-center">
+            <Search size={14} className="absolute left-3 text-text-muted pointer-events-none" aria-hidden="true" />
             <input
               ref={searchRef}
               id="udg-search-input"
               type="search"
-              className="udg-search"
+              className="w-[240px] max-[640px]:w-[150px] py-2.5 pl-9 pr-4 bg-main border border-color rounded-xl text-text-main font-body text-[13px] transition-all duration-200 focus:outline-none focus:bg-card focus:border-accent-primary focus:ring-2 focus:ring-accent-primary focus:ring-opacity-20 appearance-none"
               placeholder="Search records…"
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -232,7 +229,7 @@ export default function UniversalDataGrid({
           {onAdd && (
             <button
               id="udg-add-btn"
-              className="udg-add-btn"
+              className="inline-flex items-center gap-2 py-2 px-4 rounded-xl border-none bg-accent-primary text-white font-display font-bold text-[13px] cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(99,91,255,0.35)] shadow-[0_2px_8px_rgba(99,91,255,0.25)]"
               onClick={onAdd}
               aria-label={`Add new ${title}`}
             >
@@ -244,7 +241,7 @@ export default function UniversalDataGrid({
           {/* Refresh */}
           <button
             id="udg-refresh-btn"
-            className="udg-icon-btn"
+            className="w-9 h-9 flex items-center justify-center rounded-xl border border-color bg-card text-text-muted cursor-pointer transition-all duration-200 hover:bg-main hover:text-text-main hover:border-black/20"
             onClick={fetchData}
             title="Refresh"
             aria-label="Refresh data"
@@ -255,16 +252,16 @@ export default function UniversalDataGrid({
       </div>
 
       {/* ── Table ─────────────────────────────────────────────────────────── */}
-      <div className="udg-table-wrap">
-        <table className="udg-table" role="grid" aria-label={title}>
+      <div className="overflow-x-auto overflow-y-auto max-h-[540px]">
+        <table className="w-full border-collapse text-[14px] text-left table-auto" role="grid" aria-label={title}>
           <thead>
             <tr>
-              <th className="udg-th udg-th--index" aria-label="Row number">#</th>
+              <th className="py-3.5 px-4 font-display text-xs font-bold uppercase tracking-wider text-text-muted bg-main border-b-2 border-color whitespace-nowrap sticky top-0 z-10 select-none w-12 text-center" aria-label="Row number">#</th>
 
               {columns.map(col => (
                 <th
                   key={col.key}
-                  className={`udg-th ${col.sortable ? 'udg-th--sortable' : ''}`}
+                  className={`py-3.5 px-4 font-display text-xs font-bold uppercase tracking-wider text-text-muted bg-main border-b-2 border-color whitespace-nowrap sticky top-0 z-10 select-none ${col.sortable ? 'cursor-pointer hover:text-text-main hover:bg-border' : ''}`}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
                   aria-sort={
                     sortKey === col.key
@@ -272,14 +269,14 @@ export default function UniversalDataGrid({
                       : col.sortable ? 'none' : undefined
                   }
                 >
-                  <span className="udg-th-inner">
+                  <span className="inline-flex items-center gap-1.5">
                     {col.label}
                     {col.sortable && <SortIcon colKey={col.key} />}
                   </span>
                 </th>
               ))}
 
-              <th className="udg-th udg-th--actions">Actions</th>
+              <th className="py-3.5 px-4 font-display text-xs font-bold uppercase tracking-wider text-text-muted bg-main border-b-2 border-color whitespace-nowrap sticky top-0 z-10 select-none w-[130px] text-center">Actions</th>
             </tr>
           </thead>
 
@@ -288,7 +285,7 @@ export default function UniversalDataGrid({
               <tr>
                 <td
                   colSpan={columns.length + 2}
-                  className="udg-empty"
+                  className="text-center py-16 px-4 text-text-muted text-[15px] font-medium"
                 >
                   {emptyMessage}
                 </td>
@@ -297,27 +294,27 @@ export default function UniversalDataGrid({
               paginated.map((row, idx) => (
                 <tr
                   key={row.id ?? idx}
-                  className="udg-row"
+                  className="border-b border-color transition-colors duration-150 outline-none bg-card hover:bg-main focus-visible:bg-card-hover focus-visible:outline-2 focus-visible:outline-accent-primary/40 focus-visible:-outline-offset-2 last:border-b-0"
                   tabIndex={0}
                   aria-rowindex={(page - 1) * pageSize + idx + 1}
                 >
                   {/* Row index */}
-                  <td className="udg-td udg-td--index">
+                  <td className="text-center font-mono text-xs text-text-muted w-12 py-3.5 px-4">
                     {(page - 1) * pageSize + idx + 1}
                   </td>
 
                   {/* Data cells */}
                   {columns.map(col => (
-                    <td key={col.key} className="udg-td">
+                    <td key={col.key} className="py-3.5 px-4 text-text-main align-middle max-w-[260px] max-[640px]:max-w-[140px] overflow-hidden truncate font-semibold">
                       {renderCell(row, col)}
                     </td>
                   ))}
 
                   {/* Actions cell */}
-                  <td className="udg-td udg-td--actions">
+                  <td className="text-center whitespace-nowrap w-[130px] py-3.5 px-4">
                     {onView && (
                       <button
-                        className="udg-action-btn udg-action-btn--view"
+                        className="inline-flex items-center gap-1 py-1.5 px-2.5 rounded-lg border border-transparent text-xs font-bold font-display cursor-pointer transition-all duration-200 mx-1 text-accent-primary bg-accent-primary/5 hover:bg-accent-primary/10"
                         onClick={() => onView(row)}
                         aria-label={`View record ${row.id ?? idx + 1}`}
                       >
@@ -327,7 +324,7 @@ export default function UniversalDataGrid({
                     )}
                     {onEdit && (
                       <button
-                        className="udg-action-btn udg-action-btn--edit"
+                        className="inline-flex items-center gap-1 py-1.5 px-2.5 rounded-lg border border-transparent text-xs font-bold font-display cursor-pointer transition-all duration-200 mx-1 text-accent-purple bg-accent-purple/5 hover:bg-accent-purple/10"
                         onClick={() => onEdit(row)}
                         aria-label={`Edit record ${row.id ?? idx + 1}`}
                       >
@@ -336,7 +333,7 @@ export default function UniversalDataGrid({
                       </button>
                     )}
                     {!onView && !onEdit && (
-                      <span className="udg-null">—</span>
+                      <span className="text-text-muted opacity-60 italic">—</span>
                     )}
                   </td>
                 </tr>
@@ -348,16 +345,16 @@ export default function UniversalDataGrid({
 
       {/* ── Pagination ────────────────────────────────────────────────────── */}
       {totalPages > 1 && (
-        <div className="udg-pagination" role="navigation" aria-label="Pagination">
+        <div className="flex items-center justify-center gap-1.5 p-4 border-t border-color flex-wrap bg-card" role="navigation" aria-label="Pagination">
           <button
-            className="udg-page-btn"
+            className="min-w-[34px] h-[34px] px-2 rounded-lg border border-color bg-card text-text-muted text-[13px] font-semibold font-display cursor-pointer transition-all duration-200 inline-flex items-center justify-center hover:bg-main hover:text-text-main hover:border-black/20 disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={() => setPage(1)}
             disabled={page === 1}
             aria-label="First page"
           >«</button>
 
           <button
-            className="udg-page-btn"
+            className="min-w-[34px] h-[34px] px-2 rounded-lg border border-color bg-card text-text-muted text-[13px] font-semibold font-display cursor-pointer transition-all duration-200 inline-flex items-center justify-center hover:bg-main hover:text-text-main hover:border-black/20 disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
             aria-label="Previous page"
@@ -373,11 +370,15 @@ export default function UniversalDataGrid({
             }, [])
             .map((p, i) =>
               p === '…' ? (
-                <span key={`ellipsis-${i}`} className="udg-page-ellipsis">…</span>
+                <span key={`ellipsis-${i}`} className="text-text-muted text-[13px] px-1 pointer-events-none">…</span>
               ) : (
                 <button
                   key={p}
-                  className={`udg-page-btn ${p === page ? 'udg-page-btn--active' : ''}`}
+                  className={`min-w-[34px] h-[34px] px-2 rounded-lg border border-color text-[13px] font-semibold font-display cursor-pointer transition-all duration-200 inline-flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed ${
+                    p === page 
+                      ? 'bg-accent-primary text-white border-accent-primary' 
+                      : 'bg-card text-text-muted hover:bg-main hover:text-text-main hover:border-black/20'
+                  }`}
                   onClick={() => setPage(p)}
                   aria-label={`Page ${p}`}
                   aria-current={p === page ? 'page' : undefined}
@@ -388,14 +389,14 @@ export default function UniversalDataGrid({
             )}
 
           <button
-            className="udg-page-btn"
+            className="min-w-[34px] h-[34px] px-2 rounded-lg border border-color bg-card text-text-muted text-[13px] font-semibold font-display cursor-pointer transition-all duration-200 inline-flex items-center justify-center hover:bg-main hover:text-text-main hover:border-black/20 disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
             aria-label="Next page"
           >›</button>
 
           <button
-            className="udg-page-btn"
+            className="min-w-[34px] h-[34px] px-2 rounded-lg border border-color bg-card text-text-muted text-[13px] font-semibold font-display cursor-pointer transition-all duration-200 inline-flex items-center justify-center hover:bg-main hover:text-text-main hover:border-black/20 disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={() => setPage(totalPages)}
             disabled={page === totalPages}
             aria-label="Last page"
