@@ -3,7 +3,7 @@ import { ShieldAlert, Send, Radio, AlertTriangle, Lock } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 
 export default function CommandCenter() {
-  const { token, currentUser } = useAppContext();
+  const { token, currentUser, isApiLive } = useAppContext();
   const [targetAudience, setTargetAudience] = useState('ALL_SESSIONS');
   const [severity, setSeverity] = useState('WARNING');
   const [message, setMessage] = useState('');
@@ -14,12 +14,14 @@ export default function CommandCenter() {
   const COMMAND_CENTER_UUID = '00000000-0000-0000-0000-000000000000';
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !isApiLive) return;
 
     const connectWs = () => {
       setWsStatus('CONNECTING');
-      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${wsProtocol}//localhost:8001/api/v1/events/ws/${COMMAND_CENTER_UUID}?token=${token}`;
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const wsProto = apiBaseUrl.startsWith('https') ? 'wss' : 'ws';
+      const wsHost = apiBaseUrl.replace(/^https?:\/\//, '');
+      const wsUrl = `${wsProto}://${wsHost}/api/v1/events/ws/${COMMAND_CENTER_UUID}?token=${token}`;
       
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
@@ -54,7 +56,7 @@ export default function CommandCenter() {
         wsRef.current.close();
       }
     };
-  }, [token]);
+  }, [token, isApiLive]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -9,7 +9,7 @@ import VirtualGridTab from '../features/virtualized/components/VirtualGridTab';
 import EventConsoleSidebar from '../features/events/components/EventConsoleSidebar';
 import OfflineCacheManager from '../services/OfflineCacheManager';
 
-const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api/v1`;
+const API_BASE_URL = `${import.meta.env.VITE_API_URL || ''}/api/v1`;
 
 const VIRTUAL_LIST_SIZE = 100000;
 
@@ -91,8 +91,14 @@ export default function Sandbox() {
   const checkBackendConnection = async () => {
     setIsConnecting(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/`);
-      if (res.ok) {
+      const url = import.meta.env.VITE_API_URL || '';
+      const checkUrl = url ? `${url}/` : '/api/v1/system/health';
+      const res = await fetch(checkUrl);
+      
+      const isProxyError = res.status === 502 || res.status === 504;
+      const isHtml = res.headers.get('content-type')?.includes('text/html');
+      
+      if (!isProxyError && !isHtml) {
         setIsApiLive(true);
         await attemptAutoLogin();
       } else {

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail, AlertCircle, Shield, Globe, Percent, Cpu, Key } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, AlertCircle, Shield, Globe, Percent, Cpu, Key, ExternalLink, Share2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import NexusLogoAnimated from '../components/branding/NexusLogoAnimated';
 import { useAppContext } from '../context/AppContext';
@@ -88,10 +88,51 @@ export default function Login() {
     setTimeout(() => navigate('/'), 800);
   };
 
+  const featureSlides = [
+    {
+      title: 'Global Registries',
+      description: 'Unified entity visibility across multijurisdictional workflows.',
+      icon: <Globe size={18} className="login-feature-icon" />,
+    },
+    {
+      title: 'Tax Engine',
+      description: 'Smart tax calculation and compliance automation for every transaction.',
+      icon: <Percent size={18} className="login-feature-icon" strokeWidth={2.5} />,
+    },
+    {
+      title: 'Headless Core',
+      description: 'API-first architecture built for composable enterprise ecosystems.',
+      icon: <Cpu size={18} className="login-feature-icon" />,
+    },
+    {
+      title: 'Secure Access',
+      description: 'Multi-layered identity fencing with strong role separation.',
+      icon: <Key size={18} className="login-feature-icon" />,
+    },
+  ];
+
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveSlide(prev => (prev + 1) % featureSlides.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   /* ── Primary login submit ─────────────────────────────────────────────── */
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password) return;
+    
+    // Autofill fallback: Read from refs if React state hasn't synced
+    const currentEmail = email.trim() || emailRef.current?.value.trim() || '';
+    const currentPassword = password || passwordRef.current?.value || '';
+
+    if (!currentEmail || !currentPassword) return;
+    
+    // Sync state for potential subsequent re-renders
+    if (!email) setEmail(currentEmail);
+    if (!password) setPassword(currentPassword);
 
     setFormState('loading');
     setErrorMsg('');
@@ -99,8 +140,8 @@ export default function Login() {
 
     try {
       const body = new URLSearchParams();
-      body.append('username', email.trim());
-      body.append('password', password);
+      body.append('username', currentEmail);
+      body.append('password', currentPassword);
 
       const res = await fetch(`${API_BASE}/auth/login`, {
         method:  'POST',
@@ -263,12 +304,6 @@ export default function Login() {
 
   return (
     <div className="login-root">
-
-      {/* ── System Status badge absolute top right ────────────────────── */}
-      <div className="system-status" aria-label="System status">
-        <span className="status-dot"></span>
-        <span>All Systems Operational</span>
-      </div>
 
       {/* ══════════════════════════════════════════════════════════════════
           LEFT PANEL — Interactive form (35%)
@@ -433,7 +468,7 @@ export default function Login() {
                 id="login-submit-btn"
                 type="submit"
                 className="login-btn"
-                disabled={isLoading || !email || !password}
+                disabled={isLoading}
                 aria-busy={isLoading}
               >
                 {isLoading ? (
@@ -449,22 +484,6 @@ export default function Login() {
                 )}
               </button>
 
-              {/* SSO Section */}
-              <div className="login-sso-container">
-                <div className="login-divider">
-                  <span className="login-divider-line"></span>
-                  <span className="login-divider-text">OR</span>
-                  <span className="login-divider-line"></span>
-                </div>
-                <div className="login-sso-buttons">
-                  <button type="button" className="login-sso-btn" onClick={() => alert('Google SSO integration')}>
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" style={{ marginRight: '8px' }}>
-                      <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.859-3.579-7.859-8s3.529-8 7.859-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 5.92 1 1 5.92 1 12.24s4.92 11.24 11.24 11.24c6.6 0 11-4.606 11-11.24 0-.756-.08-1.333-.18-1.955H12.24z" />
-                    </svg>
-                    Continue with Google
-                  </button>
-                </div>
-              </div>
             </form>
           )}
 
@@ -615,7 +634,7 @@ export default function Login() {
 
       {/* Build tag badge - absolute bottom left */}
       <div className="login-build-tag">
-        <span>Build&nbsp;<code>1.2.1 (Alpha)</code></span>
+        <span>Build&nbsp;<code>1.3.1</code></span>
       </div>
 
     </section>
@@ -646,55 +665,52 @@ export default function Login() {
           <div className="login-brand-explain">
             <p className="login-explain-title">Enterprise Control System</p>
             
-            {/* Feature Cards Grid */}
-            <div className="login-feature-grid">
-              <div className="login-feature-card">
-                <div className="login-feature-header">
-                  <Globe size={13} className="login-feature-icon" />
-                  <strong className="login-feature-title">Global Registries</strong>
-                </div>
-                <p className="login-feature-desc">Manage cross-border entities</p>
+            {/* Carousel for feature highlights */}
+            <div className="login-carousel-container">
+              <div
+                className="login-carousel-track"
+                style={{ transform: `translateX(-${activeSlide * 100}%)` }}
+              >
+                {featureSlides.map((slide, index) => (
+                  <div className="login-carousel-slide" key={slide.title}>
+                    <div className="login-feature-card">
+                      <div className="login-feature-header">
+                        {slide.icon}
+                        <strong className="login-feature-title">{slide.title}</strong>
+                      </div>
+                      <p className="login-feature-desc">{slide.description}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-
-              <div className="login-feature-card">
-                <div className="login-feature-header">
-                  <Percent size={13} className="login-feature-icon" strokeWidth={2.5} />
-                  <strong className="login-feature-title">Tax Engine</strong>
-                </div>
-                <p className="login-feature-desc">Dynamic date-effective policies</p>
-              </div>
-
-              <div className="login-feature-card">
-                <div className="login-feature-header">
-                  <Cpu size={13} className="login-feature-icon" />
-                  <strong className="login-feature-title">Headless Core</strong>
-                </div>
-                <p className="login-feature-desc">Decoupled API-first architecture</p>
-              </div>
-
-              <div className="login-feature-card">
-                <div className="login-feature-header">
-                  <Key size={13} className="login-feature-icon" />
-                  <strong className="login-feature-title">Secure Access</strong>
-                </div>
-                <p className="login-feature-desc">Strict role-based tier isolation</p>
+              <div className="login-carousel-dots" role="tablist" aria-label="Feature carousel navigation">
+                {featureSlides.map((_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className={`login-carousel-dot ${activeSlide === index ? 'login-carousel-dot--active' : ''}`}
+                    onClick={() => setActiveSlide(index)}
+                    aria-label={`Show slide ${index + 1}`}
+                  />
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Minimalist Trust Badges */}
-          <div className="login-trust-badges">
-            <div className="login-badge-item">
-              <Shield size={12} strokeWidth={2.25} />
-              <span>RBAC Enforced</span>
-            </div>
-            <div className="login-badge-item">
-              <Lock size={12} strokeWidth={2.25} />
-              <span>AES-256 Encrypted</span>
-            </div>
-            <div className="login-badge-item">
-              <span>SOC 2 Type II</span>
-            </div>
+          {/* Social & Web links */}
+          <div className="login-social-links">
+            <a className="login-social-link" href="https://www.linkedin.com" target="_blank" rel="noreferrer" aria-label="LinkedIn profile">
+              <ExternalLink size={16} />
+              <span>LinkedIn</span>
+            </a>
+            <a className="login-social-link" href="https://www.facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook page">
+              <Share2 size={16} />
+              <span>Facebook</span>
+            </a>
+            <a className="login-social-link" href="https://www.bcore.com" target="_blank" rel="noreferrer" aria-label="Official website">
+              <Globe size={16} />
+              <span>Website</span>
+            </a>
           </div>
         </div>
       </section>
