@@ -137,145 +137,93 @@ export default function Departments() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px', color: 'var(--text-muted)', gap: '1rem' }}>
-        <Loader2 className="udg-spinner" size={32} />
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-text-muted gap-4">
+        <Loader2 className="animate-spin" size={32} />
         <span>Loading corporate network...</span>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '1rem' }}>
+    <div className="flex flex-col gap-8 w-full max-w-[1200px] mx-auto p-4">
       
       {/* Header Panel */}
-      <div 
-        style={{
-          background: 'linear-gradient(135deg, rgba(157, 78, 221, 0.12) 0%, rgba(0, 242, 254, 0.04) 100%)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '16px',
-          padding: '1.75rem 2rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1.5rem',
-          boxShadow: '0 8px 32px rgba(9, 13, 26, 0.2)',
-          backdropFilter: 'blur(4px)'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div 
-            style={{
-              background: 'linear-gradient(135deg, #9d4edd 0%, #00f2fe 100%)',
-              borderRadius: '12px',
-              padding: '11px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 20px rgba(157, 78, 221, 0.3)'
-            }}
-          >
-            <Network size={26} color='var(--text-main)' />
+      <div className="bg-gradient-to-br from-[#9d4edd]/12 to-[#00f2fe]/4 border border-color rounded-2xl py-7 px-8 flex justify-between items-center flex-wrap gap-6 shadow-[0_8px_32px_rgba(9,13,26,0.2)] backdrop-blur-[4px]">
+        <div className="flex items-center gap-5">
+          <div className="bg-gradient-to-br from-[#9d4edd] to-[#00f2fe] rounded-xl p-3 flex items-center justify-center shadow-[0_4px_20px_rgba(157,78,221,0.3)]">
+            <Network size={26} className="text-text-main" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.3rem', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
+            <h1 className="text-[1.6rem] font-extrabold text-text-main font-display mb-1.5 tracking-tight">
               Hierarchical Departments
             </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: '1.4' }}>
+            <p className="text-text-muted text-[0.88rem] leading-normal">
               Configure parent-child organizational hierarchies, assign team managers, and provision isolated department nodes.
             </p>
           </div>
         </div>
 
-        <button onClick={handleOpenModal} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.75rem 1.25rem', fontWeight: 600 }}>
+        <button onClick={handleOpenModal} className="btn btn-primary flex items-center gap-2 py-3 px-5 font-semibold">
           <Plus size={16} />
           New Department
         </button>
       </div>
 
       {errorMsg && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '1rem', backgroundColor: 'rgba(255, 51, 102, 0.1)', border: '1px solid rgba(255, 51, 102, 0.2)', borderRadius: '12px', color: '#ff3366', fontSize: '0.88rem' }}>
+        <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-[0.88rem]">
           <AlertCircle size={16} />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Departments Tree Table */}
-      <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '14px', boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)' }}>
-        <div 
-          style={{ 
-            padding: '1.25rem 2rem', 
-            borderBottom: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'var(--bg-card-hover)'
-          }}
-        >
-          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '0.02em' }}>Active Organizational Hierarchy</span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', backgroundColor: 'var(--bg-card-hover)', padding: '4px 10px', borderRadius: '100px', fontWeight: 600 }}>{departments.length} Nodes</span>
+      <div className="glass-panel p-0 overflow-hidden bg-card border border-color rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.3)]">
+        <div className="py-5 px-8 border-b border-color flex items-center justify-between bg-card-hover">
+          <span className="text-[0.9rem] font-bold text-text-main tracking-wide">Active Organizational Hierarchy</span>
+          <span className="text-[0.75rem] text-text-muted bg-card-hover py-1 px-2.5 rounded-full font-semibold">{departments.length} Nodes</span>
         </div>
 
-        <div style={{ padding: '1.5rem 2rem', overflowX: 'auto' }}>
+        <div className="py-6 px-8 overflow-x-auto">
           {flatDepartments.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+            <div className="text-center py-16 px-8 text-text-muted text-[0.95rem]">
               No departments registered in this organization yet. Click "New Department" to begin mapping the hierarchy.
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+            <table className="w-full border-collapse text-left text-[0.9rem]">
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  <th style={{ padding: '1rem 0.75rem' }}>Department Name</th>
-                  <th style={{ padding: '1rem 0.75rem' }}>Parent Department</th>
-                  <th style={{ padding: '1rem 0.75rem', textAlign: 'center' }}>Status</th>
+                <tr className="border-b border-color text-text-muted text-[0.75rem] uppercase tracking-wider">
+                  <th className="py-4 px-3">Department Name</th>
+                  <th className="py-4 px-3">Parent Department</th>
+                  <th className="py-4 px-3 text-center">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {flatDepartments.map((dept) => (
                   <tr 
                     key={dept.id} 
-                    style={{ 
-                      borderBottom: '1px solid var(--border-color)',
-                      transition: 'background-color 0.2s',
-                    }}
-                    className="hover-row"
+                    className="border-b border-color transition-colors duration-200 hover:bg-card-hover"
                   >
-                    <td style={{ 
-                      padding: '1.1rem 0.75rem', 
-                      fontWeight: 600, 
-                      color: 'var(--text-main)',
-                      paddingLeft: `${dept.depth * 24 + 12}px`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}>
-                      {dept.depth > 0 && <CornerDownRight size={14} color='var(--text-muted)' style={{ minWidth: '14px' }} />}
-                      <span style={{ color: dept.depth === 0 ? 'var(--text-main)' : 'var(--text-main)' }}>{dept.name}</span>
+                    <td 
+                      className="py-4.5 px-3 font-semibold text-text-main flex items-center gap-2"
+                      style={{ paddingLeft: `${dept.depth * 24 + 12}px` }}
+                    >
+                      {dept.depth > 0 && <CornerDownRight size={14} className="text-text-muted min-w-[14px]" />}
+                      <span>{dept.name}</span>
                     </td>
-                    <td style={{ padding: '1.1rem 0.75rem', color: 'var(--text-muted)' }}>
+                    <td className="py-4.5 px-3 text-text-muted">
                       {dept.parent_name ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
-                          <ChevronRight size={12} color="#00f2fe" />
+                        <div className="flex items-center gap-1.5 text-[0.85rem]">
+                          <ChevronRight size={12} className="text-[#00f2fe]" />
                           <span>{dept.parent_name}</span>
                         </div>
                       ) : (
-                        <span style={{ fontSize: '0.75rem', color: 'rgba(0, 242, 254, 0.5)', background: 'rgba(0, 242, 254, 0.05)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(0, 242, 254, 0.1)' }}>
+                        <span className="text-[0.75rem] text-[#00f2fe]/50 bg-[#00f2fe]/5 py-0.5 px-2 rounded border border-[#00f2fe]/10">
                           Root
                         </span>
                       )}
                     </td>
-                    <td style={{ padding: '1.1rem 0.75rem', textAlign: 'center' }}>
-                      <span 
-                        style={{ 
-                          fontSize: '0.75rem', 
-                          fontWeight: 700, 
-                          color: '#00f5a0', 
-                          background: 'rgba(0, 245, 160, 0.1)', 
-                          padding: '4px 10px', 
-                          borderRadius: '100px', 
-                          border: '1px solid rgba(0, 245, 160, 0.2)' 
-                        }}
-                      >
+                    <td className="py-4.5 px-3 text-center">
+                      <span className="text-[0.75rem] font-bold text-[#00f5a0] bg-[#00f5a0]/10 py-1 px-2.5 rounded-full border border-[#00f5a0]/20">
                         Enabled
                       </span>
                     </td>
@@ -289,54 +237,17 @@ export default function Departments() {
 
       {/* ── Create Department Modal ── */}
       {modalOpen && (
-        <div 
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(9, 13, 26, 0.85)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 999,
-            padding: '1.5rem'
-          }}
-        >
-          <div 
-            className="glass-panel" 
-            style={{ 
-              width: '100%', 
-              maxWidth: '480px', 
-              backgroundColor: 'var(--bg-main)', 
-              border: '1px solid rgba(157, 78, 221, 0.3)',
-              borderRadius: '16px',
-              padding: '2rem',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.5rem',
-              position: 'relative'
-            }}
-          >
+        <div className="fixed inset-0 bg-[#090d1a]/85 backdrop-blur-md flex items-center justify-center z-[999] p-6">
+          <div className="glass-panel w-full max-w-[480px] bg-main border border-[#9d4edd]/30 rounded-2xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col gap-6 relative">
             {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-display)' }}>
-                <Network size={20} color="#9d4edd" />
+            <div className="flex justify-between items-center">
+              <h3 className="text-[1.25rem] font-extrabold text-text-main flex items-center gap-2 font-display">
+                <Network size={20} className="text-[#9d4edd]" />
                 New Department
               </h3>
               <button 
                 onClick={() => setModalOpen(false)}
-                style={{
-                  background: 'var(--bg-card-hover)',
-                  border: 'none',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer',
-                  padding: '6px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
+                className="bg-card-hover border-none text-text-muted cursor-pointer p-1.5 rounded-full flex items-center justify-center"
               >
                 <X size={16} />
               </button>
@@ -344,31 +255,31 @@ export default function Departments() {
 
             {/* Notifications */}
             {successMsg && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.75rem 1rem', backgroundColor: 'rgba(0, 245, 160, 0.1)', border: '1px solid rgba(0, 245, 160, 0.2)', borderRadius: '8px', color: '#00f5a0', fontSize: '0.85rem' }}>
+              <div className="flex items-center gap-2 py-3 px-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-[0.85rem]">
                 <CheckCircle size={16} />
                 <span>{successMsg}</span>
               </div>
             )}
 
             {formError && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.75rem 1rem', backgroundColor: 'rgba(255, 51, 102, 0.1)', border: '1px solid rgba(255, 51, 102, 0.2)', borderRadius: '8px', color: '#ff3366', fontSize: '0.85rem' }}>
+              <div className="flex items-center gap-2 py-3 px-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-[0.85rem]">
                 <AlertCircle size={16} />
                 <span>{formError}</span>
               </div>
             )}
 
             {/* Form */}
-            <form onSubmit={handleCreateDepartment} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <form onSubmit={handleCreateDepartment} className="flex flex-col gap-5">
               
               {/* Name */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Name *</label>
-                <div style={{ position: 'relative' }}>
-                  <Network size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <label className="block text-[0.78rem] text-text-muted font-semibold uppercase tracking-wider mb-1.5">Name *</label>
+                <div className="relative">
+                  <Network size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                   <input 
                     type="text" 
                     required 
-                    style={{ paddingLeft: '38px', width: '100%' }}
+                    className="pl-[38px] w-full"
                     placeholder="e.g. Operations & Fleet Management"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -378,11 +289,11 @@ export default function Departments() {
 
               {/* Description */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Description</label>
-                <div style={{ position: 'relative' }}>
-                  <FileText size={16} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-muted)' }} />
+                <label className="block text-[0.78rem] text-text-muted font-semibold uppercase tracking-wider mb-1.5">Description</label>
+                <div className="relative">
+                  <FileText size={16} className="absolute left-3 top-3.5 text-text-muted" />
                   <textarea 
-                    style={{ paddingLeft: '38px', minHeight: '70px', width: '100%', resize: 'vertical' }}
+                    className="pl-[38px] min-h-[70px] w-full resize-vertical"
                     placeholder="Describe operational focus and metrics..."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
@@ -392,22 +303,13 @@ export default function Departments() {
 
               {/* Parent Department Selector */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Parent Department</label>
-                <div style={{ position: 'relative' }}>
-                  <Network size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <label className="block text-[0.78rem] text-text-muted font-semibold uppercase tracking-wider mb-1.5">Parent Department</label>
+                <div className="relative">
+                  <Network size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                   <select 
                     value={parentId} 
                     onChange={(e) => setParentId(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      paddingLeft: '38px',
-                      backgroundColor: 'var(--bg-input)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '8px',
-                      color: 'var(--text-main)',
-                      fontSize: '0.9rem'
-                    }}
+                    className="w-full py-3 px-4 pl-[38px] bg-input border border-color rounded-lg text-text-main text-[0.9rem]"
                   >
                     <option value="">-- Root Department (None) --</option>
                     {departments.map((dept) => (
@@ -420,11 +322,10 @@ export default function Departments() {
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <div className="flex gap-4 mt-4">
                 <button 
                   type="button" 
-                  className="btn btn-secondary" 
-                  style={{ flex: 1 }}
+                  className="btn btn-secondary flex-1" 
                   onClick={() => setModalOpen(false)}
                   disabled={submitting}
                 >
@@ -432,13 +333,12 @@ export default function Departments() {
                 </button>
                 <button 
                   type="submit" 
-                  className="btn btn-primary" 
-                  style={{ flex: 1 }}
+                  className="btn btn-primary flex-1" 
                   disabled={submitting}
                 >
                   {submitting ? (
                     <>
-                      <Loader2 size={16} className="udg-spinner" />
+                      <Loader2 size={16} className="animate-spin" />
                       Creating...
                     </>
                   ) : (

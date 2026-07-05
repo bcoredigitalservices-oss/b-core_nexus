@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { 
+import React, { useState, useEffect } from 'react';
+import {
   Users, Package, Activity, AlertTriangle, RefreshCw, Layers, Database, Server, User
 } from 'lucide-react';
 import DirectoryTab from '../features/directory/components/DirectoryTab';
@@ -11,7 +10,11 @@ import OfflineCacheManager from '../services/OfflineCacheManager';
 
 const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api/v1`;
 
-const VIRTUAL_LIST_SIZE = 100000;
+const TABS = [
+  { key: 'directory', label: 'Global Directory', icon: Users },
+  { key: 'catalog', label: 'Universal Catalog', icon: Package },
+  { key: 'virtualized', label: 'Virtualized Grid (100k Rows)', icon: Activity },
+];
 
 export default function Sandbox() {
   // Mode & Tiers
@@ -41,30 +44,18 @@ export default function Sandbox() {
 
     const fetchData = async () => {
       try {
-        const headers = { 'Authorization': `Bearer ${token}` };
-        
-        // Fetch Directory Profiles
+        const headers = { Authorization: `Bearer ${token}` };
+
         const dirRes = await fetch(`${API_BASE_URL}/directory`, { headers });
-        if (dirRes.ok) {
-          const data = await dirRes.json();
-          setLocalDirectory(data);
-        }
+        if (dirRes.ok) setLocalDirectory(await dirRes.json());
 
-        // Fetch Catalog Items
         const catRes = await fetch(`${API_BASE_URL}/catalog`, { headers });
-        if (catRes.ok) {
-          const data = await catRes.json();
-          setLocalCatalog(data);
-        }
+        if (catRes.ok) setLocalCatalog(await catRes.json());
 
-        // Fetch Events
         const evtRes = await fetch(`${API_BASE_URL}/events`, { headers });
-        if (evtRes.ok) {
-          const data = await evtRes.json();
-          setLocalEvents(data);
-        }
+        if (evtRes.ok) setLocalEvents(await evtRes.json());
       } catch (err) {
-        console.error("Failed to fetch backend data:", err);
+        console.error('Failed to fetch backend data:', err);
       }
     };
 
@@ -114,22 +105,22 @@ export default function Sandbox() {
       const res = await fetch(`${API_BASE_URL}/auth/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: formData
+        body: formData,
       });
       if (res.ok) {
         const data = await res.json();
         setToken(data.access_token);
-        console.log("Logged into FastAPI Backend as admin@bcore.local");
+        console.log('Logged into FastAPI Backend as admin@bcore.local');
       }
     } catch (e) {
-      console.warn("FastAPI token acquisition failed:", e);
+      console.warn('FastAPI token acquisition failed:', e);
     }
   };
 
   const handlePostEvent = (e) => {
     e.preventDefault();
     if (!eventConsole.entity_id) {
-      alert("Please select a target entity ID from the dropdown or paste a UUID.");
+      alert('Please select a target entity ID from the dropdown or paste a UUID.');
       return;
     }
 
@@ -138,25 +129,20 @@ export default function Sandbox() {
         entity_id: eventConsole.entity_id,
         entity_type: eventConsole.entity_type,
         message: eventConsole.message || 'Emergency halt triggered by Operator',
-        blocked_by: getRoleLabel(roleTier)
+        blocked_by: getRoleLabel(roleTier),
       };
       setBlockerBeacon(beaconData);
-      
+
       logSystemEvent(eventConsole.entity_id, eventConsole.entity_type, 'blocker_beacon', {
         message: `EMERGENCY BLOCKER BEACON: ${beaconData.message}`,
-        status: 'blocked'
+        status: 'blocked',
       });
-      setEventConsole(prev => ({ ...prev, message: '' }));
+      setEventConsole((prev) => ({ ...prev, message: '' }));
       return;
     }
 
-    logSystemEvent(
-      eventConsole.entity_id,
-      eventConsole.entity_type,
-      eventConsole.event_type,
-      { message: eventConsole.message }
-    );
-    setEventConsole(prev => ({ ...prev, message: '' }));
+    logSystemEvent(eventConsole.entity_id, eventConsole.entity_type, eventConsole.event_type, { message: eventConsole.message });
+    setEventConsole((prev) => ({ ...prev, message: '' }));
   };
 
   const logSystemEvent = (entityId, entityType, eventType, payload) => {
@@ -165,40 +151,38 @@ export default function Sandbox() {
       entity_id: entityId,
       entity_type: entityType,
       event_type: eventType,
-      payload: payload,
+      payload,
       created_by: getRoleLabel(roleTier),
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
     setLocalEvents([newEvent, ...localEvents]);
   };
 
   const resolveBeacon = () => {
     if (roleTier > 3) {
-      alert("Permission Denied: Only Tier 1 (Admin), Tier 2 (Directional), or Tier 3 (Supervisor) can resolve Blocker Beacons.");
+      alert('Permission Denied: Only Tier 1 (Admin), Tier 2 (Directional), or Tier 3 (Supervisor) can resolve Blocker Beacons.');
       return;
     }
 
     if (blockerBeacon) {
-      logSystemEvent(
-        blockerBeacon.entity_id, 
-        blockerBeacon.entity_type, 
-        'resolve_blocker', 
-        { message: 'Emergency Blocker Beacon cleared and resolved.', resolved_by: getRoleLabel(roleTier) }
-      );
+      logSystemEvent(blockerBeacon.entity_id, blockerBeacon.entity_type, 'resolve_blocker', {
+        message: 'Emergency Blocker Beacon cleared and resolved.',
+        resolved_by: getRoleLabel(roleTier),
+      });
       setBlockerBeacon(null);
     }
   };
 
   const getEntityNameById = (id) => {
-    const dMatch = localDirectory.find(d => d.id === id);
+    const dMatch = localDirectory.find((d) => d.id === id);
     if (dMatch) return dMatch.name;
-    const cMatch = localCatalog.find(c => c.id === id);
+    const cMatch = localCatalog.find((c) => c.id === id);
     if (cMatch) return cMatch.sku;
     return id;
   };
 
   const getRoleLabel = (tier) => {
-    switch(tier) {
+    switch (tier) {
       case 1: return 'Admin (Tier 1)';
       case 2: return 'Directional (Tier 2)';
       case 3: return 'Leadership (Tier 3)';
@@ -208,85 +192,59 @@ export default function Sandbox() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      
+    <div className="flex min-h-screen flex-col">
       {/* Top Banner Navigation */}
-      <header style={{
-        background: 'rgba(20, 27, 46, 0.9)',
-        borderBottom: '1px solid var(--border-color)',
-        padding: '1rem 2rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        backdropFilter: 'blur(10px)'
-      }} className={blockerBeacon ? 'beacon-active' : ''}>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            background: 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%)',
-            padding: '0.5rem',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+      <header
+        className={`sticky top-0 z-[100] flex items-center justify-between border-b border-[var(--border-color)] bg-[rgba(20,27,46,0.9)] px-8 py-4 backdrop-blur-[10px] ${blockerBeacon ? 'beacon-active' : ''}`}
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center rounded-lg bg-gradient-to-br from-[var(--accent-blue)] to-[var(--accent-purple)] p-2">
             <Layers size={24} color="#0b0f19" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 800 }}>B-CORE NEXUS</h1>
-            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Headless ERP Core</p>
+            <h1 className="font-[family-name:var(--font-display)] text-xl font-extrabold">B-CORE NEXUS</h1>
+            <p className="text-[0.7rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">Headless ERP Core</p>
           </div>
         </div>
 
         {/* Backend Connect Status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', background: 'rgba(14, 19, 34, 0.6)', padding: '0.4rem 0.8rem', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-[rgba(14,19,34,0.6)] px-3.5 py-1.5 text-[0.8rem]">
             {isConnecting ? (
               <>
-                <RefreshCw size={14} className="spin" style={{ animation: 'spin 2s linear infinite' }} />
-                <span style={{ color: 'var(--text-muted)' }}>Probing API...</span>
+                <RefreshCw size={14} className="animate-spin" />
+                <span className="text-[var(--text-muted)]">Probing API...</span>
               </>
             ) : isApiLive ? (
               <>
-                <Database size={14} color="var(--accent-green)" />
-                <span style={{ color: 'var(--accent-green)', fontWeight: 600 }}>API Connected (Live)</span>
+                <Database size={14} className="text-[var(--accent-green)]" />
+                <span className="font-semibold text-[var(--accent-green)]">API Connected (Live)</span>
               </>
             ) : (
               <>
-                <Server size={14} color="var(--accent-warning)" />
-                <span style={{ color: 'var(--text-muted)' }}>Sandbox Simulation</span>
+                <Server size={14} className="text-[var(--accent-warning)]" />
+                <span className="text-[var(--text-muted)]">Sandbox Simulation</span>
               </>
             )}
-            <button 
+            <button
               onClick={checkBackendConnection}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: 'var(--text-muted)' }}
               title="Refresh connection status"
+              className="flex cursor-pointer border-none bg-transparent p-0 text-[var(--text-muted)] transition-colors hover:text-[var(--text-main)]"
             >
               <RefreshCw size={12} />
             </button>
           </div>
 
           {/* Active User Tier Manager */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-[0.85rem] text-[var(--text-muted)]">
               <User size={14} />
               <span>Identity Profile:</span>
             </div>
-            <select 
-              value={roleTier} 
+            <select
+              value={roleTier}
               onChange={(e) => setRoleTier(Number(e.target.value))}
-              style={{
-                width: 'auto',
-                padding: '0.35rem 1.75rem 0.35rem 0.75rem',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                borderRadius: '6px',
-                borderColor: 'var(--border-color)',
-                cursor: 'pointer'
-              }}
+              className="w-auto cursor-pointer rounded-md border-[var(--border-color)] py-1.5 pl-3 pr-7 text-[0.85rem] font-semibold"
             >
               <option value={1}>Admin (Tier 1)</option>
               <option value={2}>Directional (Tier 2)</option>
@@ -298,30 +256,29 @@ export default function Sandbox() {
       </header>
 
       {/* Main Content Area */}
-      <main style={{ flex: 1, padding: '2rem', maxWidth: '1600px', width: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }}>
-        
+      <main className="mx-auto grid w-full max-w-[1600px] flex-1 grid-cols-[1fr_350px] gap-8 p-8">
         {/* Left Side: Workspaces */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
+        <section className="flex flex-col gap-6">
           {/* Emergency Blocker Beacon Banner */}
           {blockerBeacon && (
             <div className="beacon-banner">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <AlertTriangle size={28} color="var(--accent-danger)" style={{ animation: 'pulse-glow 1s infinite alternate' }} />
+              <div className="flex items-center gap-4">
+                <AlertTriangle size={28} className="animate-pulse text-[var(--accent-danger)]" />
                 <div>
-                  <h4 style={{ color: 'var(--accent-danger)', fontWeight: 700, fontSize: '1rem' }}>BLOCKER BEACON ACTIVE</h4>
-                  <p style={{ fontSize: '0.85rem', color: '#ffb7b7' }}>
-                    Entity: <strong>{getEntityNameById(blockerBeacon.entity_id)}</strong> is BLOCKED. {blockerBeacon.message} (Triggered by {blockerBeacon.blocked_by})
+                  <h4 className="text-base font-bold text-[var(--accent-danger)]">BLOCKER BEACON ACTIVE</h4>
+                  <p className="text-[0.85rem] text-[#ffb7b7]">
+                    Entity: <strong>{getEntityNameById(blockerBeacon.entity_id)}</strong> is BLOCKED. {blockerBeacon.message} (Triggered by{' '}
+                    {blockerBeacon.blocked_by})
                   </p>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div className="flex gap-2">
                 {roleTier > 3 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                    <button className="btn btn-danger" style={{ opacity: 0.5, cursor: 'not-allowed' }} disabled>
+                  <div className="flex flex-col items-end">
+                    <button className="btn btn-danger cursor-not-allowed opacity-50" disabled>
                       Resolve (Requires Tier 1-3)
                     </button>
-                    <span style={{ fontSize: '0.65rem', color: 'var(--accent-danger)', marginTop: '0.25rem' }}>Only Tier 1-3 can execute resolution payload</span>
+                    <span className="mt-1 text-[0.65rem] text-[var(--accent-danger)]">Only Tier 1-3 can execute resolution payload</span>
                   </div>
                 ) : (
                   <button className="btn btn-primary" onClick={resolveBeacon}>
@@ -334,58 +291,44 @@ export default function Sandbox() {
 
           {/* Navigation Tabs */}
           <div className="tabs-container">
-            <button 
-              className={`tab-btn ${activeTab === 'directory' ? 'active' : ''}`}
-              onClick={() => setActiveTab('directory')}
-            >
-              <Users size={16} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
-              Global Directory
-            </button>
-            <button 
-              className={`tab-btn ${activeTab === 'catalog' ? 'active' : ''}`}
-              onClick={() => setActiveTab('catalog')}
-            >
-              <Package size={16} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
-              Universal Catalog
-            </button>
-            <button 
-              className={`tab-btn ${activeTab === 'virtualized' ? 'active' : ''}`}
-              onClick={() => setActiveTab('virtualized')}
-            >
-              <Activity size={16} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
-              Virtualized Grid (100k Rows)
-            </button>
+            {TABS.map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                className={`tab-btn ${activeTab === key ? 'active' : ''}`}
+                onClick={() => setActiveTab(key)}
+              >
+                <Icon size={16} className="mr-2 inline-block align-middle" />
+                {label}
+              </button>
+            ))}
           </div>
 
           {/* Tab 1: Global Directory */}
           {activeTab === 'directory' && (
-            <DirectoryTab 
-              localDirectory={localDirectory} 
-              setLocalDirectory={setLocalDirectory} 
-              roleTier={roleTier} 
-              logSystemEvent={logSystemEvent} 
+            <DirectoryTab
+              localDirectory={localDirectory}
+              setLocalDirectory={setLocalDirectory}
+              roleTier={roleTier}
+              logSystemEvent={logSystemEvent}
             />
           )}
 
           {/* Tab 2: Universal Catalog */}
           {activeTab === 'catalog' && (
-            <CatalogTab 
-              localCatalog={localCatalog} 
-              setLocalCatalog={setLocalCatalog} 
-              roleTier={roleTier} 
-              logSystemEvent={logSystemEvent} 
+            <CatalogTab
+              localCatalog={localCatalog}
+              setLocalCatalog={setLocalCatalog}
+              roleTier={roleTier}
+              logSystemEvent={logSystemEvent}
             />
           )}
 
           {/* Tab 3: Virtualized 100k Rows */}
-          {activeTab === 'virtualized' && (
-            <VirtualGridTab />
-          )}
-
+          {activeTab === 'virtualized' && <VirtualGridTab />}
         </section>
 
         {/* Right Side: Sidebar Event Stream & Console */}
-        <EventConsoleSidebar 
+        <EventConsoleSidebar
           roleTier={roleTier}
           getRoleLabel={getRoleLabel}
           localDirectory={localDirectory}
@@ -396,21 +339,12 @@ export default function Sandbox() {
           localEvents={localEvents}
           getEntityNameById={getEntityNameById}
         />
-        </main>
+      </main>
 
       {/* Footer */}
-      <footer style={{
-        textAlign: 'center',
-        padding: '1.5rem',
-        borderTop: '1px solid var(--border-color)',
-        fontSize: '0.8rem',
-        color: 'var(--text-muted)',
-        background: 'var(--bg-input)',
-        marginTop: 'auto'
-      }}>
+      <footer className="mt-auto border-t border-[var(--border-color)] bg-[var(--bg-input)] px-6 py-6 text-center text-[0.8rem] text-[var(--text-muted)]">
         B-Core Nexus Autonomous ERP Engine. Code-first layout compliance checked. Made for Antigravity pair programming.
       </footer>
-
     </div>
   );
 }

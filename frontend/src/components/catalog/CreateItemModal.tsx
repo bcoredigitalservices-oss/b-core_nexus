@@ -113,88 +113,45 @@ export default function CreateItemModal({ isOpen, onClose, onSuccess }: CreateIt
   };
 
   return (
-    <div 
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        backdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 999,
-        padding: '1.5rem'
-      }}
-    >
-      <div 
-        className="glass-panel" 
-        style={{ 
-          width: '100%', 
-          maxWidth: '560px', 
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          backgroundColor: 'var(--bg-card)', 
-          border: '1px solid var(--border-color)',
-          borderRadius: '16px',
-          padding: '2rem',
-          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1.5rem',
-          position: 'relative'
-        }}
-      >
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-[999] p-6">
+      <div className="glass-panel w-full max-w-[560px] max-h-[90vh] overflow-y-auto bg-card border border-color rounded-2xl p-8 shadow-xl flex flex-col gap-6 relative">
         {/* Modal Close Button */}
         <button 
           onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '1.5rem',
-            right: '1.5rem',
-            background: 'var(--bg-card-hover)',
-            border: '1px solid var(--border-color)',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-            padding: '6px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.2s ease'
-          }}
+          className="absolute top-6 right-6 bg-card-hover border border-color text-text-muted cursor-pointer p-1.5 rounded-full flex items-center justify-center transition-all duration-200 hover:text-text-main hover:border-accent-primary"
         >
           <X size={16} />
         </button>
 
         {/* Modal Header */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-display)', margin: 0 }}>
-            <Cpu size={20} color="var(--accent-primary)" />
+        <div className="flex flex-col gap-1.5 border-b border-color pb-4">
+          <h3 className="text-[1.25rem] font-extrabold text-text-main flex items-center gap-2 font-display m-0">
+            <Cpu size={20} className="text-accent-primary" />
             Add Catalog Item
           </h3>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+          <p className="text-[0.8rem] text-text-muted m-0">
             Define stock code, tracking barcodes, names, and structural classification.
           </p>
         </div>
 
         {errorMsg && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.75rem 1rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', color: 'var(--accent-danger)', fontSize: '0.85rem' }}>
+          <div className="flex items-center gap-2 py-3 px-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-[0.85rem]">
             <AlertCircle size={16} />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '3rem', color: 'var(--text-muted)', gap: '1rem' }}>
-            <div className="udg-spinner" style={{ width: '24px', height: '24px', border: '3px solid var(--border-color)', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-            <span style={{ fontSize: '0.85rem' }}>Loading catalog classifications...</span>
+          <div className="flex flex-col justify-center items-center py-12 text-text-muted gap-4">
+            <div className="w-6 h-6 border-3 border-color border-t-accent-primary rounded-full animate-spin"></div>
+            <span className="text-[0.85rem]">Loading catalog classifications...</span>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             
             {/* SKU */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>SKU Code *</label>
+              <label className="block text-[0.75rem] text-text-muted font-semibold mb-1.5">SKU Code *</label>
               <input 
                 type="text" 
                 required
@@ -207,7 +164,7 @@ export default function CreateItemModal({ isOpen, onClose, onSuccess }: CreateIt
 
             {/* Name */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Item Name *</label>
+              <label className="block text-[0.75rem] text-text-muted font-semibold mb-1.5">Item Name *</label>
               <input 
                 type="text" 
                 required
@@ -219,9 +176,9 @@ export default function CreateItemModal({ isOpen, onClose, onSuccess }: CreateIt
             </div>
 
             {/* Catalog Type & Default UOM */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Catalog Type *</label>
+                <label className="block text-[0.75rem] text-text-muted font-semibold mb-1.5">Catalog Type *</label>
                 <select 
                   value={catalogType} 
                   onChange={(e) => setCatalogType(e.target.value)}
@@ -235,7 +192,7 @@ export default function CreateItemModal({ isOpen, onClose, onSuccess }: CreateIt
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Default UOM *</label>
+                <label className="block text-[0.75rem] text-text-muted font-semibold mb-1.5">Default UOM *</label>
                 <select 
                   value={defaultUom} 
                   onChange={(e) => setDefaultUom(e.target.value)}
@@ -252,7 +209,7 @@ export default function CreateItemModal({ isOpen, onClose, onSuccess }: CreateIt
 
             {/* Item Group */}
             <div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>
+              <label className="flex items-center gap-1.5 text-[0.75rem] text-text-muted font-semibold mb-1.5">
                 <Layers size={14} />
                 Item Group
               </label>
@@ -271,11 +228,10 @@ export default function CreateItemModal({ isOpen, onClose, onSuccess }: CreateIt
             </div>
 
             {/* Modal Action Buttons */}
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
+            <div className="flex gap-4 mt-4 border-t border-color pt-5">
               <button 
                 type="button" 
-                className="btn btn-secondary" 
-                style={{ flex: 1 }}
+                className="btn btn-secondary flex-1" 
                 onClick={onClose}
                 disabled={submitting}
               >
@@ -283,8 +239,7 @@ export default function CreateItemModal({ isOpen, onClose, onSuccess }: CreateIt
               </button>
               <button 
                 type="submit" 
-                className="btn btn-primary" 
-                style={{ flex: 1 }}
+                className="btn btn-primary flex-1" 
                 disabled={submitting}
               >
                 {submitting ? 'Creating...' : 'Create Item'}

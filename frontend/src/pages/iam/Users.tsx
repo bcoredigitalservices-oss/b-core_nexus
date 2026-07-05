@@ -157,49 +157,27 @@ export default function Users() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px', color: 'var(--text-muted)', gap: '1rem' }}>
-        <Loader2 className="udg-spinner" size={32} />
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-text-muted gap-4">
+        <Loader2 className="animate-spin" size={32} />
         <span>Loading operator directory...</span>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
+    <div className="flex flex-col gap-8 w-full max-w-[1200px] mx-auto p-4 relative">
       
       {/* Header */}
-      <div 
-        style={{
-          background: 'linear-gradient(135deg, rgba(157, 78, 221, 0.08) 0%, rgba(0, 242, 254, 0.03) 100%)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '16px',
-          padding: '1.75rem 2rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1.5rem'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div 
-            style={{
-              background: 'rgba(157, 78, 221, 0.15)',
-              border: '1px solid rgba(157, 78, 221, 0.3)',
-              borderRadius: '12px',
-              padding: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <UsersIcon size={24} color="#9d4edd" />
+      <div className="bg-gradient-to-br from-[#9d4edd]/8 to-[#00f2fe]/3 border border-color rounded-2xl py-7 px-8 flex justify-between items-center flex-wrap gap-6">
+        <div className="flex items-center gap-4">
+          <div className="bg-[#9d4edd]/15 border border-[#9d4edd]/30 rounded-xl p-2.5 flex items-center justify-center shadow-[0_0_20px_rgba(157,78,221,0.2)]">
+            <UsersIcon size={24} className="text-[#9d4edd]" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.2rem', fontFamily: 'var(--font-display)' }}>
+            <h1 className="text-[1.5rem] font-extrabold text-text-main font-display mb-1">
               Operator Directory & RBAC
             </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            <p className="text-text-muted text-[0.85rem]">
               Provision new system users, audit clearance permissions, and assign active operational workspaces.
             </p>
           </div>
@@ -207,8 +185,7 @@ export default function Users() {
 
         <button 
           onClick={() => setProvisionModalOpen(true)} 
-          className="btn btn-primary" 
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          className="btn btn-primary flex items-center gap-2 py-3 px-5 font-semibold"
         >
           <UserPlus size={16} />
           Provision Operator
@@ -216,43 +193,35 @@ export default function Users() {
       </div>
 
       {successMsg && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '1rem', backgroundColor: 'rgba(0, 245, 160, 0.1)', border: '1px solid rgba(0, 245, 160, 0.2)', borderRadius: '12px', color: '#00f5a0', fontSize: '0.88rem' }}>
+        <div className="flex items-center gap-2 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[#00f5a0] text-[0.88rem]">
           <CheckCircle size={16} />
           <span>{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '1rem', backgroundColor: 'rgba(255, 51, 102, 0.1)', border: '1px solid rgba(255, 51, 102, 0.2)', borderRadius: '12px', color: '#ff3366', fontSize: '0.88rem' }}>
+        <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-[#ff3366] text-[0.88rem]">
           <AlertCircle size={16} />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Operator Directory Ledger */}
-      <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '14px' }}>
-        <div 
-          style={{ 
-            padding: '1.25rem 1.75rem', 
-            borderBottom: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}
-        >
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>Operator Authority Records</span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{users.length} Active Profiles</span>
+      <div className="glass-panel p-0 overflow-hidden bg-main border border-color rounded-2xl shadow-lg">
+        <div className="py-5 px-7 border-b border-color flex items-center justify-between bg-card-hover">
+          <span className="text-[0.85rem] font-bold text-text-main tracking-wide">Operator Authority Records</span>
+          <span className="text-[0.75rem] text-text-muted font-medium bg-card-hover py-1 px-3 rounded-full">{users.length} Active Profiles</span>
         </div>
 
-        <div style={{ padding: '1.25rem 1.75rem', overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+        <div className="py-5 px-7 overflow-x-auto">
+          <table className="w-full border-collapse text-left text-[0.9rem]">
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
-                <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email / Login Identity</th>
-                <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Full Name</th>
-                <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Designation</th>
-                <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Onboarding Status</th>
-                <th style={{ padding: '0.75rem 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Actions</th>
+              <tr className="border-b border-color text-text-muted text-[0.75rem] uppercase tracking-wider">
+                <th className="py-3 px-2">Email / Login Identity</th>
+                <th className="py-3 px-2">Full Name</th>
+                <th className="py-3 px-2">Designation</th>
+                <th className="py-3 px-2">Onboarding Status</th>
+                <th className="py-3 px-2 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -260,54 +229,47 @@ export default function Users() {
                 const badge = getClearanceBadge(user.role_tier);
                 
                 return (
-                  <tr key={user.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '1rem 0.5rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                  <tr key={user.id} className="border-b border-color transition-colors duration-200 hover:bg-card-hover">
+                    <td className="py-4 px-2 font-semibold text-text-main">
                       {user.email}
                     </td>
-                    <td style={{ padding: '1rem 0.5rem', color: 'var(--text-muted)' }}>
-                      {user.first_name ? `${user.first_name} ${user.last_name || ''}` : <em style={{ opacity: 0.5 }}>Unconfigured</em>}
+                    <td className="py-4 px-2 text-text-muted">
+                      {user.first_name ? `${user.first_name} ${user.last_name || ''}` : <em className="opacity-50">Unconfigured</em>}
                     </td>
-                    <td style={{ padding: '1rem 0.5rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>
-                          {user.designation || <em style={{ opacity: 0.5 }}>Unassigned</em>}
+                    <td className="py-4 px-2">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[0.85rem] font-semibold text-text-main">
+                          {user.designation || <em className="opacity-50">Unassigned</em>}
                         </span>
                         <span 
+                          className="text-[0.65rem] font-bold py-0.5 px-2.5 rounded border uppercase tracking-wider self-start"
                           style={{
-                            fontSize: '0.65rem',
-                            fontWeight: 700,
-                            padding: '2px 6px',
-                            borderRadius: '4px',
                             color: badge.color,
                             backgroundColor: badge.bg,
-                            border: badge.border,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                            alignSelf: 'flex-start'
+                            borderColor: badge.color + '33',
                           }}
                         >
                           {badge.label}
                         </span>
                       </div>
                     </td>
-                    <td style={{ padding: '1rem 0.5rem' }}>
+                    <td className="py-4 px-2">
                       {user.is_active ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#00f5a0', fontSize: '0.82rem', fontWeight: 600 }}>
+                        <div className="flex items-center gap-1.5 text-[#00f5a0] text-[0.82rem] font-semibold">
                           <UserCheck size={14} />
                           Active / Claimed
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ffb703', fontSize: '0.82rem', fontWeight: 600 }}>
+                        <div className="flex items-center gap-1.5 text-[#ffb703] text-[0.82rem] font-semibold">
                           <Clock size={14} />
                           Pending Invite Claim
                         </div>
                       )}
                     </td>
-                    <td style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>
+                    <td className="py-4 px-2 text-right">
                       <button 
                         onClick={() => handleSelectUser(user)}
-                        className="btn btn-secondary" 
-                        style={{ padding: '4px 10px', fontSize: '0.78rem' }}
+                        className="btn btn-secondary py-1 px-3 text-[0.78rem]"
                       >
                         Configure Access
                       </button>

@@ -4,43 +4,19 @@ import CommandCenter from '../../components/admin/CommandCenter';
 
 export default function EventEngineDashboard() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="flex flex-col gap-8 w-full max-w-[1200px] mx-auto">
       
       {/* Header Banner */}
-      <div 
-        style={{
-          background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.05) 0%, rgba(157, 78, 221, 0.05) 100%)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '14px',
-          padding: '1.75rem 2rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1.5rem',
-          position: 'relative',
-          overflow: 'hidden'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', zIndex: 1 }}>
-          <div 
-            style={{
-              background: 'rgba(0, 242, 254, 0.1)',
-              border: '1px solid rgba(0, 242, 254, 0.2)',
-              borderRadius: '12px',
-              padding: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <Terminal size={28} color="var(--accent-blue)" />
+      <div className="bg-gradient-to-br from-[#00f2fe]/5 to-[#9d4edd]/5 border border-color rounded-2xl py-7 px-8 flex justify-between items-center flex-wrap gap-6 relative overflow-hidden">
+        <div className="flex items-center gap-5 z-10">
+          <div className="bg-[#00f2fe]/10 border border-[#00f2fe]/20 rounded-xl p-3 flex items-center justify-center">
+            <Terminal size={28} className="text-accent-blue" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-display)', marginBottom: '0.3rem', fontWeight: 700 }}>
+            <h1 className="text-[1.6rem] font-bold text-text-main font-display mb-1">
               Event Engine Control
             </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            <p className="text-text-muted text-[0.875rem]">
               Broadcast events and inspect system message backplanes.
             </p>
           </div>
@@ -49,19 +25,9 @@ export default function EventEngineDashboard() {
 
       <CommandCenter />
       
-      <div 
-        className="glass-panel" 
-        style={{ 
-          padding: '1.5rem', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: '1rem',
-          border: '1px solid var(--border-color)',
-          borderRadius: '12px'
-        }}
-      >
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Live Audit Stream & IP Tracking</h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+      <div className="glass-panel p-6 flex flex-col gap-4 border border-color rounded-xl">
+        <h3 className="text-[1.1rem] font-semibold text-text-main">Live Audit Stream & IP Tracking</h3>
+        <p className="text-text-muted text-[0.85rem]">
           Real-time event logs and audit streams will display here. IP geolocations and routing headers are tracked automatically.
         </p>
       </div>

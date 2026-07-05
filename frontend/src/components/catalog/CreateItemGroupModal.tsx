@@ -46,72 +46,59 @@ export default function CreateItemGroupModal({ isOpen, onClose, onSuccess }: Cre
   };
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 9999,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)'
-    }}>
-      <div style={{
-        width: '450px', background: 'var(--bg-card)', border: '1px solid var(--border-color)',
-        borderRadius: '16px', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
-      }}>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-[450px] bg-card border border-color rounded-2xl overflow-hidden shadow-2xl">
         {/* Header */}
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)',
-          background: 'linear-gradient(90deg, rgba(99,91,255,0.08), transparent)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ background: 'rgba(99,91,255,0.1)', padding: '8px', borderRadius: '8px', color: '#635bff' }}>
+        <div className="flex justify-between items-center py-5 px-6 border-b border-color bg-gradient-to-r from-accent-primary/8 to-transparent">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-accent-primary/10 p-2 rounded-lg text-accent-primary flex items-center justify-center">
               <Layers size={20} />
             </div>
-            <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Create Item Group</h2>
+            <h2 className="m-0 text-[1.1rem] font-bold text-text-main">Create Item Group</h2>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+          <button onClick={onClose} className="bg-transparent border-none text-text-muted cursor-pointer hover:text-text-main">
             <X size={20} />
           </button>
         </div>
 
         {/* Body */}
-        <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+        <form onSubmit={handleSubmit} className="p-6">
           {error && (
-            <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '10px', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem' }}>
+            <div className="bg-red-500/10 text-[#ef4444] p-2.5 rounded-lg mb-4 text-[0.85rem] border border-red-500/20">
               {error}
             </div>
           )}
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Group Name *</label>
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[0.8rem] font-semibold text-text-muted">Group Name *</label>
               <input 
                 type="text" 
-                className="input-field" 
+                className="input-field w-full p-2.5 bg-black/20 border border-color rounded-lg text-white outline-none focus:ring-2 focus:ring-accent-primary/20" 
                 value={name} 
                 onChange={(e) => setName(e.target.value)} 
                 placeholder="e.g. Raw Materials" 
                 required 
-                style={{ width: '100%', padding: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)', borderRadius: '8px', color: '#fff' }}
               />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Parent Group ID (Optional)</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[0.8rem] font-semibold text-text-muted">Parent Group ID (Optional)</label>
               <input 
                 type="text" 
-                className="input-field" 
+                className="input-field w-full p-2.5 bg-black/20 border border-color rounded-lg text-white outline-none focus:ring-2 focus:ring-accent-primary/20" 
                 value={parentGroupId} 
                 onChange={(e) => setParentGroupId(e.target.value)} 
                 placeholder="UUID for hierarchy..." 
-                style={{ width: '100%', padding: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)', borderRadius: '8px', color: '#fff' }}
               />
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '2rem' }}>
-            <button type="button" onClick={onClose} style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-muted)', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}>
+          <div className="flex justify-end gap-2.5 mt-8">
+            <button type="button" onClick={onClose} className="bg-transparent border border-color text-text-muted py-2 px-4 rounded-lg cursor-pointer hover:text-text-main">
               Cancel
             </button>
-            <button type="submit" disabled={loading} style={{ background: 'var(--accent-primary)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
+            <button type="submit" disabled={loading} className="bg-accent-primary text-white border-none py-2 px-4 rounded-lg cursor-pointer font-bold disabled:opacity-50 disabled:cursor-not-allowed">
               {loading ? 'Creating...' : 'Create Group'}
             </button>
           </div>
