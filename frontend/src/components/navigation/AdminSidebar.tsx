@@ -100,7 +100,7 @@ export default function AdminSidebar() {
                   <span>{item.label}</span>
                   {item.readOnly && <ReadOnlyBadge />}
                 </div>
-                {item.label === 'Users' && currentUser?.role_tier === 0 && (
+                {item.label === 'Users' && currentUser?.permissions?.includes('*:*') && (
                   <button
                     onClick={(e) => {
                       e.preventDefault();
@@ -136,7 +136,7 @@ export default function AdminSidebar() {
                 {currentUser.full_name || currentUser.email}
               </span>
               <span className="text-[0.68rem] text-text-muted">
-                Tier {currentUser.role_tier ?? 0} Root
+                {currentUser?.permissions?.includes('*:*') ? 'System Admin' : 'Admin'}
               </span>
             </div>
           </div>

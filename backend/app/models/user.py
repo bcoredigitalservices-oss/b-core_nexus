@@ -22,6 +22,14 @@ role_permissions = Table(
     Column("permission_id", UUID(as_uuid=True), ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True),
 )
 
+# Junction table: user_permissions (direct user-to-permission mapping for workspace access)
+user_permissions = Table(
+    "user_permissions",
+    Base.metadata,
+    Column("user_id", UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+    Column("permission_id", UUID(as_uuid=True), ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True),
+)
+
 # Create the Many-to-Many Junction Table (user_workspaces)
 user_workspaces = Table(
     "user_workspaces",
@@ -41,6 +49,7 @@ class Permission(Base):
     name: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
 
     roles: Mapped[list["Role"]] = relationship("Role", secondary=role_permissions, back_populates="permissions")
+    users: Mapped[list["User"]] = relationship("User", secondary=user_permissions, back_populates="direct_permissions")
 
 class Role(Base):
     __tablename__ = "roles"
@@ -72,6 +81,9 @@ class User(CoreModel):
 
     # Relationships
     roles: Mapped[list["Role"]] = relationship("Role", secondary=user_roles, back_populates="users", lazy="selectin")
+    direct_permissions: Mapped[list["Permission"]] = relationship(
+        "Permission", secondary=user_permissions, back_populates="users", lazy="selectin"
+    )
     employee_profile: Mapped["EmployeeProfile | None"] = relationship("EmployeeProfile", back_populates="user", uselist=False, cascade="all, delete-orphan", lazy="selectin")
 
     @property

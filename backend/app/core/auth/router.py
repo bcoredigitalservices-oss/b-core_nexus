@@ -341,7 +341,7 @@ async def login(
         
     # MFA Intercept Modification
     if not user.mfa_enabled:
-        if user.role_tier == 0:
+        if getattr(user, "role_tier", 1) == 0:
             # Mandatory MFA for Tier 0
             if not user.totp_secret:
                 user.totp_secret = generate_totp_secret()
@@ -485,7 +485,7 @@ async def login_for_access_token(
     
     # MFA Intercept Modification
     if not user.mfa_enabled:
-        if user.role_tier == 0:
+        if getattr(user, "role_tier", 1) == 0:
             # Mandatory MFA for Tier 0
             if not user.totp_secret:
                 user.totp_secret = generate_totp_secret()
@@ -649,6 +649,12 @@ async def revoke_user_session(
         raise HTTPException(status_code=404, detail="User not found.")
         
     user.is_active = False
+
+    # Wipe all direct permissions on deactivation
+    from sqlalchemy import delete as sql_delete
+    from app.models.user import user_permissions
+    await db.execute(sql_delete(user_permissions).where(user_permissions.c.user_id == user_uuid))
+
     db.add(user)
     await db.commit()
 

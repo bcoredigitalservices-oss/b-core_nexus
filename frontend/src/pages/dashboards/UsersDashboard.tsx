@@ -79,30 +79,7 @@ export default function UsersDashboard() {
                   return fullName || <em className="opacity-50">Unconfigured</em>;
                 }
               },
-              {
-                key: 'role_tier',
-                label: 'Tier',
-                sortable: true,
-                render: (value: any) => (
-                  <span className={`badge badge-t${value}`}>
-                    Tier {value}
-                  </span>
-                )
-              },
-              {
-                key: 'clearance_level',
-                label: 'Clearance',
-                sortable: true,
-                render: (value: any) => (
-                  value !== undefined && value !== null ? (
-                    <span className={`badge badge-t${value}`}>
-                      Level {value}
-                    </span>
-                  ) : (
-                    <em className="opacity-50">N/A</em>
-                  )
-                )
-              },
+
               {
                 key: 'mfa_enabled',
                 label: 'MFA',

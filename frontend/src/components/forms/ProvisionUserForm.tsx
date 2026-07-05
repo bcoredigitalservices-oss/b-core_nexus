@@ -40,7 +40,6 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [clearanceLevel, setClearanceLevel] = useState(4); // Default Tier 4 Viewer
   const [departmentId, setDepartmentId] = useState('');
   const [selectedWorkspaces, setSelectedWorkspaces] = useState<string[]>([]);
 
@@ -104,8 +103,6 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
           email,
           first_name: firstName || null,
           last_name: lastName || null,
-          role_tier: clearanceLevel,
-          clearance_level: clearanceLevel,
           department_id: departmentId || null,
           workspace_ids: selectedWorkspaces
         })
@@ -227,20 +224,6 @@ export default function ProvisionUserForm({ onSuccess, onCancel }: ProvisionUser
             />
           </div>
         </div>
-      </div>
-
-      {/* Clearance Level / Role */}
-      <div>
-        <label className="block text-[0.75rem] text-text-muted font-semibold mb-1.5">Clearance Level Assignment</label>
-        <select 
-          value={clearanceLevel} 
-          onChange={(e) => setClearanceLevel(Number(e.target.value))}
-          className="w-full py-3 px-4 bg-input border border-color rounded-lg text-text-main text-[0.9rem] outline-none"
-        >
-          <option value={2}>Tier 2 Manager (Directional Operations)</option>
-          <option value={3}>Tier 3 Operator (Operational Leadership)</option>
-          <option value={4}>Tier 4 Viewer (Execution & Logs)</option>
-        </select>
       </div>
 
       {/* Department Assignment */}

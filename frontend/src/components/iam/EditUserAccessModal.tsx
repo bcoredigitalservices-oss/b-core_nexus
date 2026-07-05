@@ -18,7 +18,6 @@ interface EditUserAccessModalProps {
     email: string;
     first_name: string | null;
     last_name: string | null;
-    role_tier: number;
     designation: string | null;
     department_id: string | null;
     workspaces?: string[];
@@ -84,7 +83,7 @@ const WORKSPACE_CATEGORIES = [
 ];
 
 export default function EditUserAccessModal({ user, onClose, onSuccess }: EditUserAccessModalProps) {
-  const { token, authFetch, currentUser } = useAppContext();
+  const { token, authFetch } = useAppContext();
 
   // Metadata context lists
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -92,7 +91,6 @@ export default function EditUserAccessModal({ user, onClose, onSuccess }: EditUs
   const [loading, setLoading] = useState(true);
 
   // Form Field States
-  const [roleTier, setRoleTier] = useState<number>(4);
   const [designation, setDesignation] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [selectedWorkspaceIds, setSelectedWorkspaceIds] = useState<string[]>([]);
@@ -131,7 +129,6 @@ export default function EditUserAccessModal({ user, onClose, onSuccess }: EditUs
   // Initialize form fields with existing user properties
   useEffect(() => {
     if (!user) return;
-    setRoleTier(user.role_tier || 4);
     setDesignation(user.designation || '');
     setDepartmentId(user.department_id || '');
   }, [user]);
@@ -198,7 +195,6 @@ export default function EditUserAccessModal({ user, onClose, onSuccess }: EditUs
       await authFetch(`/iam/users/${user.id}/access`, {
         method: 'PUT',
         body: JSON.stringify({
-          role_tier: roleTier,
           designation: designation.trim() || null,
           department_id: departmentId || null,
           workspace_ids: selectedWorkspaceIds
@@ -279,26 +275,8 @@ export default function EditUserAccessModal({ user, onClose, onSuccess }: EditUs
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 
-            {/* Clearance & Role Tier Selection */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="flex items-center gap-1.5 text-[0.75rem] text-text-muted font-semibold mb-1.5">
-                  <ShieldCheck size={14} />
-                  Role Tier
-                </label>
-                <select 
-                  value={roleTier} 
-                  onChange={(e) => setRoleTier(Number(e.target.value))}
-                  disabled={submitting}
-                >
-                  <option value={0} disabled={currentUser?.role_tier > 0}>Tier 0 Superadmin</option>
-                  <option value={1} disabled={currentUser?.role_tier > 1}>Tier 1 Executive</option>
-                  <option value={2}>Tier 2 Manager</option>
-                  <option value={3}>Tier 3 Operator</option>
-                  <option value={4}>Tier 4 Auditor</option>
-                </select>
-              </div>
-
+            {/* Designation */}
+            <div className="grid grid-cols-1 gap-4 mb-6">
               <div>
                 <label className="flex items-center gap-1.5 text-[0.75rem] text-text-muted font-semibold mb-1.5">
                   <ShieldCheck size={14} />

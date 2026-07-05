@@ -55,7 +55,7 @@ export default function AppShell() {
   }
 
   // Determine if layout should show structural sidebar
-  const showSidebar = !isWorkspaceAppRoute && currentUser?.role_tier < 2;
+  const showSidebar = !isWorkspaceAppRoute && !currentUser?.permissions?.includes('*:*');
 
   // Derived from Sidebar.jsx's own constants — this is the single source of
   // truth for both the sidebar's rendered width and the content offset, so
@@ -166,7 +166,7 @@ export default function AppShell() {
                     {currentUser?.full_name || currentUser?.email || 'Admin'}
                   </span>
                   <span className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">
-                    Tier {currentUser?.role_tier ?? '—'}
+                    {currentUser?.permissions?.includes('*:*') ? 'Admin' : 'User'}
                   </span>
                 </div>
                 <ChevronDown size={14} className={`text-text-muted transition-transform duration-200 shrink-0 ${userMenuOpen ? 'rotate-180' : 'rotate-0'}`} />

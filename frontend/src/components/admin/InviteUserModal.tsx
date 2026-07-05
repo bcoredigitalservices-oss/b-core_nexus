@@ -7,8 +7,22 @@ export default function InviteUserModal() {
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [roleId, setRoleId] = useState('');
+  const [roles, setRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Fetch roles when modal opens
+  useEffect(() => {
+    if (inviteModalOpen) {
+      authFetch('/iam/roles').then((fetchedRoles) => {
+        if (fetchedRoles && fetchedRoles.length > 0) {
+          setRoles(fetchedRoles);
+          setRoleId(fetchedRoles[0].id);
+        }
+      }).catch(err => console.error("Failed to fetch roles:", err));
+    }
+  }, [inviteModalOpen]);
 
   // Toast notification state
   const [showToast, setShowToast] = useState(false);
@@ -36,6 +50,10 @@ export default function InviteUserModal() {
     setErrorMsg('');
 
     try {
+      if (!roleId) {
+        throw new Error('Please select a base role for the invitation.');
+      }
+
       // POST /api/v1/auth/invite (requires min_tier=0, which our currentUser is)
       const data = await authFetch('/auth/invite', {
         method: 'POST',
@@ -43,7 +61,7 @@ export default function InviteUserModal() {
           email: email.trim(),
           first_name: firstName.trim(),
           last_name: lastName.trim(),
-          role_tier: 1 // default role tier to 1 (Executive)
+          role_id: roleId
         })
       });
 
@@ -128,11 +146,11 @@ export default function InviteUserModal() {
               <div className="flex items-center gap-2">
                 <Sparkles size={18} className="text-[#00A0DF]" />
                 <h3 className="text-[1.25rem] font-extrabold m-0 tracking-tight text-text-main">
-                  Invite Executive Boardroom Member
+                  Invite User
                 </h3>
               </div>
               <p className="text-[0.8rem] text-text-muted m-0 leading-relaxed">
-                Generate a secure activation link for a new Tier 1 Executive user.
+                Generate a secure activation link for a new user.
               </p>
             </div>
 
@@ -208,6 +226,25 @@ export default function InviteUserModal() {
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* Base Role Selection */}
+              <div className="flex flex-col gap-1.5 mt-2">
+                <label className="text-[0.7rem] font-semibold uppercase tracking-wider text-text-muted">
+                  Base Role
+                </label>
+                <select 
+                  value={roleId} 
+                  onChange={(e) => setRoleId(e.target.value)}
+                  disabled={loading}
+                  required
+                  className="w-full py-3 px-4 bg-white/2 border border-white/8 rounded-lg text-text-main text-[0.9rem] outline-none focus:border-transparent focus:ring-2 focus:ring-[#00A0DF]"
+                >
+                  <option value="" disabled>-- Select Base Role --</option>
+                  {roles.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Submit Button */}

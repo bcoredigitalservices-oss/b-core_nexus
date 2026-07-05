@@ -24,6 +24,11 @@ interface Department {
   parent_id: string | null;
 }
 
+interface Role {
+  id: string;
+  name: string;
+}
+
 interface Workspace {
   id: string;
   name: string;
@@ -80,13 +85,14 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
   // Metadata context lists
   const [departments, setDepartments] = useState<Department[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Form Field States
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [roleTier, setRoleTier] = useState<number>(4);
+  const [roleId, setRoleId] = useState('');
   const [designation, setDesignation] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [selectedWorkspaces, setSelectedWorkspaces] = useState<string[]>([]);
@@ -106,6 +112,12 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
         
         const depts = await authFetch('/iam/departments');
         if (depts) setDepartments(depts);
+
+        const fetchedRoles = await authFetch('/iam/roles');
+        if (fetchedRoles && fetchedRoles.length > 0) {
+          setRoles(fetchedRoles);
+          setRoleId(fetchedRoles[0].id);
+        }
 
         const wses = await authFetch('/iam/workspaces');
         if (wses) {
@@ -173,7 +185,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
           email: email.trim(),
           first_name: firstName.trim() || null,
           last_name: lastName.trim() || null,
-          role_tier: roleTier,
+          role_id: roleId,
           designation: designation.trim() || null,
           department_id: departmentId || null,
           workspace_strings: selectedWorkspaces
@@ -188,7 +200,6 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
       setEmail('');
       setFirstName('');
       setLastName('');
-      setRoleTier(4);
       setDesignation('');
       setDepartmentId('');
       setSelectedWorkspaces([]);
@@ -298,22 +309,22 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
             </div>
 
             {/* Clearance & Role Tier Selection */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-color pt-5">
+            <div className="grid grid-cols-1 gap-4 border-t border-color pt-5">
               <div>
                 <label className="flex items-center gap-1.5 text-[0.75rem] text-text-muted font-semibold mb-1.5">
                   <ShieldCheck size={14} />
-                  Role Tier *
+                  Base Role Assignment *
                 </label>
                 <select 
-                  value={roleTier} 
-                  onChange={(e) => setRoleTier(Number(e.target.value))}
+                  value={roleId} 
+                  onChange={(e) => setRoleId(e.target.value)}
                   disabled={submitting}
+                  required
                 >
-                  <option value={0} disabled={currentUser?.role_tier > 0}>Tier 0 Superadmin</option>
-                  <option value={1} disabled={currentUser?.role_tier > 1}>Tier 1 Executive</option>
-                  <option value={2}>Tier 2 Manager</option>
-                  <option value={3}>Tier 3 Operator</option>
-                  <option value={4}>Tier 4 Auditor</option>
+                  <option value="" disabled>-- Select Base Role --</option>
+                  {roles.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
                 </select>
               </div>
 
