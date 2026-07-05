@@ -1,10 +1,26 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Table, Column, String, DateTime, ForeignKey, UniqueConstraint, JSON
-from sqlalchemy.dialects.postgresql import ARRAY, UUID
+from sqlalchemy import Table, Column, String, DateTime, ForeignKey, Boolean, JSON, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.associationproxy import association_proxy
 from app.database import Base, CoreModel
+
+# Junction table: user_roles
+user_roles = Table(
+    "user_roles",
+    Base.metadata,
+    Column("user_id", UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+    Column("role_id", UUID(as_uuid=True), ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
+)
+
+# Junction table: role_permissions
+role_permissions = Table(
+    "role_permissions",
+    Base.metadata,
+    Column("role_id", UUID(as_uuid=True), ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
+    Column("permission_id", UUID(as_uuid=True), ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True),
+)
 
 # Create the Many-to-Many Junction Table (user_workspaces)
 user_workspaces = Table(
@@ -18,39 +34,55 @@ user_workspaces = Table(
 class UserWorkspace(Base):
     __table__ = user_workspaces
 
+class Permission(Base):
+    __tablename__ = "permissions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+
+    roles: Mapped[list["Role"]] = relationship("Role", secondary=role_permissions, back_populates="permissions")
+
+class Role(Base):
+    __tablename__ = "roles"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    users: Mapped[list["User"]] = relationship("User", secondary=user_roles, back_populates="roles")
+    permissions: Mapped[list["Permission"]] = relationship("Permission", secondary=role_permissions, back_populates="roles")
+
 class User(CoreModel):
     __tablename__ = "users"
 
-    email: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
-    hashed_password: Mapped[str | None] = mapped_column(nullable=True)
-    first_name: Mapped[str | None] = mapped_column(nullable=True)
-    last_name: Mapped[str | None] = mapped_column(nullable=True)
-    invite_token: Mapped[str | None] = mapped_column(unique=True, index=True, nullable=True)
+    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    password_hash: Mapped[str | None] = mapped_column(String, nullable=True)
+    mfa_secret: Mapped[str | None] = mapped_column(String, nullable=True)
+    mfa_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    last_login: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    
+    # Invitation columns to preserve onboarding flow
+    invite_token: Mapped[str | None] = mapped_column(String, unique=True, index=True, nullable=True)
     token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    role_tier: Mapped[int] = mapped_column(default=4, nullable=False)  # 0 = System Admin (Root), 1 = Executive Admin, 2 = Directional, 3 = Leadership, 4 = Execution
-    functional_roles: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
-    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
-    totp_secret: Mapped[str | None] = mapped_column(default=None, nullable=True)
-    mfa_enabled: Mapped[bool] = mapped_column(default=False, nullable=False)
     
-    # Designation (e.g., 'Lead Developer', 'Sales Executive')
-    designation: Mapped[str | None] = mapped_column(nullable=True)
-    
-    # Department Link
-    department_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("departments.id", ondelete="SET NULL"), 
-        nullable=True
-    )
+    # Keeping designation and department for compatibility
+    designation: Mapped[str | None] = mapped_column(String, nullable=True)
     preferences = Column(JSON, nullable=True)
 
     # Relationships
-    department: Mapped["Department | None"] = relationship(
-        "Department", 
-        foreign_keys=[department_id], 
-        back_populates="members"
-    )
+    roles: Mapped[list["Role"]] = relationship("Role", secondary=user_roles, back_populates="users", lazy="selectin")
+    employee_profile: Mapped["EmployeeProfile | None"] = relationship("EmployeeProfile", back_populates="user", uselist=False, cascade="all, delete-orphan", lazy="selectin")
+
+    @property
+    def department_id(self) -> uuid.UUID | None:
+        return self.employee_profile.department_id if self.employee_profile else None
+
+    @department_id.setter
+    def department_id(self, value: uuid.UUID | None):
+        if self.employee_profile:
+            self.employee_profile.department_id = value
     
-    # Relationship to user_workspaces junction table to easily fetch a user's active workspaces list upon authentication
     _workspaces: Mapped[list["UserWorkspace"]] = relationship(
         "UserWorkspace",
         lazy="selectin",
@@ -59,6 +91,42 @@ class User(CoreModel):
 
     workspaces = association_proxy("_workspaces", "workspace_string")
 
+    # Compatibility properties for password hashing & MFA
+    @property
+    def hashed_password(self) -> str | None:
+        return self.password_hash
+
+    @hashed_password.setter
+    def hashed_password(self, value: str | None):
+        self.password_hash = value
+
+    @property
+    def totp_secret(self) -> str | None:
+        return self.mfa_secret
+
+    @totp_secret.setter
+    def totp_secret(self, value: str | None):
+        self.mfa_secret = value
+
     @property
     def is_totp_enabled(self) -> bool:
         return self.mfa_enabled
+
+class EmployeeProfile(Base):
+    __tablename__ = "employee_profiles"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    first_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    phone: Mapped[str | None] = mapped_column(String, nullable=True)
+    hire_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    
+    department_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("departments.id", ondelete="SET NULL"),
+        nullable=True
+    )
+
+    user: Mapped["User"] = relationship("User", back_populates="employee_profile")
+    department: Mapped["Department | None"] = relationship("Department", foreign_keys=[department_id], back_populates="members")
