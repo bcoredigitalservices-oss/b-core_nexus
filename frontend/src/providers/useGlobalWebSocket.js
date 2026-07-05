@@ -8,12 +8,12 @@ const getActiveWorkspaceFromUrl = () => {
 };
 
 export default function useGlobalWebSocket() {
-  const { token, isApiLive } = useAppContext();
+  const { token } = useAppContext();
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
 
   useEffect(() => {
-    if (!token || !isApiLive) {
+    if (!token) {
       if (socketRef.current) {
         socketRef.current.close();
         socketRef.current = null;
@@ -27,9 +27,8 @@ export default function useGlobalWebSocket() {
     const connect = () => {
       try {
         // Derive WebSocket URL dynamically based on the current browser URL
-        const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001';
-        const wsProto = apiBaseUrl.startsWith('https') ? 'wss' : 'ws';
-        const wsHost = apiBaseUrl.replace(/^https?:\/\//, '');
+        const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsHost = window.location.host;
         
         const currentWorkspace = getActiveWorkspaceFromUrl();
         const wsUrl = `${wsProto}://${wsHost}/api/v1/stream?token=${token}${
@@ -92,7 +91,7 @@ export default function useGlobalWebSocket() {
         socketRef.current = null;
       }
     };
-  }, [token, isApiLive]);
+  }, [token]);
 
   // Monitor URL location mutations and auto-update subscription
   useEffect(() => {

@@ -1,13 +1,11 @@
 import os
 from pydantic_settings import BaseSettings
 from pydantic import field_validator
-import os
-
 
 class Settings(BaseSettings):
-    DATABASE_URL: str | None = None
+    DATABASE_URL: str
     REDIS_URL: str = "redis://localhost:6379/0"
-    SECRET_KEY: str = "bcore_dev_secret_change_me"
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
 
@@ -15,17 +13,14 @@ class Settings(BaseSettings):
     @classmethod
     def validate_database_url(cls, v: str) -> str:
         if not v:
-            # Provide a safe local sqlite dev fallback when no DATABASE_URL is set
-            dev_db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dev_bcore.db")
-            v = f"sqlite+aiosqlite:///{dev_db_path}"
-        # Accept either Postgres async dialects or sqlite+aiosqlite for local development
-        if v.startswith("postgresql") or v.startswith("postgres"):
-            return v
-        if v.startswith("sqlite+aiosqlite://"):
-            return v
-        raise ValueError(
-            f"Fail-Safe Guardrail: DATABASE_URL must point to a PostgreSQL database or a local sqlite+aiosqlite DB (got '{v}')."
-        )
+            raise ValueError("DATABASE_URL must be defined.")
+        # Fail-fast validation: restrict database dialect to PostgreSQL (postgresql:// or postgresql+asyncpg:// or postgres://)
+        if not v.startswith("postgresql") and not v.startswith("postgres"):
+            raise ValueError(
+                f"Fail-Safe Guardrail: DATABASE_URL must point to a PostgreSQL database (got '{v}'). "
+                "Local file-based databases (e.g. SQLite) are prohibited to prevent container data loss."
+            )
+        return v
 
     class Config:
         # Load .env from the parent directory of backend/app/config.py (backend/)

@@ -4,7 +4,7 @@ from sqlalchemy import Table, Column, String, DateTime, ForeignKey, Boolean, JSO
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.associationproxy import association_proxy
-from app.database import Base, CoreModel, JSONType
+from app.database import Base, CoreModel
 
 # Junction table: user_roles
 user_roles = Table(
@@ -65,8 +65,6 @@ class User(CoreModel):
     # Invitation columns to preserve onboarding flow
     invite_token: Mapped[str | None] = mapped_column(String, unique=True, index=True, nullable=True)
     token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    role_tier: Mapped[int] = mapped_column(default=4, nullable=False)  # 0 = System Admin (Root), 1 = Executive Admin, 2 = Directional, 3 = Leadership, 4 = Execution
-    functional_roles: Mapped[list[str]] = mapped_column(JSONType, default=list, nullable=False)
     
     # Keeping designation and department for compatibility
     designation: Mapped[str | None] = mapped_column(String, nullable=True)

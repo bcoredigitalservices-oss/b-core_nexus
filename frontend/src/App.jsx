@@ -6,11 +6,11 @@ import AppRouter from './routes/AppRouter';
 import GlobalBlockerScreen from './components/ui/GlobalBlockerScreen';
 
 function AppContent() {
-  const { token, currentUser, isApiLive } = useAppContext();
+  const { token, currentUser } = useAppContext();
   const [blockerMessage, setBlockerMessage] = useState(null);
 
   useEffect(() => {
-    if (!token || !isApiLive) {
+    if (!token) {
       setBlockerMessage(null);
       return;
     }
@@ -77,7 +77,7 @@ function AppContent() {
         clearTimeout(reconnectTimeout);
       }
     };
-  }, [token, currentUser, isApiLive]);
+  }, [token, currentUser]);
 
   return (
     <>
