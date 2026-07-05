@@ -36,6 +36,8 @@ async def init_db():
                 )
                 session.add(org)
                 await session.flush()
+                await session.commit()
+                org = default_org
                 print("Default Organization seeded.")
 
             # Seed default *:* permission
