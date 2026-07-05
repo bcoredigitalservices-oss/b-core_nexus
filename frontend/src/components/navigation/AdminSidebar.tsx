@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import ReadOnlyBadge from '../ui/ReadOnlyBadge';
+import BCoreLogoMark from '../branding/BCoreLogoMark';
 
 interface NavItem {
   label: string;
@@ -62,98 +63,40 @@ export default function AdminSidebar() {
   };
 
   return (
-    <aside 
-      style={{
-        width: '260px',
-        backgroundColor: 'var(--bg-main)',
-        borderRight: '1px solid var(--border-color)',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        position: 'sticky',
-        top: 0,
-        overflowY: 'auto'
-      }}
-    >
-      <style>{`
-        .admin-sidebar-link {
-          display: flex;
-          align-items: center;
-          padding: 0.65rem 1.25rem;
-          color: var(--text-muted);
-          text-decoration: none;
-          font-size: 0.875rem;
-          font-weight: 500;
-          transition: all 0.2s ease;
-          border-left: 2px solid transparent;
-          gap: 10px;
-        }
-        .admin-sidebar-link:hover {
-          color: var(--text-main);
-          background-color: var(--bg-card-hover);
-        }
-        .admin-sidebar-link.active {
-          border-left-color: var(--accent-primary);
-          background-color: var(--sidebar-active-bg);
-          color: var(--sidebar-active-text);
-        }
-        .admin-sidebar-link-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          opacity: 0.85;
-        }
-        .admin-sidebar-link.active .admin-sidebar-link-icon {
-          color: var(--sidebar-active-text);
-          opacity: 1;
-        }
-      `}</style>
-
+    <aside className="w-[260px] bg-sidebar border-r border-color flex flex-col h-screen sticky top-0 overflow-y-auto shrink-0">
       {/* Brand Header */}
-      <div 
-        style={{ 
-          padding: '1.5rem 1.25rem', 
-          borderBottom: '1px solid var(--border-color)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}
-      >
-        <div 
-          style={{
-            background: 'color-mix(in srgb, var(--accent-primary) 10%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--accent-primary) 20%, transparent)',
-            borderRadius: '8px',
-            padding: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <Cpu size={20} color="var(--accent-primary)" />
+      <div className="py-6 px-5 border-b border-color flex items-center gap-3">
+        <div className="bg-card border border-color rounded-lg p-1.5 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(99,91,255,0.15)]">
+          <BCoreLogoMark size={20} />
         </div>
         <div>
-          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '0.05em', display: 'block' }}>
+          <span className="text-[0.9rem] font-bold text-text-main tracking-wider block font-display">
             B-CORE NEXUS
           </span>
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>
+          <span className="text-[0.7rem] text-text-muted block">
             {systemSettings?.organization_name || 'Tier 0 Root Admin'}
           </span>
         </div>
       </div>
 
       {/* Navigation Links */}
-      <nav style={{ flex: 1, padding: '1rem 0', display: 'flex', flexDirection: 'column' }}>
+      <nav className="flex-1 py-4 flex flex-col">
         {navItems.map((item, index) => (
           <NavLink 
             key={index} 
             to={item.path} 
-            className="admin-sidebar-link"
+            className={({ isActive }) =>
+              `flex items-center gap-2.5 py-2.5 px-5 text-text-muted text-[13.5px] font-medium border-l-2 transition-all duration-150 ${
+                isActive
+                  ? 'border-accent-primary bg-sidebar-active-bg text-sidebar-active-text font-semibold'
+                  : 'border-transparent hover:bg-card-hover hover:text-text-main'
+              }`
+            }
           >
-            <span className="admin-sidebar-link-icon">{item.icon}</span>
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span className="flex items-center justify-center opacity-85">{item.icon}</span>
+            <div className="flex flex-col flex-1">
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center">
                   <span>{item.label}</span>
                   {item.readOnly && <ReadOnlyBadge />}
                 </div>
@@ -164,25 +107,7 @@ export default function AdminSidebar() {
                       e.stopPropagation();
                       setInviteModalOpen(true);
                     }}
-                    style={{
-                      background: 'rgba(0, 160, 223, 0.12)',
-                      border: '1px solid rgba(0, 160, 223, 0.3)',
-                      borderRadius: '4px',
-                      color: '#00A0DF',
-                      padding: '2px 4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(0, 160, 223, 0.25)';
-                      e.currentTarget.style.borderColor = 'rgba(0, 160, 223, 0.5)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(0, 160, 223, 0.12)';
-                      e.currentTarget.style.borderColor = 'rgba(0, 160, 223, 0.3)';
-                    }}
+                    className="bg-[#00A0DF] bg-opacity-10 border border-[#00A0DF] border-opacity-30 rounded text-[#00A0DF] p-0.5 flex items-center cursor-pointer transition-all duration-150 hover:bg-opacity-25 hover:border-opacity-50"
                     title="Invite Executive User"
                   >
                     <Plus size={12} strokeWidth={2.5} />
@@ -190,7 +115,7 @@ export default function AdminSidebar() {
                 )}
               </div>
               {item.subtext && (
-                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '1px' }}>
+                <span className="text-[11px] text-text-muted mt-0.5 font-normal">
                   {item.subtext}
                 </span>
               )}
@@ -200,38 +125,17 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Footer / User Profile */}
-      <div 
-        style={{ 
-          padding: '1rem 1.25rem', 
-          borderTop: '1px solid var(--border-color)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px'
-        }}
-      >
+      <div className="p-5 border-t border-color flex flex-col gap-2.5">
         {currentUser && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div 
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                backgroundColor: 'color-mix(in srgb, var(--accent-primary) 20%, transparent)',
-                color: 'var(--accent-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '0.85rem'
-              }}
-            >
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-accent-primary bg-opacity-20 text-accent-primary flex items-center justify-center font-bold text-[0.85rem]">
               {currentUser.email?.[0]?.toUpperCase() ?? 'A'}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-[0.8rem] font-semibold text-text-main truncate">
                 {currentUser.full_name || currentUser.email}
               </span>
-              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+              <span className="text-[0.68rem] text-text-muted">
                 Tier {currentUser.role_tier ?? 0} Root
               </span>
             </div>
@@ -239,22 +143,7 @@ export default function AdminSidebar() {
         )}
         <button
           onClick={handleLogout}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: '#EF4444',
-            fontSize: '0.8rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            padding: '6px 0',
-            textAlign: 'left',
-            transition: 'color 0.2s ease'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.color = '#F87171'}
-          onMouseLeave={(e) => e.currentTarget.style.color = '#EF4444'}
+          className="flex items-center gap-2 bg-transparent border-none text-accent-danger text-[0.8rem] font-semibold cursor-pointer py-1.5 text-left transition-colors duration-150 hover:text-red-400"
         >
           <LogOut size={14} />
           <span>Logout Session</span>

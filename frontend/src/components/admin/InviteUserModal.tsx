@@ -9,7 +9,7 @@ export default function InviteUserModal() {
   const [lastName, setLastName] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  
+
   // Toast notification state
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
@@ -74,41 +74,23 @@ export default function InviteUserModal() {
     <>
       {/* ── Floating Success Toast ────────────────────────────────────── */}
       {showToast && (
-        <div 
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            zIndex: 1000,
-            background: 'rgba(9, 27, 46, 0.85)',
-            border: '1px solid rgba(0, 245, 160, 0.35)',
-            borderRadius: '12px',
-            padding: '1rem 1.5rem',
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            animation: 'toast-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-            maxWidth: '400px'
-          }}
-        >
+        <div className="fixed bottom-6 right-6 z-[1000] bg-[#091b2e]/85 border border-[#00f5a0]/35 rounded-xl p-4 md:p-6 backdrop-blur-md shadow-[0_20px_40px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] flex items-center gap-3 animate-[toast-slide-in_0.3s_cubic-bezier(0.16,1,0.3,1)] max-w-[400px]">
           <style>{`
             @keyframes toast-slide-in {
               from { transform: translateY(20px) scale(0.95); opacity: 0; }
               to { transform: translateY(0) scale(1); opacity: 1; }
             }
           `}</style>
-          <div style={{ background: 'rgba(0, 245, 160, 0.1)', borderRadius: '50%', padding: '6px', display: 'flex', alignItems: 'center' }}>
-            <CheckCircle2 size={18} color="var(--accent-green)" />
+          <div className="bg-[#00f5a0]/10 rounded-full p-1.5 flex items-center justify-center">
+            <CheckCircle2 size={18} className="text-[var(--accent-green)]" />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>Invitation Created</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{toastMsg}</span>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[0.85rem] font-bold text-text-main">Invitation Created</span>
+            <span className="text-[0.75rem] text-text-muted">{toastMsg}</span>
           </div>
-          <button 
+          <button
             onClick={() => setShowToast(false)}
-            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', marginLeft: 'auto' }}
+            className="bg-transparent border-none text-text-muted cursor-pointer p-1 ml-auto hover:text-text-main"
           >
             <X size={14} />
           </button>
@@ -117,163 +99,59 @@ export default function InviteUserModal() {
 
       {/* ── Modal Backdrop ────────────────────────────────────────────── */}
       {inviteModalOpen && (
-        <div 
+        <div
           onClick={() => setInviteModalOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(3, 7, 18, 0.75)',
-            backdropFilter: 'blur(8px)',
-            zIndex: 900,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1.5rem'
-          }}
+          className="fixed inset-0 bg-[#030712]/75 backdrop-blur-md z-[900] flex items-center justify-center p-6"
         >
           {/* Modal Container Card */}
-          <div 
+          <div
             onClick={(e) => e.stopPropagation()}
-            style={{
-              width: '100%',
-              maxWidth: '460px',
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '16px',
-              padding: '2.25rem 2rem',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 160, 223, 0.05)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.5rem',
-              position: 'relative',
-              animation: 'modal-zoom-in 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-            }}
+            className="w-full max-w-[460px] bg-card border border-color rounded-2xl p-9 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5),0_0_40px_rgba(0,160,223,0.05)] flex flex-col gap-6 relative animate-[modal-zoom-in_0.3s_cubic-bezier(0.16,1,0.3,1)]"
           >
             <style>{`
               @keyframes modal-zoom-in {
                 from { transform: scale(0.95); opacity: 0; }
                 to { transform: scale(1); opacity: 1; }
               }
-              .invite-input-wrap {
-                position: relative;
-                display: flex;
-                align-items: center;
-              }
-              .invite-input-icon {
-                position: absolute;
-                left: 1rem;
-                color: var(--text-muted);
-                display: flex;
-                align-items: center;
-                pointer-events: none;
-              }
-              .invite-input {
-                width: 100%;
-                padding: 0.75rem 1rem 0.75rem 2.75rem;
-                background: rgba(255, 255, 255, 0.02);
-                border: 1px solid rgba(255, 255, 255, 0.08);
-                border-radius: 10px;
-                color: var(--text-main);
-                font-size: 0.9rem;
-                transition: all 0.2s ease;
-                outline: none;
-              }
-              .invite-input:focus {
-                border-color: transparent;
-                box-shadow: 0 0 0 2px #00A0DF;
-              }
-              .invite-input:focus ~ .invite-input-icon {
-                color: #00A0DF;
-              }
-              .invite-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.5rem;
-                width: 100%;
-                padding: 0.9rem;
-                border: none;
-                border-radius: 10px;
-                font-weight: 700;
-                font-size: 0.95rem;
-                cursor: pointer;
-                background: linear-gradient(to right, #00A0DF, #007cb0);
-                color: #ffffff;
-                box-shadow: 0 0 15px rgba(0, 160, 223, 0.2);
-                transition: all 0.2s ease;
-              }
-              .invite-btn:hover:not(:disabled) {
-                transform: translateY(-1px);
-                box-shadow: 0 0 20px rgba(0, 160, 223, 0.4);
-              }
-              .invite-btn:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-              }
             `}</style>
 
             {/* Close button */}
-            <button 
+            <button
               onClick={() => setInviteModalOpen(false)}
-              style={{
-                position: 'absolute',
-                top: '1.5rem',
-                right: '1.5rem',
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                padding: '4px',
-                borderRadius: '6px',
-                transition: 'color 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
-              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+              className="absolute top-6 right-6 bg-transparent border-none text-text-muted cursor-pointer p-1 rounded-md transition-colors duration-200 hover:text-text-main"
             >
               <X size={18} />
             </button>
 
             {/* Header */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Sparkles size={18} color="#00A0DF" />
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-2">
+                <Sparkles size={18} className="text-[#00A0DF]" />
+                <h3 className="text-[1.25rem] font-extrabold m-0 tracking-tight text-text-main">
                   Invite Executive Boardroom Member
                 </h3>
               </div>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+              <p className="text-[0.8rem] text-text-muted m-0 leading-relaxed">
                 Generate a secure activation link for a new Tier 1 Executive user.
               </p>
             </div>
 
             {/* Error banner */}
             {errorMsg && (
-              <div 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '0.75rem 1rem',
-                  background: 'rgba(255, 51, 102, 0.1)',
-                  border: '1px solid rgba(255, 51, 102, 0.3)',
-                  borderRadius: '8px',
-                  color: '#ff8099',
-                  fontSize: '0.8rem'
-                }}
-              >
+              <div className="flex items-center gap-2 py-3 px-4 bg-[#ff3366]/10 border border-[#ff3366]/30 rounded-lg text-[#ff8099] text-[0.8rem]">
                 <AlertCircle size={15} />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               {/* Email Address */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[0.7rem] font-semibold uppercase tracking-wider text-text-muted">
                   Email Address
                 </label>
-                <div className="invite-input-wrap">
+                <div className="relative flex items-center">
                   <input
                     type="email"
                     required
@@ -281,21 +159,21 @@ export default function InviteUserModal() {
                     placeholder="executive@bcore.local"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    className="invite-input"
+                    className="w-full py-3 pr-4 pl-11 bg-white/2 border border-white/8 rounded-lg text-text-main text-[0.9rem] transition-all duration-200 outline-none focus:border-transparent focus:ring-2 focus:ring-[#00A0DF]"
                   />
-                  <span className="invite-input-icon">
+                  <span className="absolute left-4 text-text-muted flex items-center pointer-events-none">
                     <Mail size={16} />
                   </span>
                 </div>
               </div>
 
               {/* First Name & Last Name in double column */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <label style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[0.7rem] font-semibold uppercase tracking-wider text-text-muted">
                     First Name
                   </label>
-                  <div className="invite-input-wrap">
+                  <div className="relative flex items-center">
                     <input
                       type="text"
                       required
@@ -303,20 +181,19 @@ export default function InviteUserModal() {
                       placeholder="Jane"
                       value={firstName}
                       onChange={e => setFirstName(e.target.value)}
-                      className="invite-input"
-                      style={{ paddingLeft: '2.5rem' }}
+                      className="w-full py-3 pr-4 pl-10 bg-white/2 border border-white/8 rounded-lg text-text-main text-[0.9rem] transition-all duration-200 outline-none focus:border-transparent focus:ring-2 focus:ring-[#00A0DF]"
                     />
-                    <span className="invite-input-icon" style={{ left: '0.85rem' }}>
+                    <span className="absolute left-3.5 text-text-muted flex items-center pointer-events-none">
                       <User size={15} />
                     </span>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <label style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[0.7rem] font-semibold uppercase tracking-wider text-text-muted">
                     Last Name
                   </label>
-                  <div className="invite-input-wrap">
+                  <div className="relative flex items-center">
                     <input
                       type="text"
                       required
@@ -324,10 +201,9 @@ export default function InviteUserModal() {
                       placeholder="Doe"
                       value={lastName}
                       onChange={e => setLastName(e.target.value)}
-                      className="invite-input"
-                      style={{ paddingLeft: '2.5rem' }}
+                      className="w-full py-3 pr-4 pl-10 bg-white/2 border border-white/8 rounded-lg text-text-main text-[0.9rem] transition-all duration-200 outline-none focus:border-transparent focus:ring-2 focus:ring-[#00A0DF]"
                     />
-                    <span className="invite-input-icon" style={{ left: '0.85rem' }}>
+                    <span className="absolute left-3.5 text-text-muted flex items-center pointer-events-none">
                       <User size={15} />
                     </span>
                   </div>
@@ -335,9 +211,9 @@ export default function InviteUserModal() {
               </div>
 
               {/* Submit Button */}
-              <button 
-                type="submit" 
-                className="invite-btn"
+              <button
+                type="submit"
+                className="flex items-center justify-center gap-2 w-full py-3.5 border-none rounded-lg font-bold text-[0.95rem] cursor-pointer bg-gradient-to-r from-[#00A0DF] to-[#007cb0] text-white shadow-[0_0_15px_rgba(0,160,223,0.2)] transition-all duration-200 hover:translate-y-[-1px] hover:shadow-[0_0_20px_rgba(0,160,223,0.4)] disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
                 disabled={loading || !email.trim() || !firstName.trim() || !lastName.trim()}
               >
                 {loading ? 'Generating Link...' : 'Generate Invitation'}

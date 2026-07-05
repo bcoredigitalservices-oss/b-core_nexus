@@ -7,29 +7,7 @@ interface GlobalBlockerScreenProps {
 
 export default function GlobalBlockerScreen({ message }: GlobalBlockerScreenProps) {
   return (
-    <div 
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: 'rgba(18, 2, 2, 0.95)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        zIndex: 9999,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#ffffff',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        padding: '2rem',
-        boxSizing: 'border-box',
-        textAlign: 'center',
-        overflow: 'hidden'
-      }}
-    >
+    <div className="fixed inset-0 bg-[#120202]/95 backdrop-blur-[12px] z-[9999] flex flex-col items-center justify-center text-white font-sans p-8 text-center overflow-hidden">
       <style>{`
         @keyframes pulse-neon {
           0% {
@@ -50,76 +28,22 @@ export default function GlobalBlockerScreen({ message }: GlobalBlockerScreenProp
         }
       `}</style>
       
-      <div 
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          maxWidth: '600px',
-          gap: '1.5rem',
-        }}
-      >
-        <div 
-          className="neon-warning-icon"
-          style={{
-            color: '#ef4444',
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '2px solid #ef4444',
-            borderRadius: '50%',
-            padding: '1.5rem',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '1rem',
-          }}
-        >
+      <div className="flex flex-col items-center max-w-[600px] gap-6">
+        <div className="neon-warning-icon text-red-500 bg-red-500/10 border-2 border-red-500 rounded-full p-6 inline-flex items-center justify-center mb-4">
           <ShieldAlert size={64} />
         </div>
         
-        <h1 
-          style={{
-            fontSize: '2.5rem',
-            fontWeight: 800,
-            letterSpacing: '-0.02em',
-            margin: 0,
-            textTransform: 'uppercase',
-            color: '#ef4444',
-            textShadow: '0 0 20px rgba(239, 68, 68, 0.4)',
-          }}
-        >
+        <h1 className="text-[2.5rem] font-extrabold tracking-tight m-0 uppercase text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.4)] font-display">
           System Lockdown
         </h1>
         
-        <div 
-          style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(239, 68, 68, 0.2)',
-            borderRadius: '12px',
-            padding: '1.5rem 2rem',
-            width: '100%',
-            boxSizing: 'border-box',
-          }}
-        >
-          <p 
-            style={{
-              fontSize: '1.15rem',
-              lineHeight: '1.6',
-              margin: 0,
-              color: '#f87171',
-              fontWeight: 500,
-            }}
-          >
+        <div className="bg-white/3 border border-red-500/20 rounded-xl py-6 px-8 w-full box-border">
+          <p className="text-[1.15rem] leading-relaxed m-0 text-red-400 font-medium">
             {message || 'An emergency system-wide broadcast has locked active nodes.'}
           </p>
         </div>
         
-        <p 
-          style={{
-            color: 'rgba(156, 163, 175, 0.8)',
-            fontSize: '0.875rem',
-            marginTop: '1rem',
-          }}
-        >
+        <p className="text-gray-400/80 text-[0.875rem] mt-4">
           All operations are temporarily suspended. Please contact your Tier 0 Administrator for resolution details.
         </p>
       </div>

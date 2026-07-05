@@ -51,43 +51,19 @@ export default function CatalogDashboard() {
   const isInventoryRoute = location.pathname.startsWith('/workspace/inventory');
 
   const content = (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="flex flex-col gap-8 w-full max-w-[1200px] mx-auto">
       
       {/* Header Banner */}
-      <div 
-        style={{
-          background: 'linear-gradient(135deg, rgba(99, 91, 255, 0.05) 0%, rgba(0, 242, 254, 0.05) 100%)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '14px',
-          padding: '1.75rem 2rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1.5rem',
-          position: 'relative',
-          overflow: 'hidden'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', zIndex: 1 }}>
-          <div 
-            style={{
-              background: 'rgba(99, 91, 255, 0.1)',
-              border: '1px solid rgba(99, 91, 255, 0.2)',
-              borderRadius: '12px',
-              padding: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <Layers size={28} color="var(--accent-primary)" />
+      <div className="bg-gradient-to-br from-[#635bff]/5 to-[#00f2fe]/5 border border-color rounded-2xl py-7 px-8 flex justify-between items-center flex-wrap gap-6 relative overflow-hidden">
+        <div className="flex items-center gap-5 z-10">
+          <div className="bg-[#635bff]/10 border border-[#635bff]/20 rounded-xl p-3 flex items-center justify-center">
+            <Layers size={28} className="text-accent-primary" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-display)', marginBottom: '0.3rem', fontWeight: 700 }}>
+            <h1 className="text-[1.6rem] font-bold text-text-main font-display mb-1">
               Structural Engine Control
             </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            <p className="text-text-muted text-[0.875rem]">
               Manage registered catalog items, asset registry, warehouse operations and live stock health.
             </p>
           </div>
@@ -95,28 +71,25 @@ export default function CatalogDashboard() {
 
         {/* Header Action Buttons */}
         {activeTab === 'items' && (
-          <div style={{ display: 'flex', gap: '0.75rem', zIndex: 1 }}>
+          <div className="flex gap-3 z-10">
             <button 
-              className="btn btn-secondary" 
+              className="btn btn-secondary flex items-center gap-1.5" 
               onClick={() => setIsGroupModalOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <Plus size={16} />
               + Item Group
             </button>
             <button 
-              className="btn btn-secondary" 
+              className="btn btn-secondary flex items-center gap-1.5" 
               onClick={() => setIsImportModalOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <FileSpreadsheet size={16} />
               Bulk Import CSV
             </button>
             
             <button 
-              className="btn btn-primary" 
+              className="btn btn-primary flex items-center gap-1.5" 
               onClick={() => setIsCreateModalOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <Plus size={16} />
               + Add Item
@@ -126,38 +99,18 @@ export default function CatalogDashboard() {
       </div>
 
       {/* Tab Navigation Bar */}
-      <div 
-        style={{
-          display: 'flex',
-          gap: '0.5rem',
-          background: 'rgba(255, 255, 255, 0.02)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '12px',
-          padding: '5px',
-          width: 'fit-content'
-        }}
-      >
+      <div className="flex gap-2 bg-white/2 backdrop-blur-[10px] border border-color rounded-xl p-1 w-fit">
         {tabs.map(tab => {
           const active = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              style={{
-                padding: '8px 18px',
-                borderRadius: '8px',
-                border: 'none',
-                background: active ? 'rgba(99, 91, 255, 0.12)' : 'transparent',
-                color: active ? 'var(--text-main)' : 'var(--text-muted)',
-                fontWeight: active ? 700 : 500,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: active ? '0 0 10px rgba(99, 91, 255, 0.15)' : 'none',
-                borderBottom: active ? '2px solid var(--accent-primary)' : '2px solid transparent'
-              }}
+              className={`py-2 px-[18px] rounded-lg border-none text-[0.85rem] cursor-pointer transition-all duration-200 border-b-2 ${
+                active 
+                  ? 'bg-[#635bff]/12 text-text-main font-bold shadow-[0_0_10px_rgba(99,91,255,0.15)] border-b-accent-primary' 
+                  : 'bg-transparent text-text-muted font-medium border-b-transparent hover:text-text-main'
+              }`}
             >
               {tab.label}
             </button>
@@ -167,20 +120,12 @@ export default function CatalogDashboard() {
 
       {/* Conditional Content Area */}
       {activeTab === 'items' && (
-        <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden' }}>
-          <div 
-            style={{ 
-              padding: '1.25rem 1.5rem', 
-              borderBottom: '1px solid var(--border-color)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem'
-            }}
-          >
-            <Layers size={20} color="var(--accent-primary)" />
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Catalog Items Registry</h2>
+        <div className="glass-panel p-0 overflow-hidden">
+          <div className="py-5 px-6 border-b border-color flex items-center gap-3">
+            <Layers size={20} className="text-accent-primary" />
+            <h2 className="text-[1.1rem] font-semibold text-text-main">Catalog Items Registry</h2>
           </div>
-          <div style={{ padding: '1.25rem' }}>
+          <div className="p-5">
             <UniversalDataGrid
               key={`grid-items-${gridKey}`}
               endpointUrl="/api/v1/catalog/items"
@@ -195,7 +140,7 @@ export default function CatalogDashboard() {
                   label: 'Catalog Type', 
                   sortable: true,
                   render: (value: string) => (
-                    <span className="badge badge-t3" style={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+                    <span className="badge badge-t3 uppercase text-[0.7rem]">
                       {value.replace('_', ' ')}
                     </span>
                   )
@@ -214,31 +159,21 @@ export default function CatalogDashboard() {
       )}
 
       {activeTab === 'assets' && (
-        <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden' }}>
-          <div 
-            style={{ 
-              padding: '1.25rem 1.5rem', 
-              borderBottom: '1px solid var(--border-color)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '0.75rem'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <Layers size={20} color="var(--accent-primary)" />
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Asset Registry</h2>
+        <div className="glass-panel p-0 overflow-hidden">
+          <div className="py-5 px-6 border-b border-color flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Layers size={20} className="text-accent-primary" />
+              <h2 className="text-[1.1rem] font-semibold text-text-main">Asset Registry</h2>
             </div>
             <button 
-              className="btn btn-primary"
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', fontSize: '0.8rem' }}
+              className="btn btn-primary flex items-center gap-1.5 py-1.5 px-3.5 text-[0.8rem]"
               onClick={() => alert('Register Asset action placeholder.')}
             >
               <Plus size={14} />
               Register Asset
             </button>
           </div>
-          <div style={{ padding: '1.25rem' }}>
+          <div className="p-5">
             <UniversalDataGrid
               key="grid-assets"
               endpointUrl="/api/v1/inventory/assets"
@@ -253,16 +188,13 @@ export default function CatalogDashboard() {
                   sortable: true,
                   render: (v: string) => (
                     <span 
-                      style={{
-                        display: 'inline-block',
-                        padding: '2px 8px',
-                        borderRadius: '12px',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        background: v === 'In Use' ? 'rgba(16, 185, 129, 0.12)' : v === 'Scrapped' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(245, 158, 11, 0.12)',
-                        color: v === 'In Use' ? '#10b981' : v === 'Scrapped' ? '#ef4444' : '#f59e0b',
-                        border: `1px solid ${v === 'In Use' ? '#10b981' : v === 'Scrapped' ? '#ef4444' : '#f59e0b'}33`
-                      }}
+                      className={`inline-block py-0.5 px-2 rounded-full text-[0.75rem] font-bold border ${
+                        v === 'In Use' 
+                          ? 'bg-emerald-500/12 text-emerald-400 border-emerald-500/20' 
+                          : v === 'Scrapped' 
+                            ? 'bg-red-500/12 text-red-400 border-red-500/20' 
+                            : 'bg-amber-500/12 text-amber-400 border-amber-500/20'
+                      }`}
                     >
                       {v}
                     </span>
@@ -287,31 +219,21 @@ export default function CatalogDashboard() {
       )}
 
       {activeTab === 'warehouses' && (
-        <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden' }}>
-          <div 
-            style={{ 
-              padding: '1.25rem 1.5rem', 
-              borderBottom: '1px solid var(--border-color)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '0.75rem'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <Layers size={20} color="var(--accent-primary)" />
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Warehouses Control</h2>
+        <div className="glass-panel p-0 overflow-hidden">
+          <div className="py-5 px-6 border-b border-color flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Layers size={20} className="text-accent-primary" />
+              <h2 className="text-[1.1rem] font-semibold text-text-main">Warehouses Control</h2>
             </div>
             <button 
-              className="btn btn-primary"
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', fontSize: '0.8rem' }}
+              className="btn btn-primary flex items-center gap-1.5 py-1.5 px-3.5 text-[0.8rem]"
               onClick={() => alert('Create Warehouse action placeholder.')}
             >
               <Plus size={14} />
               Create Warehouse
             </button>
           </div>
-          <div style={{ padding: '1.25rem' }}>
+          <div className="p-5">
             <UniversalDataGrid
               key="grid-warehouses"
               endpointUrl="/api/v1/inventory/warehouses"
@@ -326,16 +248,11 @@ export default function CatalogDashboard() {
                   sortable: true,
                   render: (v: boolean) => (
                     <span 
-                      style={{
-                        display: 'inline-block',
-                        padding: '2px 8px',
-                        borderRadius: '12px',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        background: v ? 'rgba(59, 130, 246, 0.12)' : 'rgba(100, 116, 139, 0.12)',
-                        color: v ? '#3b82f6' : '#64748b',
-                        border: `1px solid ${v ? '#3b82f6' : '#64748b'}33`
-                      }}
+                      className={`inline-block py-0.5 px-2 rounded-full text-[0.75rem] font-bold border ${
+                        v 
+                          ? 'bg-blue-500/12 text-blue-400 border-blue-500/20' 
+                          : 'bg-slate-500/12 text-slate-400 border-slate-500/20'
+                      }`}
                     >
                       {v ? 'Yes (Group)' : 'No (Bin)'}
                     </span>
@@ -348,20 +265,12 @@ export default function CatalogDashboard() {
       )}
 
       {activeTab === 'stock' && (
-        <div className="glass-panel" style={{ padding: '0px', overflow: 'hidden' }}>
-          <div 
-            style={{ 
-              padding: '1.25rem 1.5rem', 
-              borderBottom: '1px solid var(--border-color)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem'
-            }}
-          >
-            <Layers size={20} color="var(--accent-primary)" />
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Stock Health & Balances</h2>
+        <div className="glass-panel p-0 overflow-hidden">
+          <div className="py-5 px-6 border-b border-color flex items-center gap-3">
+            <Layers size={20} className="text-accent-primary" />
+            <h2 className="text-[1.1rem] font-semibold text-text-main">Stock Health & Balances</h2>
           </div>
-          <div style={{ padding: '1.25rem' }}>
+          <div className="p-5">
             <UniversalDataGrid
               key="grid-stock"
               endpointUrl="/api/v1/inventory/stock-balance"

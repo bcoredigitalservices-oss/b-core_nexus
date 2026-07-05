@@ -94,153 +94,48 @@ export default function CommandCenter() {
   };
 
   return (
-    <div 
-      className="glass-panel" 
-      style={{ 
-        padding: '0px', 
-        overflow: 'hidden',
-        border: '1px solid rgba(239, 68, 68, 0.25)',
-        background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.04) 0%, rgba(20, 27, 46, 0.6) 100%)',
-        boxShadow: '0 8px 32px 0 rgba(239, 68, 68, 0.03)'
-      }}
-    >
-      <style>{`
-        .cc-form-label {
-          font-size: 0.75rem;
-          color: var(--text-muted);
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin-bottom: 0.4rem;
-          display: block;
-          font-weight: 600;
-        }
-        .cc-select, .cc-textarea {
-          width: 100%;
-          background: rgba(14, 19, 34, 0.6);
-          border: 1px solid var(--border-color);
-          border-radius: 8px;
-          color: var(--text-color);
-          font-size: 0.9rem;
-          padding: 0.6rem 0.8rem;
-          transition: all 0.2s ease;
-        }
-        .cc-select:focus, .cc-textarea:focus {
-          border-color: rgba(239, 68, 68, 0.5);
-          outline: none;
-          box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
-        }
-        .cc-btn-broadcast {
-          background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-          border: 1px solid rgba(239, 68, 68, 0.4);
-          color: white;
-          width: 100%;
-          padding: 0.75rem;
-          border-radius: 8px;
-          font-weight: 700;
-          font-size: 0.9rem;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-          transition: all 0.2s ease;
-        }
-        .cc-btn-broadcast:hover:not(:disabled) {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
-          filter: brightness(1.1);
-        }
-        .cc-btn-broadcast:active:not(:disabled) {
-          transform: translateY(1px);
-        }
-        .cc-btn-broadcast:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-          box-shadow: none;
-        }
-        .ws-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          padding: 3px 8px;
-          border-radius: 20px;
-        }
-        .ws-connected {
-          background: rgba(0, 245, 160, 0.08);
-          border: 1px solid rgba(0, 245, 160, 0.25);
-          color: var(--accent-green);
-        }
-        .ws-connecting {
-          background: rgba(157, 78, 221, 0.08);
-          border: 1px solid rgba(157, 78, 221, 0.25);
-          color: var(--accent-purple);
-        }
-        .ws-disconnected {
-          background: rgba(239, 68, 68, 0.08);
-          border: 1px solid rgba(239, 68, 68, 0.25);
-          color: #f87171;
-        }
-      `}</style>
-
+    <div className="glass-panel p-0 overflow-hidden border border-red-500/25 bg-gradient-to-br from-red-500/4 to-[#141b2e]/60 shadow-[0_8px_32px_0_rgba(239,68,68,0.03)]">
       {/* Header */}
-      <div 
-        style={{ 
-          padding: '1.25rem 1.5rem', 
-          borderBottom: '1px solid rgba(239, 68, 68, 0.15)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <ShieldAlert size={20} color="#f87171" />
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f87171' }}>Command Center</h2>
+      <div className="py-5 px-6 border-b border-red-500/15 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <ShieldAlert size={20} className="text-red-400" />
+          <h2 className="text-[1.1rem] font-bold text-red-400">Command Center</h2>
         </div>
-        <div className={`ws-badge ws-${wsStatus.toLowerCase()}`}>
-          <Radio size={12} className={wsStatus === 'CONNECTED' ? 'pulse' : ''} />
+        <div className={`inline-flex items-center gap-1.5 text-[0.75rem] font-semibold py-1 px-3 rounded-full border ${
+          wsStatus === 'CONNECTED' ? 'bg-emerald-500/8 border-emerald-500/25 text-[#00f5a0]' :
+          wsStatus === 'CONNECTING' ? 'bg-purple-500/8 border-purple-500/25 text-[#c084fc]' :
+          'bg-red-500/8 border-red-500/25 text-red-400'
+        }`}>
+          <Radio size={12} className={wsStatus === 'CONNECTED' ? 'animate-pulse' : ''} />
           <span>{wsStatus}</span>
         </div>
       </div>
 
-      <div style={{ padding: '1.5rem' }}>
+      <div className="p-6">
         {/* Sender Identity (Immutable) */}
-        <div 
-          style={{ 
-            marginBottom: '1.25rem', 
-            padding: '0.75rem 1rem', 
-            background: 'rgba(14, 19, 34, 0.6)', 
-            borderRadius: '8px', 
-            border: '1px solid var(--border-color)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}
-        >
+        <div className="mb-5 py-3 px-4 bg-[#0e1322]/60 rounded-lg border border-color flex justify-between items-center">
           <div>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span className="text-[0.7rem] text-text-muted block uppercase tracking-wider">
               Authorized Sender
             </span>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-color)' }}>
+            <span className="text-[0.9rem] font-semibold text-text-main">
               {currentUser?.email || 'System Administrator'}
             </span>
           </div>
           {currentUser?.role_tier !== undefined && (
-            <span className={`badge badge-t${currentUser.role_tier}`} style={{ fontSize: '0.7rem' }}>
+            <span className={`badge badge-t${currentUser.role_tier} text-[0.7rem]`}>
               Tier {currentUser.role_tier}
             </span>
           )}
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* Target Audience Dropdown */}
           <div>
-            <label className="cc-form-label">Target Audience</label>
+            <label className="text-[0.75rem] text-text-muted uppercase tracking-wider mb-1.5 block font-semibold">Target Audience</label>
             <select 
-              className="cc-select"
+              className="w-full bg-[#0e1322]/60 border border-color rounded-lg text-text-main text-[0.9rem] py-2.5 px-3.5 transition-all duration-200 outline-none focus:border-red-500/50 focus:ring-2 focus:ring-red-500/15"
               value={targetAudience}
               onChange={(e) => setTargetAudience(e.target.value)}
             >
@@ -252,9 +147,9 @@ export default function CommandCenter() {
 
           {/* Severity Dropdown */}
           <div>
-            <label className="cc-form-label">Severity Level</label>
+            <label className="text-[0.75rem] text-text-muted uppercase tracking-wider mb-1.5 block font-semibold">Severity Level</label>
             <select 
-              className="cc-select"
+              className="w-full bg-[#0e1322]/60 border border-color rounded-lg text-text-main text-[0.9rem] py-2.5 px-3.5 transition-all duration-200 outline-none focus:border-red-500/50 focus:ring-2 focus:ring-red-500/15"
               value={severity}
               onChange={(e) => setSeverity(e.target.value)}
             >
@@ -265,9 +160,9 @@ export default function CommandCenter() {
 
           {/* Emergency Message Textarea */}
           <div>
-            <label className="cc-form-label">Emergency Message</label>
+            <label className="text-[0.75rem] text-text-muted uppercase tracking-wider mb-1.5 block font-semibold">Emergency Message</label>
             <textarea 
-              className="cc-textarea"
+              className="w-full bg-[#0e1322]/60 border border-color rounded-lg text-text-main text-[0.9rem] py-2.5 px-3.5 transition-all duration-200 outline-none focus:border-red-500/50 focus:ring-2 focus:ring-red-500/15"
               rows={4}
               placeholder="Input emergency broadcast payload description..."
               value={message}
@@ -277,19 +172,11 @@ export default function CommandCenter() {
 
           {/* Feedback message */}
           {feedback && (
-            <div 
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.8rem',
-                padding: '0.75rem',
-                borderRadius: '6px',
-                border: feedback.type === 'success' ? '1px solid rgba(0, 245, 160, 0.25)' : '1px solid rgba(239, 68, 68, 0.25)',
-                background: feedback.type === 'success' ? 'rgba(0, 245, 160, 0.05)' : 'rgba(239, 68, 68, 0.05)',
-                color: feedback.type === 'success' ? 'var(--accent-green)' : '#f87171'
-              }}
-            >
+            <div className={`flex items-center gap-2 text-[0.8rem] p-3 rounded-lg border ${
+              feedback.type === 'success' 
+                ? 'border-emerald-500/25 bg-emerald-500/5 text-[#00f5a0]' 
+                : 'border-red-500/25 bg-red-500/5 text-red-400'
+            }`}>
               {feedback.type === 'success' ? <Lock size={14} /> : <AlertTriangle size={14} />}
               <span>{feedback.text}</span>
             </div>
@@ -298,7 +185,7 @@ export default function CommandCenter() {
           {/* Broadcast Button */}
           <button 
             type="submit" 
-            className="cc-btn-broadcast"
+            className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-br from-red-500 to-red-700 border border-red-500/40 text-white rounded-lg font-bold text-[0.9rem] cursor-pointer shadow-[0_4px_12px_rgba(239,68,68,0.2)] transition-all duration-200 hover:translate-y-[-1px] hover:shadow-[0_6px_16px_rgba(239,68,68,0.35)] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             disabled={wsStatus !== 'CONNECTED'}
           >
             <Send size={15} />

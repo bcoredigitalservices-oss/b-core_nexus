@@ -10,9 +10,15 @@ const VIRTUAL_ITEMS = Array.from({ length: VIRTUAL_LIST_SIZE }, (_, i) => ({
   custom_attributes: {
     criticality: i % 10 === 0 ? 'High' : 'Normal',
     power_draw_w: 120 + (i % 8) * 15,
-    factory_batch: `B-${1000 + Math.floor(i / 100)}`
-  }
+    factory_batch: `B-${1000 + Math.floor(i / 100)}`,
+  },
 }));
+
+const STATS = [
+  { label: 'Total Records Injected', value: '100,000', color: 'var(--accent-purple)' },
+  { label: 'Active DOM Elements', value: '~15-20 rows', color: 'var(--accent-blue)' },
+  { label: 'Render Performance', value: '< 1ms', color: 'var(--accent-green)' },
+];
 
 export default function VirtualGridTab() {
   const parentRef = useRef(null);
@@ -25,32 +31,28 @@ export default function VirtualGridTab() {
   });
 
   return (
-    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div className="glass-panel flex flex-col gap-4">
       <div>
-        <h3 style={{ color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <h3 className="flex items-center gap-2 text-[var(--accent-blue)]">
           <Activity size={20} /> Asynchronous DOM Virtualization Grid
         </h3>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem', lineHeight: '1.4' }}>
-          Rendering **100,000 grid records** smoothly at 60 FPS using `@tanstack/react-virtual`.
+        <p className="mt-1 text-[0.85rem] leading-[1.4] text-[var(--text-muted)]">
+          Rendering <strong>100,000 grid records</strong> smoothly at 60 FPS using <code>@tanstack/react-virtual</code>.
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', margin: '0.5rem 0' }}>
-        <div style={{ background: 'rgba(14, 19, 34, 0.6)', border: '1px solid var(--border-color)', padding: '0.75rem', borderRadius: '6px' }}>
-          <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Total Records Injected</span>
-          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-purple)', fontFamily: 'var(--font-display)' }}>100,000</div>
-        </div>
-        <div style={{ background: 'rgba(14, 19, 34, 0.6)', border: '1px solid var(--border-color)', padding: '0.75rem', borderRadius: '6px' }}>
-          <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Active DOM Elements</span>
-          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-blue)', fontFamily: 'var(--font-display)' }}>~15-20 rows</div>
-        </div>
-        <div style={{ background: 'rgba(14, 19, 34, 0.6)', border: '1px solid var(--border-color)', padding: '0.75rem', borderRadius: '6px' }}>
-          <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Render Performance</span>
-          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-green)', fontFamily: 'var(--font-display)' }}>&lt; 1ms</div>
-        </div>
+      <div className="my-2 grid grid-cols-3 gap-4">
+        {STATS.map((stat) => (
+          <div key={stat.label} className="rounded-md border border-[var(--border-color)] bg-[rgba(14,19,34,0.6)] p-3">
+            <span className="text-[0.7rem] uppercase text-[var(--text-muted)]">{stat.label}</span>
+            <div className="font-[family-name:var(--font-display)] text-xl font-bold" style={{ color: stat.color }}>
+              {stat.value}
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <div className="flex flex-col">
         <div className="grid-header">
           <div>Grid Index</div>
           <div>SKU & Title</div>
@@ -58,48 +60,37 @@ export default function VirtualGridTab() {
         </div>
         <div
           ref={parentRef}
-          style={{
-            height: '400px',
-            overflow: 'auto',
-            border: '1px solid var(--border-color)',
-            borderTop: 'none',
-            borderRadius: '0 0 8px 8px',
-            backgroundColor: 'var(--bg-input)'
-          }}
+          className="h-[400px] overflow-auto rounded-b-lg border border-t-0 border-[var(--border-color)] bg-[var(--bg-input)]"
         >
-          <div
-            style={{
-              height: `${rowVirtualizer.getTotalSize()}px`,
-              width: '100%',
-              position: 'relative'
-            }}
-          >
+          <div className="relative w-full" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
             {rowVirtualizer.getVirtualItems().map((virtualItem) => {
               const item = VIRTUAL_ITEMS[virtualItem.index];
+              const isHighCriticality = item.custom_attributes.criticality === 'High';
               return (
                 <div
                   key={virtualItem.key}
-                  className="grid-row"
+                  className="grid-row absolute left-0 top-0 w-full border-b border-[#1c253b]"
                   style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
                     height: `${virtualItem.size}px`,
                     transform: `translateY(${virtualItem.start}px)`,
-                    borderBottom: '1px solid #1c253b'
+                    backgroundColor: isHighCriticality ? 'rgba(255, 51, 102, 0.05)' : undefined,
                   }}
                 >
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  <div className="font-[family-name:var(--font-mono)] text-[0.8rem] text-[var(--text-muted)]">
                     # {item.index + 1}
                   </div>
                   <div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--accent-blue)', marginRight: '0.75rem' }}>
+                    <span className="mr-3 font-[family-name:var(--font-mono)] font-semibold text-[var(--accent-blue)]">
                       {item.sku}
                     </span>
-                    <span style={{ fontSize: '0.85rem' }}>{item.title}</span>
+                    <span className="text-[0.85rem]">{item.title}</span>
+                    {isHighCriticality && (
+                      <span className="ml-2 rounded-full border border-[var(--accent-danger)]/30 bg-[var(--accent-danger)]/10 px-1.5 py-px text-[0.6rem] font-semibold text-[var(--accent-danger)]">
+                        HIGH
+                      </span>
+                    )}
                   </div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#818cf8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div className="overflow-hidden text-ellipsis whitespace-nowrap font-[family-name:var(--font-mono)] text-[0.75rem] text-[#818cf8]">
                     {JSON.stringify(item.custom_attributes)}
                   </div>
                 </div>

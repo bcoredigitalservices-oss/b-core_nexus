@@ -110,117 +110,86 @@ export default function OrganisationSetup() {
 
   if (loading) {
     return (
-      <div 
-        style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          minHeight: '400px', 
-          color: 'var(--text-muted)',
-          gap: '1rem'
-        }}
-      >
-        <Loader2 className="udg-spinner" size={32} />
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-[var(--text-muted)] gap-4">
+        <Loader2 className="animate-spin text-[var(--accent-primary)]" size={32} />
         <span>Syncing corporate directory...</span>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%' }}>
+    <div className="max-w-[1000px] mx-auto flex flex-col gap-8 w-full">
       {/* Page Header */}
       <div>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem', fontFamily: 'var(--font-display)' }}>
+        <h1 className="text-3xl font-extrabold text-[var(--text-main)] mb-2 font-[var(--font-display)]">
           Organisation Setup
         </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+        <p className="text-[var(--text-muted)] text-sm">
           Configure legal identifiers, operational currencies, branding media assets, and primary industry vertical configurations.
         </p>
       </div>
 
       {/* Form Container */}
-      <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-8">
         
         {/* Status Messages */}
         {successMsg && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '1rem', backgroundColor: 'rgba(0, 245, 160, 0.1)', border: '1px solid rgba(0, 245, 160, 0.3)', borderRadius: '12px', color: '#00f5a0', fontSize: '0.9rem', fontWeight: 500 }}>
+          <div className="flex items-center gap-2.5 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-[#00f5a0] text-sm font-medium">
             <CheckCircle size={18} />
             <span>{successMsg}</span>
           </div>
         )}
 
         {errorMsg && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '1rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', color: '#EF4444', fontSize: '0.9rem', fontWeight: 500 }}>
+          <div className="flex items-center gap-2.5 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-sm font-medium">
             <AlertTriangle size={18} />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {/* Outer Grid for Groups */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           
           {/* Group 1: Legal Identity */}
-          <div 
-            className="glass-panel" 
-            style={{ 
-              padding: '2rem', 
-              backgroundColor: 'var(--bg-main)', 
-              border: '1px solid var(--border-color)', 
-              borderRadius: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.25rem'
-            }}
-          >
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Building2 size={18} color="#9d4edd" />
+          <div className="glass-panel p-8 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-2xl flex flex-col gap-5">
+            <h3 className="text-base font-bold text-[var(--text-main)] border-b border-[var(--border-color)] pb-3 flex items-center gap-2">
+              <Building2 size={18} className="text-[#9d4edd]" />
               Legal Identity
             </h3>
 
-            <div>
-              <label>Company Legal Name</label>
-              <div style={{ position: 'relative' }}>
-                <Building2 size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-[var(--text-main)]">Company Legal Name</label>
+              <div className="relative">
+                <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                 <input 
                   type="text" 
-                  style={{ paddingLeft: '38px' }}
+                  className="pl-[38px] w-full p-3 bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg text-[var(--text-main)] text-sm focus:outline-none focus:border-[#9d4edd]"
                   placeholder="e.g. Nexus Logistics Global Ltd"
                   {...register('legal_name', { required: 'Legal name is required' })} 
                 />
               </div>
-              {errors.legal_name && <p style={{ color: '#EF4444', fontSize: '0.75rem', marginTop: '4px' }}>{errors.legal_name.message}</p>}
+              {errors.legal_name && <p className="text-red-500 text-xs mt-1">{errors.legal_name.message}</p>}
             </div>
 
-            <div>
-              <label>Tax Identification Number (TIN / EIN)</label>
-              <div style={{ position: 'relative' }}>
-                <FileCheck2 size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-[var(--text-main)]">Tax Identification Number (TIN / EIN)</label>
+              <div className="relative">
+                <FileCheck2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                 <input 
                   type="text" 
-                  style={{ paddingLeft: '38px' }}
+                  className="pl-[38px] w-full p-3 bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg text-[var(--text-main)] text-sm focus:outline-none focus:border-[#9d4edd]"
                   placeholder="e.g. US-8849204-TX"
                   {...register('tax_id')} 
                 />
               </div>
             </div>
 
-            <div>
-              <label>Base Operating Currency</label>
-              <div style={{ position: 'relative' }}>
-                <Coins size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-[var(--text-main)]">Base Operating Currency</label>
+              <div className="relative">
+                <Coins size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                 <select 
-                  style={{ 
-                    paddingLeft: '38px', 
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    paddingLeft: '38px',
-                    backgroundColor: 'var(--bg-input)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    color: 'var(--text-main)',
-                    fontSize: '0.9rem'
-                  }}
+                  className="pl-[38px] pr-4 w-full p-3 bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg text-[var(--text-main)] text-sm focus:outline-none focus:border-[#9d4edd] appearance-none"
                   {...register('base_currency', { required: 'Currency selection is required' })}
                 >
                   <option value="USD">USD - United States Dollar</option>
@@ -234,72 +203,45 @@ export default function OrganisationSetup() {
           </div>
 
           {/* Group 2: Contact & Branding */}
-          <div 
-            className="glass-panel" 
-            style={{ 
-              padding: '2rem', 
-              backgroundColor: 'var(--bg-main)', 
-              border: '1px solid var(--border-color)', 
-              borderRadius: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.25rem'
-            }}
-          >
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Globe2 size={18} color="#00f2fe" />
+          <div className="glass-panel p-8 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-2xl flex flex-col gap-5">
+            <h3 className="text-base font-bold text-[var(--text-main)] border-b border-[var(--border-color)] pb-3 flex items-center gap-2">
+              <Globe2 size={18} className="text-[#00f2fe]" />
               Contact & Branding
             </h3>
 
-            <div>
-              <label>Primary Operational Email</label>
-              <div style={{ position: 'relative' }}>
-                <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-[var(--text-main)]">Primary Operational Email</label>
+              <div className="relative">
+                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                 <input 
                   type="email" 
-                  style={{ paddingLeft: '38px' }}
+                  className="pl-[38px] w-full p-3 bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg text-[var(--text-main)] text-sm focus:outline-none focus:border-[#00f2fe]"
                   placeholder="e.g. operations@bcore.local"
                   {...register('primary_email')} 
                 />
               </div>
             </div>
 
-            <div>
-              <label>Contact Phone Number</label>
-              <div style={{ position: 'relative' }}>
-                <Phone size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-[var(--text-main)]">Contact Phone Number</label>
+              <div className="relative">
+                <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                 <input 
                   type="text" 
-                  style={{ paddingLeft: '38px' }}
+                  className="pl-[38px] w-full p-3 bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg text-[var(--text-main)] text-sm focus:outline-none focus:border-[#00f2fe]"
                   placeholder="e.g. +1 (555) 019-2834"
                   {...register('contact_phone')} 
                 />
               </div>
             </div>
 
-            {/* Logo Upload Placeholder Area */}
-            <div>
-              <label>Corporate Identity Logo</label>
-              <div 
-                style={{
-                  border: '1px dashed rgba(255, 255, 255, 0.15)',
-                  backgroundColor: 'var(--bg-card-hover)',
-                  borderRadius: '10px',
-                  padding: '1.25rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'border-color 0.2s',
-                  gap: '8px'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#9d4edd'}
-                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)'}
-              >
-                <Upload size={20} color="var(--text-muted)" />
-                <span style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', fontWeight: 600 }}>Upload Logo File</span>
-                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>PNG, SVG, or JPG (max 2MB)</span>
+            {/* Logo Upload Area */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-[var(--text-main)]">Corporate Identity Logo</label>
+              <div className="border border-dashed border-white/15 bg-[var(--bg-card-hover)] rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-colors duration-200 hover:border-[#9d4edd] gap-2">
+                <Upload size={20} className="text-[var(--text-muted)]" />
+                <span className="text-sm text-[var(--accent-primary)] font-semibold">Upload Logo File</span>
+                <span className="text-xs text-[var(--text-muted)]">PNG, SVG, or JPG (max 2MB)</span>
               </div>
             </div>
           </div>
@@ -307,35 +249,16 @@ export default function OrganisationSetup() {
         </div>
 
         {/* Group 3: Core Routing / Industry Vertical Selection */}
-        <div 
-          className="glass-panel" 
-          style={{ 
-            padding: '2rem', 
-            backgroundColor: 'var(--bg-main)', 
-            border: '1px solid var(--border-color)', 
-            borderRadius: '16px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1rem'
-          }}
-        >
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <AlertTriangle size={18} color="#ffb703" />
+        <div className="glass-panel p-8 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-2xl flex flex-col gap-4">
+          <h3 className="text-base font-bold text-[var(--text-main)] border-b border-[var(--border-color)] pb-3 flex items-center gap-2">
+            <AlertTriangle size={18} className="text-[#ffb703]" />
             Core Routing & Vertical Alignment
           </h3>
 
-          <div>
-            <label style={{ marginBottom: '6px' }}>Target Industry Vertical</label>
+          <div className="flex flex-col gap-2.5">
+            <label className="text-sm font-medium text-[var(--text-main)]">Target Industry Vertical</label>
             <select 
-              style={{ 
-                width: '100%',
-                padding: '0.75rem 1rem',
-                backgroundColor: 'var(--bg-input)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                color: 'var(--text-main)',
-                fontSize: '0.9rem'
-              }}
+              className="w-full p-3 bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg text-[var(--text-main)] text-sm focus:outline-none focus:border-[#ffb703]"
               {...register('industry_vertical', { required: 'Vertical alignment is required' })}
             >
               <option value="GENERAL_TRADING">General Trading & Stock Management</option>
@@ -343,20 +266,9 @@ export default function OrganisationSetup() {
               <option value="HEAVY_MACHINERY">Heavy Machinery Fleet Asset Operations</option>
             </select>
             
-            <div 
-              style={{ 
-                display: 'flex', 
-                alignItems: 'flex-start', 
-                gap: '8px', 
-                marginTop: '10px', 
-                backgroundColor: 'rgba(255, 183, 3, 0.08)', 
-                border: '1px solid rgba(255, 183, 3, 0.2)', 
-                padding: '0.75rem 1rem', 
-                borderRadius: '8px' 
-              }}
-            >
-              <AlertTriangle size={16} color="#ffb703" style={{ flexShrink: 0, marginTop: '2px' }} />
-              <p style={{ margin: 0, fontSize: '0.75rem', color: '#ffb703', lineHeight: '1.4' }}>
+            <div className="flex items-start gap-2 mt-2.5 bg-[#ffb703]/10 border border-[#ffb703]/20 p-4 rounded-lg">
+              <AlertTriangle size={16} className="text-[#ffb703] shrink-0 mt-0.5" />
+              <p className="m-0 text-xs text-[#ffb703] Regal-leading-relaxed">
                 <strong>Warning:</strong> Changing this vertical will alter the available workspace applications on your Home dashboard. Active product schemas, workflow matrices, and dynamic tracking structures will be updated instantly to support the new vertical profile.
               </p>
             </div>
@@ -364,23 +276,15 @@ export default function OrganisationSetup() {
         </div>
 
         {/* Submit Actions */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+        <div className="flex justify-end gap-4">
           <button 
             type="submit" 
-            className="btn btn-primary" 
+            className="btn btn-primary px-10 py-3 text-sm font-bold flex items-center gap-2 disabled:opacity-50"
             disabled={saving}
-            style={{ 
-              padding: '0.8rem 2.5rem', 
-              fontSize: '0.9rem', 
-              fontWeight: 700, 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px' 
-            }}
           >
             {saving ? (
               <>
-                <Loader2 size={16} className="udg-spinner" />
+                <Loader2 size={16} className="animate-spin" />
                 Commiting Changes...
               </>
             ) : (
