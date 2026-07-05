@@ -13,10 +13,9 @@ from sqlalchemy import (
     Text,
     UUID as SQLUUID,
 )
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database import CoreModel
+from app.database import CoreModel, JSONType, is_postgres
 
 
 # ─── CRM Enums ────────────────────────────────────────────────────────────────
@@ -93,7 +92,7 @@ class Customer(CoreModel):
         index=True,
     )
     custom_attributes: Mapped[dict] = mapped_column(
-        JSONB,
+        JSONType,
         nullable=False,
         server_default='{}',
         default=dict
@@ -148,7 +147,7 @@ class Contact(CoreModel):
         default=ContactStatus.PASSIVE,
     )
     custom_attributes: Mapped[dict] = mapped_column(
-        JSONB,
+        JSONType,
         nullable=False,
         server_default='{}',
         default=dict

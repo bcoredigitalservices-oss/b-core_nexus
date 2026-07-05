@@ -1,7 +1,6 @@
 from sqlalchemy import String, Numeric, DateTime, ForeignKey, UUID as SQLUUID
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.database import CoreModel
+from app.database import CoreModel, JSONType
 from datetime import datetime, timezone
 from decimal import Decimal
 import uuid
@@ -17,7 +16,7 @@ class Transaction(CoreModel):
     posted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     workspace_source: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False)
-    metadata_payload: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+    metadata_payload: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
 
     entries = relationship("LedgerEntry", back_populates="transaction", cascade="all, delete-orphan")
 

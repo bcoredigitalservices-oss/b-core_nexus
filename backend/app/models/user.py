@@ -1,10 +1,10 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Table, Column, String, DateTime, ForeignKey, UniqueConstraint, JSON
-from sqlalchemy.dialects.postgresql import ARRAY, UUID
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.associationproxy import association_proxy
-from app.database import Base, CoreModel
+from app.database import Base, CoreModel, JSONType
 
 # Create the Many-to-Many Junction Table (user_workspaces)
 user_workspaces = Table(
@@ -28,7 +28,7 @@ class User(CoreModel):
     invite_token: Mapped[str | None] = mapped_column(unique=True, index=True, nullable=True)
     token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     role_tier: Mapped[int] = mapped_column(default=4, nullable=False)  # 0 = System Admin (Root), 1 = Executive Admin, 2 = Directional, 3 = Leadership, 4 = Execution
-    functional_roles: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
+    functional_roles: Mapped[list[str]] = mapped_column(JSONType, default=list, nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
     totp_secret: Mapped[str | None] = mapped_column(default=None, nullable=True)
     mfa_enabled: Mapped[bool] = mapped_column(default=False, nullable=False)

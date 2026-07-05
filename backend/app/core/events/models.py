@@ -1,8 +1,8 @@
 import uuid
 from sqlalchemy import Column, String, DateTime, ForeignKey, Index, func
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from app.database import Base
+from app.database import Base, JSONType, is_postgres
 
 class EventLog(Base):
     __tablename__ = "event_logs"
@@ -11,7 +11,7 @@ class EventLog(Base):
     entity_id = Column(UUID(as_uuid=True), nullable=False, index=True)
     entity_type = Column(String, nullable=False, index=True)  # e.g., 'customer', 'asset', 'catalog_item'
     event_type = Column(String, nullable=False, index=True)    # e.g., 'message', 'blocker_beacon', 'status_change'
-    payload = Column(JSONB, default=dict, nullable=False)
+    payload = Column(JSONType, default=dict, nullable=False)
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -19,4 +19,7 @@ class EventLog(Base):
     creator = relationship("User")
 
 # GIN Index for rapid search/filtering across event log payload attributes
-Index("idx_event_logs_payload", EventLog.payload, postgresql_using="gin")
+if is_postgres:
+    Index("idx_event_logs_payload", EventLog.payload, postgresql_using="gin")
+else:
+    Index("idx_event_logs_payload", EventLog.payload)

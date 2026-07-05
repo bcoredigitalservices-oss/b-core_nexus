@@ -302,31 +302,16 @@ export default function Login() {
   const isSuccess = formState === 'success';
 
   return (
-    <div className="flex flex-col min-h-screen bg-main relative overflow-x-hidden font-body lg:flex-row lg:overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-[#F8FAFC] relative overflow-x-hidden font-body lg:flex-row lg:overflow-hidden">
 
-      {/* ── System Status badge absolute top right ────────────────────── */}
-      <div className="absolute top-8 right-10 flex items-center gap-2.5 font-body text-xs font-bold text-text-main bg-card border border-color/10 py-2 px-4 rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.05)] z-10" aria-label="System status">
-        <span className="w-2 h-2 bg-accent-green rounded-full shadow-[0_0_0_3px_rgba(16,185,129,0.2)] animate-pulse"></span>
-        <span>All Systems Operational</span>
-      </div>
+
       {/* ══════════════════════════════════════════════════════════════════
           LEFT PANEL — Interactive form (35%)
           ══════════════════════════════════════════════════════════════════ */}
-      <section className="flex items-center justify-center w-full min-h-screen py-12 px-4 bg-main relative z-10 sm:px-8 lg:w-[45%] lg:shadow-[10px_0_40px_rgba(0,0,0,0.04)]" aria-label="Login access portal">
+      <section className="flex items-center justify-center w-full min-h-screen py-12 px-4 bg-[#F8FAFC] relative z-10 sm:px-8 lg:w-[45%] lg:shadow-[10px_0_40px_rgba(0,0,0,0.04)]" aria-label="Login access portal">
 
-        {/* Twinkling star particle background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-          <div className="absolute w-0.5 h-0.5 bg-white rounded-full opacity-60 animate-pulse" style={{ top: '15%', left: '25%', animationDelay: '0s' }} />
-          <div className="absolute w-0.5 h-0.5 bg-white rounded-full opacity-60 animate-pulse" style={{ top: '25%', left: '80%', animationDelay: '0.5s' }} />
-          <div className="absolute bg-white rounded-full opacity-60 animate-pulse" style={{ top: '65%', left: '15%', animationDelay: '1s', width: '3px', height: '3px' }} />
-          <div className="absolute w-0.5 h-0.5 bg-white rounded-full opacity-60 animate-pulse" style={{ top: '75%', left: '85%', animationDelay: '1.5s' }} />
-          <div className="absolute w-0.5 h-0.5 bg-white rounded-full opacity-60 animate-pulse" style={{ top: '45%', left: '70%', animationDelay: '2s' }} />
-          <div className="absolute w-0.5 h-0.5 bg-white rounded-full opacity-60 animate-pulse" style={{ top: '85%', left: '40%', animationDelay: '2.5s' }} />
-          <div className="absolute w-0.5 h-0.5 bg-white rounded-full opacity-60 animate-pulse" style={{ top: '35%', left: '10%', animationDelay: '0.8s' }} />
-          <div className="absolute w-0.5 h-0.5 bg-white rounded-full opacity-60 animate-pulse" style={{ top: '55%', left: '90%', animationDelay: '1.2s' }} />
-          <div className="absolute w-0.5 h-0.5 bg-white rounded-full opacity-60 animate-pulse" style={{ top: '90%', left: '20%', animationDelay: '1.8s' }} />
-          <div className="absolute w-0.5 h-0.5 bg-white rounded-full opacity-60 animate-pulse" style={{ top: '10%', left: '60%', animationDelay: '2.2s' }} />
-        </div>
+        {/* Telemetry Grid Overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(15,23,42,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.03)_1px,transparent_1px)] bg-[size:40px_40px] opacity-80 pointer-events-none z-0" />
 
         <div className="flex flex-col w-full max-w-[440px] z-10">
           {/* Mobile-only logo */}
@@ -464,7 +449,7 @@ export default function Login() {
                       type="checkbox"
                       checked={rememberMe}
                       onChange={e => setRememberMe(e.target.checked)}
-                      className="appearance-none w-4.5 h-4.5 border border-black/20 bg-card rounded-md cursor-pointer relative transition-all duration-200 flex items-center justify-center hover:border-accent-primary checked:bg-accent-primary checked:border-accent-primary checked:after:content-['✓'] checked:after:text-[13px] checked:after:text-white checked:after:font-black focus-visible:outline focus-visible:outline-3 focus-visible:outline-accent-primary/20 focus-visible:outline-offset-2"
+                      className="appearance-none w-3.5 h-3.5 border border-black/20 bg-card rounded cursor-pointer relative transition-all duration-200 flex items-center justify-center hover:border-accent-primary checked:bg-accent-primary checked:border-accent-primary checked:after:content-['✓'] checked:after:text-[10px] checked:after:text-white checked:after:font-black focus-visible:outline focus-visible:outline-3 focus-visible:outline-accent-primary/20 focus-visible:outline-offset-2"
                     />
                     <span>Remember me</span>
                   </label>
@@ -491,22 +476,7 @@ export default function Login() {
                   )}
                 </button>
 
-                {/* SSO Section */}
-                <div className="flex flex-col gap-5 w-full">
-                  <div className="flex items-center justify-center gap-4 w-full my-2">
-                    <span className="flex-1 h-px bg-black/10"></span>
-                    <span className="text-xs font-semibold text-text-muted">OR</span>
-                    <span className="flex-1 h-px bg-black/10"></span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3">
-                    <button type="button" className="flex items-center justify-center py-3.5 px-4 border border-black/10 bg-card text-text-main rounded-xl font-body text-sm font-semibold cursor-pointer transition-all duration-200 shadow-[0_2px_4px_rgba(0,0,0,0.02)] hover:bg-main hover:border-black/20 hover:shadow-[0_4px_10px_rgba(0,0,0,0.05)]" onClick={() => alert('Google SSO integration')}>
-                      <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" style={{ marginRight: '8px' }}>
-                        <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.859-3.579-7.859-8s3.529-8 7.859-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 5.92 1 1 5.92 1 12.24s4.92 11.24 11.24 11.24c6.6 0 11-4.606 11-11.24 0-.756-.08-1.333-.18-1.955H12.24z" />
-                      </svg>
-                      Continue with Google
-                    </button>
-                  </div>
-                </div>
+
               </form>
             )}
 
@@ -679,55 +649,71 @@ export default function Login() {
           <div className="flex flex-col items-center gap-5 max-w-[520px] px-8">
             <p className="font-display text-[18px] font-extrabold uppercase tracking-[0.35em] text-text-main bg-gradient-to-r bg-clip-text text-transparent from-text-main to-accent-primary m-0">Enterprise Control System</p>
             
-            {/* Feature Cards Grid */}
-            <div className="grid grid-cols-2 gap-6 mt-12 w-full max-w-[580px]">
-              <div className="bg-gradient-to-br from-white/70 to-slate-50/30 backdrop-blur-md border-2 border-black/5 rounded-[18px] p-7 text-left transition-all duration-300 ease-out shadow-[0_10px_25px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.6)] hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.8)] hover:border-accent-primary/30 flex flex-col gap-3.5">
-                <div className="flex items-center gap-3">
-                  <Globe size={13} className="text-accent-primary bg-accent-primary/8 p-2 rounded-lg" />
-                  <strong className="font-display text-[17px] font-extrabold text-text-main">Global Registries</strong>
-                </div>
-                <p className="text-sm text-text-muted leading-relaxed m-0 font-medium">Manage cross-border entities</p>
+            {/* Feature Carousel */}
+            <div className="relative mt-12 w-full max-w-[520px] overflow-hidden">
+              <div
+                className="flex transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]"
+                style={{ transform: `translateX(-${activeSlide * 100}%)` }}
+              >
+                {featureSlides.map((slide, idx) => (
+                  <div key={idx} className="w-full flex-shrink-0 px-4">
+                    <div className="bg-gradient-to-br from-blue-50/90 via-white to-purple-50/90 backdrop-blur-md border border-indigo-100/50 rounded-[18px] py-5 px-6 text-left shadow-[0_8px_20px_rgba(99,91,255,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] flex flex-col mx-auto max-w-[320px] relative overflow-hidden group transition-all duration-300 hover:shadow-[0_15px_35px_rgba(99,91,255,0.12),inset_0_1px_0_rgba(255,255,255,1)] hover:border-accent-primary/40">
+                      {/* Ambient card glow */}
+                      <div className="absolute top-0 right-0 w-28 h-28 bg-accent-primary/10 rounded-full filter blur-[35px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="absolute bottom-0 left-0 w-20 h-20 bg-purple-500/10 rounded-full filter blur-[25px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      
+                      <div className="flex items-center gap-3 relative z-10 mb-2">
+                        <div className="flex items-center justify-center w-10 h-10 bg-white border border-indigo-50 rounded-[12px] text-accent-primary flex-shrink-0 shadow-[0_2px_8px_rgba(99,91,255,0.15)]">
+                          {React.cloneElement(slide.icon as React.ReactElement, { size: 18, className: "text-accent-primary" })}
+                        </div>
+                        <strong className="font-display text-[17px] font-extrabold text-slate-800 tracking-tight leading-tight">
+                          {slide.title}
+                        </strong>
+                      </div>
+                      <p className="text-[13px] text-slate-500 leading-relaxed m-0 font-medium relative z-10">
+                        {slide.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              <div className="bg-gradient-to-br from-white/70 to-slate-50/30 backdrop-blur-md border-2 border-black/5 rounded-[18px] p-7 text-left transition-all duration-300 ease-out shadow-[0_10px_25px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.6)] hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.8)] hover:border-accent-primary/30 flex flex-col gap-3.5">
-                <div className="flex items-center gap-3">
-                  <Percent size={13} className="text-accent-primary bg-accent-primary/8 p-2 rounded-lg" strokeWidth={2.5} />
-                  <strong className="font-display text-[17px] font-extrabold text-text-main">Tax Engine</strong>
-                </div>
-                <p className="text-sm text-text-muted leading-relaxed m-0 font-medium">Dynamic date-effective policies</p>
-              </div>
-
-              <div className="bg-gradient-to-br from-white/70 to-slate-50/30 backdrop-blur-md border-2 border-black/5 rounded-[18px] p-7 text-left transition-all duration-300 ease-out shadow-[0_10px_25px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.6)] hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.8)] hover:border-accent-primary/30 flex flex-col gap-3.5">
-                <div className="flex items-center gap-3">
-                  <Cpu size={13} className="text-accent-primary bg-accent-primary/8 p-2 rounded-lg" />
-                  <strong className="font-display text-[17px] font-extrabold text-text-main">Headless Core</strong>
-                </div>
-                <p className="text-sm text-text-muted leading-relaxed m-0 font-medium">Decoupled API-first architecture</p>
-              </div>
-
-              <div className="bg-gradient-to-br from-white/70 to-slate-50/30 backdrop-blur-md border-2 border-black/5 rounded-[18px] p-7 text-left transition-all duration-300 ease-out shadow-[0_10px_25px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.6)] hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.8)] hover:border-accent-primary/30 flex flex-col gap-3.5">
-                <div className="flex items-center gap-3">
-                  <Key size={13} className="text-accent-primary bg-accent-primary/8 p-2 rounded-lg" />
-                  <strong className="font-display text-[17px] font-extrabold text-text-main">Secure Access</strong>
-                </div>
-                <p className="text-sm text-text-muted leading-relaxed m-0 font-medium">Strict role-based tier isolation</p>
+              {/* Carousel Pagination */}
+              <div className="flex items-center justify-center gap-3 mt-10">
+                {featureSlides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveSlide(idx)}
+                    aria-label={`Go to slide ${idx + 1}`}
+                    className={`h-2 rounded-full transition-all duration-300 ease-out cursor-pointer ${
+                      idx === activeSlide
+                        ? 'w-8 bg-accent-primary shadow-[0_0_12px_rgba(99,91,255,0.6)]'
+                        : 'w-2 bg-black/10 hover:bg-black/20'
+                    }`}
+                  />
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Minimalist Trust Badges */}
-          <div className="flex items-center justify-center gap-12 mt-16 text-text-muted font-body">
-            <div className="flex items-center gap-2.5 text-[13px] font-bold tracking-wide">
-              <Shield size={12} strokeWidth={2.25} />
-              <span>RBAC Enforced</span>
-            </div>
-            <div className="flex items-center gap-2.5 text-[13px] font-bold tracking-wide">
-              <Lock size={12} strokeWidth={2.25} />
-              <span>AES-256 Encrypted</span>
-            </div>
-            <div className="flex items-center gap-2.5 text-[13px] font-bold tracking-wide">
-              <span>SOC 2 Type II</span>
-            </div>
+          <div className="flex items-center justify-center gap-8 mt-16 text-text-muted font-body">
+            <a href="https://www.facebook.com" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[13px] font-bold tracking-wide hover:text-accent-primary transition-colors text-inherit no-underline">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+              <span>Facebook</span>
+            </a>
+            <a href="https://www.instagram.com" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[13px] font-bold tracking-wide hover:text-accent-primary transition-colors text-inherit no-underline">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+              <span>Instagram</span>
+            </a>
+            <a href="https://www.linkedin.com" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[13px] font-bold tracking-wide hover:text-accent-primary transition-colors text-inherit no-underline">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+              <span>LinkedIn</span>
+            </a>
+            <a href="https://www.bcore.com" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[13px] font-bold tracking-wide hover:text-accent-primary transition-colors text-inherit no-underline">
+              <Globe size={14} strokeWidth={2.25} />
+              <span>Website</span>
+            </a>
           </div>
         </div>
       </section>

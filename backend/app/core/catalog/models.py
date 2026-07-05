@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy import Column, String, Boolean, Index
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from app.database import Base
+from sqlalchemy.dialects.postgresql import UUID
+from app.database import Base, JSONType, is_postgres
 
 class CatalogItem(Base):
     __tablename__ = "catalog_items"
@@ -10,10 +10,13 @@ class CatalogItem(Base):
     sku = Column(String, unique=True, index=True, nullable=False)
     title = Column(String, nullable=False, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
-    custom_attributes = Column(JSONB, default=dict, nullable=False)
+    custom_attributes = Column(JSONType, default=dict, nullable=False)
 
 # GIN Index for rapid search/filtering across custom fields
-Index("idx_catalog_items_custom_attributes", CatalogItem.custom_attributes, postgresql_using="gin")
+if is_postgres:
+    Index("idx_catalog_items_custom_attributes", CatalogItem.custom_attributes, postgresql_using="gin")
+else:
+    Index("idx_catalog_items_custom_attributes", CatalogItem.custom_attributes)
 
 
 from sqlalchemy import ForeignKey, String, UUID as SQLUUID

@@ -51,6 +51,8 @@ async def init_db():
                 )
                 session.add(default_org)
                 await session.flush()
+                await session.commit()
+                org = default_org
                 print("Default Organization seeded.")
 
             result = await session.execute(select(User).filter(User.email == "admin@bcore.local"))

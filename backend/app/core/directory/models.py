@@ -1,8 +1,8 @@
 import enum
 import uuid
 from sqlalchemy import Column, String, Boolean, Enum as SQLEnum, Index
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from app.database import Base
+from sqlalchemy.dialects.postgresql import UUID
+from app.database import Base, CoreModel, JSONType, is_postgres
 
 class ProfileType(str, enum.Enum):
     CUSTOMER = "CUSTOMER"
@@ -18,10 +18,13 @@ class DirectoryProfile(Base):
     email = Column(String, nullable=True)
     phone = Column(String, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
-    custom_attributes = Column(JSONB, default=dict, nullable=False)
+    custom_attributes = Column(JSONType, default=dict, nullable=False)
 
 # GIN Index for rapid search/filtering across custom fields
-Index("idx_directory_profiles_custom_attributes", DirectoryProfile.custom_attributes, postgresql_using="gin")
+if is_postgres:
+    Index("idx_directory_profiles_custom_attributes", DirectoryProfile.custom_attributes, postgresql_using="gin")
+else:
+    Index("idx_directory_profiles_custom_attributes", DirectoryProfile.custom_attributes)
 
 
 class EntityType(str, enum.Enum):
@@ -43,7 +46,7 @@ class Entity(CoreModel):
     trade_name: Mapped[str | None] = mapped_column(String, nullable=True)
     entity_type: Mapped[EntityType] = mapped_column(SQLEnum(EntityType, name="entity_type_enum"), nullable=False)
     tax_identifier: Mapped[str | None] = mapped_column(String, nullable=True)
-    primary_billing_address: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    primary_shipping_address: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    primary_billing_address: Mapped[dict | None] = mapped_column(JSONType, nullable=True)
+    primary_shipping_address: Mapped[dict | None] = mapped_column(JSONType, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
