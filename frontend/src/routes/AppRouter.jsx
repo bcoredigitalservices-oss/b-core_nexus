@@ -106,10 +106,10 @@ export function AppShellOrTierZero() {
     return <Navigate to="/login" replace />;
   }
 
-  if (currentUser?.role_tier === 0) {
+  if (currentUser?.permissions?.includes('*:*')) {
     return <TierZeroLayout />;
   }
-  if (currentUser?.role_tier === 1) {
+  if (currentUser?.permissions?.includes('iam:manage')) {
     return <TierOneLayout />;
   }
   return <AppShell />;
@@ -139,10 +139,9 @@ export function RoleBasedIndexRoute() {
     );
   }
 
-  const tier = currentUser?.role_tier;
-  if (tier === 0) {
+  if (currentUser?.permissions?.includes('*:*')) {
     return <SystemAdminDashboard />;
-  } else if (tier === 1) {
+  } else if (currentUser?.permissions?.includes('iam:manage')) {
     return <ExecutiveHome />;
   } else {
     // Tiers 2, 3, 4 all get the clean workspace launcher grid

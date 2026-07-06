@@ -122,9 +122,9 @@ export default function CommandCenter() {
               {currentUser?.email || 'System Administrator'}
             </span>
           </div>
-          {currentUser?.role_tier !== undefined && (
-            <span className={`badge badge-t${currentUser.role_tier} text-[0.7rem]`}>
-              Tier {currentUser.role_tier}
+          {currentUser?.permissions?.includes('*:*') && (
+            <span className={`badge badge-t0 text-[0.7rem]`}>
+              System Admin
             </span>
           )}
         </div>

@@ -8,7 +8,6 @@ class UserBase(BaseModel):
     email: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
-    role_tier: int = Field(default=4, ge=0, le=4, description="0=Root, 1=Exec, 2=Dir, 3=Lead, 4=Exec")
     designation: Optional[str] = None
     custom_attributes: Dict[str, Any] = Field(default_factory=dict)
     functional_roles: list[str] = Field(default_factory=list)
@@ -22,12 +21,12 @@ class UserRead(UserBase):
     id: UUID
     is_active: bool
     is_totp_enabled: bool
+    permissions: list[str] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 
 class UserUpdate(BaseModel):
     email: Optional[str] = None
-    role_tier: Optional[int] = Field(None, ge=0, le=4)
     is_active: Optional[bool] = None
     custom_attributes: Optional[Dict[str, Any]] = None
     password: Optional[str] = Field(None, min_length=12)
@@ -40,7 +39,6 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
-    role_tier: Optional[int] = None
 
 # For backward compatibility with existing route type hints
 UserResponse = UserRead

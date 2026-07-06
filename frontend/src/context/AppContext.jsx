@@ -322,8 +322,12 @@ export function AppProvider({ children }) {
       if (!bearerToken) return;
 
       // 2. Fetch navigation matrix
-      const navRes = await api.get('/shell/navigation');
-      setNavigationMatrix(navRes.data);
+      try {
+        const navRes = await api.get('/shell/navigation');
+        setNavigationMatrix(navRes.data);
+      } catch (navErr) {
+        console.warn('Navigation matrix unavailable, using fallback', navErr);
+      }
 
       // 3. Fetch current user profile
       const meRes = await api.get('/auth/me');

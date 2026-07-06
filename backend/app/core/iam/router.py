@@ -10,9 +10,50 @@ from sqlalchemy.future import select
 from app.database import get_db
 from app.core.auth.security import get_current_user, create_invite_token
 from app.core.auth.models import User
-from app.models.user import Role, user_roles, Permission, role_permissions
+from app.models.user import Role, user_roles, Permission, role_permissions, user_permissions
 from app.models.organization import Organization, Department, DepartmentOut
 from app.core.iam.email import send_onboarding_email
+
+WORKSPACE_DEFINITIONS = [
+    {"key": "accounting", "label": "Accounting", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "invoicing", "label": "Invoicing", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "payments", "label": "Payments", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "banking", "label": "Banking", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "taxes", "label": "Taxes", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "reports", "label": "Reports", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "budget", "label": "Budget", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "shares", "label": "Shares", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "assets", "label": "Assets", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "products", "label": "Products / Items", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "warehouse", "label": "Warehouse", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "stock", "label": "Stock", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "buying", "label": "Buying", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "pos", "label": "POS", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "crm", "label": "CRM", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "sales", "label": "Sales", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "support", "label": "Support", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "field_ops", "label": "Field Ops", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "maintenance", "label": "Maintenance", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "manufacturing", "label": "Manufacturing", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "projects", "label": "Projects", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "qa", "label": "QA / QT", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "logistics", "label": "Logistics", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "expenses", "label": "Expenses", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "hr", "label": "HR", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "payroll", "label": "Payroll", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "attendance", "label": "Attendance", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "recruitment", "label": "Recruitment", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "performance", "label": "Performance", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "leaves", "label": "Leaves", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "chats", "label": "Chats", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "employee_groups", "label": "Employee Groups", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "email", "label": "Email", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "message", "label": "Message", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "marketing", "label": "Marketing / Campaigns", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "website", "label": "Website", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "internals", "label": "Internals", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+    {"key": "cog", "label": "Settings / Cog", "operations": ["read", "write", "create", "delete", "print", "email", "export", "share", "report", "import", "mask"]},
+]
 
 router = APIRouter(prefix="/iam", tags=["Identity & Access Management (IAM)"])
 
@@ -88,6 +129,9 @@ class RolePermissionsUpdate(BaseModel):
 class UserRoleUpdate(BaseModel):
     role_id: uuid.UUID
 
+class CopyPermissionsRequest(BaseModel):
+    source_user_id: uuid.UUID
+
 # ── Routes ───────────────────────────────────────────────────────────────────
 
 @router.post("/departments", status_code=status.HTTP_201_CREATED)
@@ -134,8 +178,13 @@ async def create_department(
         "description": dept.description,
         "manager_id": dept.manager_id,
         "parent_id": dept.parent_id,
-        "organization_id": dept.organization_id
     }
+
+@router.get("/roles")
+async def list_roles(db: AsyncSession = Depends(get_db), _ = Depends(require_iam_privilege)):
+    res = await db.execute(select(Role))
+    roles = res.scalars().all()
+    return [{"id": r.id, "name": r.name, "description": r.description} for r in roles]
 
 # Workspaces creation endpoint removed
 
@@ -210,7 +259,6 @@ async def provision_user(
         "invite_token": token,
         "onboarding_url": onboarding_url,
         "designation": payload.designation,
-        "role_tier": 4,
         "email_sent": email_dispatched
     }
 
@@ -256,7 +304,8 @@ async def update_user_access(
         "status": "success",
         "user_id": user.id,
         "designation": user.designation,
-        "role_tier": 4,
+        "is_active": True,
+        "is_totp_enabled": False,
         "department_id": user.department_id,
         "functional_roles": []
     }
@@ -298,6 +347,140 @@ async def list_departments(
     return result_list
 
 # List workspaces endpoint removed
+
+@router.get("/workspaces")
+async def list_workspaces(_ = Depends(require_iam_privilege)):
+    """Return the fixed list of ERP workspace modules and their operations."""
+    return WORKSPACE_DEFINITIONS
+
+@router.get("/permissions", response_model=List[PermissionRead])
+async def list_permissions(
+    db: AsyncSession = Depends(get_db),
+    _ = Depends(require_iam_privilege)
+):
+    """List all available permissions in the system."""
+    res = await db.execute(select(Permission))
+    return res.scalars().all()
+
+@router.get("/users/{user_id}/permissions", response_model=List[PermissionRead])
+async def get_user_direct_permissions(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _ = Depends(require_iam_privilege)
+):
+    """Get a user's direct workspace permissions."""
+    res = await db.execute(select(User).where(User.id == user_id))
+    if not res.scalars().first():
+        raise HTTPException(status_code=404, detail="User not found.")
+    stmt = (
+        select(Permission)
+        .join(user_permissions, Permission.id == user_permissions.c.permission_id)
+        .where(user_permissions.c.user_id == user_id)
+    )
+    perm_res = await db.execute(stmt)
+    return perm_res.scalars().all()
+
+@router.put("/users/{user_id}/permissions")
+async def update_user_direct_permissions(
+    user_id: uuid.UUID,
+    payload: RolePermissionsUpdate,
+    db: AsyncSession = Depends(get_db),
+    _ = Depends(require_iam_privilege)
+):
+    """Overwrite a user's direct workspace permissions."""
+    res = await db.execute(select(User).where(User.id == user_id))
+    if not res.scalars().first():
+        raise HTTPException(status_code=404, detail="User not found.")
+    if payload.permission_ids:
+        perm_res = await db.execute(
+            select(Permission).where(Permission.id.in_(payload.permission_ids))
+        )
+        found = perm_res.scalars().all()
+        if len(found) != len(payload.permission_ids):
+            raise HTTPException(status_code=400, detail="One or more invalid permission IDs.")
+    from sqlalchemy import delete
+    await db.execute(delete(user_permissions).where(user_permissions.c.user_id == user_id))
+    if payload.permission_ids:
+        for perm_id in payload.permission_ids:
+            await db.execute(
+                user_permissions.insert().values(user_id=user_id, permission_id=perm_id)
+            )
+    await db.commit()
+    return {"status": "success", "message": "User workspace access updated successfully."}
+
+@router.get("/users/{user_id}/details")
+async def get_user_access_details(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _ = Depends(require_iam_privilege)
+):
+    """Get a user's complete access profile."""
+    res = await db.execute(select(User).where(User.id == user_id))
+    user = res.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+    # Get user's roles (for display only)
+    role_stmt = (
+        select(Role)
+        .join(user_roles, Role.id == user_roles.c.role_id)
+        .where(user_roles.c.user_id == user_id)
+    )
+    role_res = await db.execute(role_stmt)
+    roles = role_res.scalars().all()
+    # Get direct permissions
+    perm_stmt = (
+        select(Permission)
+        .join(user_permissions, Permission.id == user_permissions.c.permission_id)
+        .where(user_permissions.c.user_id == user_id)
+    )
+    perm_res = await db.execute(perm_stmt)
+    perms = perm_res.scalars().all()
+    return {
+        "user_id": user.id,
+        "email": user.email,
+        "is_active": user.is_active,
+        "department_id": user.department_id,
+        "designation": user.designation,
+        "roles": [{"id": r.id, "name": r.name, "description": r.description} for r in roles],
+        "permissions": [{"id": p.id, "name": p.name} for p in perms]
+    }
+
+@router.post("/users/{user_id}/copy-permissions")
+async def copy_user_permissions(
+    user_id: uuid.UUID,
+    payload: CopyPermissionsRequest,
+    db: AsyncSession = Depends(get_db),
+    _ = Depends(require_iam_privilege)
+):
+    """Copy all direct permissions from a source user to the target user."""
+    # Verify target user exists
+    target_res = await db.execute(select(User).where(User.id == user_id))
+    if not target_res.scalars().first():
+        raise HTTPException(status_code=404, detail="Target user not found.")
+    # Verify source user exists
+    source_res = await db.execute(select(User).where(User.id == payload.source_user_id))
+    if not source_res.scalars().first():
+        raise HTTPException(status_code=404, detail="Source user not found.")
+    # Get source user's direct permissions
+    source_perms_stmt = (
+        select(user_permissions.c.permission_id)
+        .where(user_permissions.c.user_id == payload.source_user_id)
+    )
+    source_perms_res = await db.execute(source_perms_stmt)
+    source_perm_ids = [row[0] for row in source_perms_res.fetchall()]
+    # Overwrite target user's permissions
+    from sqlalchemy import delete
+    await db.execute(delete(user_permissions).where(user_permissions.c.user_id == user_id))
+    for perm_id in source_perm_ids:
+        await db.execute(
+            user_permissions.insert().values(user_id=user_id, permission_id=perm_id)
+        )
+    await db.commit()
+    return {
+        "status": "success",
+        "message": "Permissions copied successfully.",
+        "permissions_copied": len(source_perm_ids)
+    }
 
 # ── Role & Permission Management Routes ────────────────────────────────────────
 

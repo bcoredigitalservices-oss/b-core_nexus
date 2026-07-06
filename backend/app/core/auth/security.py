@@ -26,12 +26,12 @@ async def create_access_token(data: dict, db: AsyncSession) -> str:
     if user_id:
         try:
             user_uuid = uuid.UUID(user_id) if isinstance(user_id, str) else user_id
-            from app.models.user import user_roles, role_permissions, Permission
+            from app.models.user import user_permissions, Permission
+            # Query ONLY direct user permissions
             stmt = (
                 select(Permission.name)
-                .join(role_permissions, Permission.id == role_permissions.c.permission_id)
-                .join(user_roles, role_permissions.c.role_id == user_roles.c.role_id)
-                .where(user_roles.c.user_id == user_uuid)
+                .join(user_permissions, Permission.id == user_permissions.c.permission_id)
+                .where(user_permissions.c.user_id == user_uuid)
             )
             res = await db.execute(stmt)
             permissions = list(set(res.scalars().all()))
