@@ -354,7 +354,7 @@ export function AppProvider({ children }) {
           id: "00000000-0000-0000-0000-000000000000",
           email: "admin@bcore.local",
           name: "Admin (Sandbox)",
-          role_tier: 1, // Admin (Tier 1)
+          permissions: ["*:*"], // Superuser Wildcard
           is_active: true
         });
         setNavigationMatrix(FALLBACK_NAVIGATION);
