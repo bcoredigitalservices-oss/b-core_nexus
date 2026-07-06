@@ -97,6 +97,7 @@ const SOUNDS = {
 };
 
 // ─── Context ──────────────────────────────────────────────────────────────────
+/** @type {import('react').Context<any>} */
 export const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
@@ -348,6 +349,16 @@ export function AppProvider({ children }) {
         logout();
       } else {
         setIsApiLive(false);
+        // Fallback: Populate mock data for offline Sandbox mode
+        setCurrentUser({
+          id: "00000000-0000-0000-0000-000000000000",
+          email: "admin@bcore.local",
+          name: "Admin (Sandbox)",
+          permissions: ["*:*"], // Superuser Wildcard
+          is_active: true
+        });
+        setNavigationMatrix(FALLBACK_NAVIGATION);
+        setSystemSettings(FALLBACK_SYSTEM);
       }
     }
   }, [token, logout, fetchPreferences]);
@@ -415,6 +426,9 @@ export function AppProvider({ children }) {
 }
 
 // ── Convenience hook ──────────────────────────────────────────────────────────
+/**
+ * @returns {any}
+ */
 export function useAppContext() {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error('useAppContext must be used inside <AppProvider>');

@@ -2,11 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { 
   Mail, 
   User as UserIcon, 
-  Network, 
-  Cpu, 
   AlertCircle,
   X,
-  Layers,
   ShieldCheck,
   Briefcase
 } from 'lucide-react';
@@ -27,64 +24,14 @@ interface Department {
 interface Role {
   id: string;
   name: string;
+  description?: string | null;
 }
-
-interface Workspace {
-  id: string;
-  name: string;
-  identifier: string;
-  status: string;
-}
-
-const WORKSPACE_CATEGORIES = [
-  {
-    name: 'Finance',
-    color: '#00f5a0',
-    keys: ['accounting', 'invoicing', 'payments', 'banking', 'taxes', 'reports', 'budget', 'shares']
-  },
-  {
-    name: 'Inventory',
-    color: '#ffb703',
-    keys: ['assets', 'products', 'items', 'warehouse', 'stock', 'buying']
-  },
-  {
-    name: 'CRM & Sales',
-    color: '#00f2fe',
-    keys: ['pos', 'crm', 'sales', 'support']
-  },
-  {
-    name: 'Operations & Management',
-    color: '#c084fc',
-    keys: ['field_ops', 'maintenance', 'manufacturing', 'projects', 'qa', 'qt', 'logistics']
-  },
-  {
-    name: 'HR & Company',
-    color: '#f472b6',
-    keys: ['expenses', 'hr', 'payroll', 'attendance', 'recruitment', 'performance', 'leaves']
-  },
-  {
-    name: 'Communications',
-    color: '#38bdf8',
-    keys: ['chats', 'employee_groups', 'email', 'message']
-  },
-  {
-    name: 'Utilities',
-    color: '#fb923c',
-    keys: ['marketing', 'campaigns', 'website']
-  },
-  {
-    name: 'System Internals',
-    color: '#a3a3a3',
-    keys: ['internals', 'cog']
-  }
-];
 
 export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: ProvisionUserModalProps) {
-  const { token, authFetch, currentUser } = useAppContext();
+  const { token, authFetch } = useAppContext();
 
   // Metadata context lists
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -95,13 +42,12 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
   const [roleId, setRoleId] = useState('');
   const [designation, setDesignation] = useState('');
   const [departmentId, setDepartmentId] = useState('');
-  const [selectedWorkspaces, setSelectedWorkspaces] = useState<string[]>([]);
 
   // Submission / Loading / Error States
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Fetch departments & workspaces on mount / open
+  // Fetch departments & roles on mount / open
   useEffect(() => {
     if (!isOpen || !token) return;
 
@@ -118,14 +64,9 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
           setRoles(fetchedRoles);
           setRoleId(fetchedRoles[0].id);
         }
-
-        const wses = await authFetch('/iam/workspaces');
-        if (wses) {
-          setWorkspaces(wses);
-        }
       } catch (err: any) {
         console.error('Failed to load provisioning form metadata:', err);
-        setErrorMsg('Error loading workspaces or departments metadata.');
+        setErrorMsg('Error loading roles or departments metadata.');
       } finally {
         setLoading(false);
       }
@@ -148,38 +89,15 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
 
   if (!isOpen) return null;
 
-  const handleToggleWorkspace = (identifier: string) => {
-    setSelectedWorkspaces(prev => 
-      prev.includes(identifier) ? prev.filter(wId => wId !== identifier) : [...prev, identifier]
-    );
-  };
-
-  const handleToggleGroup = (groupItems: Workspace[]) => {
-    const groupIdentifiers = groupItems.map(item => item.identifier);
-    const allSelected = groupIdentifiers.every(id => selectedWorkspaces.includes(id));
-    
-    if (allSelected) {
-      setSelectedWorkspaces(prev => prev.filter(id => !groupIdentifiers.includes(id)));
-    } else {
-      setSelectedWorkspaces(prev => {
-        const next = [...prev];
-        groupIdentifiers.forEach(id => {
-          if (!next.includes(id)) next.push(id);
-        });
-        return next;
-      });
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || !roleId) return;
 
     setSubmitting(true);
     setErrorMsg('');
 
     try {
-      await authFetch('/iam/users/provision', {
+      const res = await authFetch('/iam/users/provision', {
         method: 'POST',
         body: JSON.stringify({
           email: email.trim(),
@@ -187,13 +105,12 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
           last_name: lastName.trim() || null,
           role_id: roleId,
           designation: designation.trim() || null,
-          department_id: departmentId || null,
-          workspace_strings: selectedWorkspaces
+          department_id: departmentId || null
         })
       });
 
-      // Call onSuccess and onClose as required
-      onSuccess();
+      // Call onSuccess and onClose
+      onSuccess(res);
       onClose();
 
       // Reset form states
@@ -202,7 +119,6 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
       setLastName('');
       setDesignation('');
       setDepartmentId('');
-      setSelectedWorkspaces([]);
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to provision user.');
     } finally {
@@ -210,28 +126,11 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
     }
   };
 
-  // Group fetched workspaces based on their categories (only active ones, or all)
-  const activeWorkspaces = workspaces.filter(w => w.status === 'Active');
-  
-  const groupedWorkspaces = WORKSPACE_CATEGORIES.map(cat => {
-    const items = activeWorkspaces.filter(ws => cat.keys.includes(ws.identifier));
-    return { ...cat, items };
-  }).filter(group => group.items.length > 0);
-
-  const categorizedIdentifiers = new Set(WORKSPACE_CATEGORIES.flatMap(cat => cat.keys));
-  const otherItems = activeWorkspaces.filter(ws => !categorizedIdentifiers.has(ws.identifier));
-  if (otherItems.length > 0) {
-    groupedWorkspaces.push({
-      name: 'Other Modules',
-      color: '#a3a3a3',
-      keys: [],
-      items: otherItems
-    });
-  }
+  const selectedRoleDescription = roles.find(r => r.id === roleId)?.description;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-[999] p-6">
-      <div className="glass-panel w-full max-w-[600px] max-h-[90vh] overflow-y-auto bg-card border border-color rounded-2xl p-8 shadow-xl flex flex-col gap-6 relative">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-[999] p-6 animate-[fadeIn_0.2s_ease]">
+      <div className="glass-panel w-full max-w-[550px] max-h-[90vh] overflow-y-auto bg-card border border-color rounded-2xl p-8 shadow-xl flex flex-col gap-6 relative">
         {/* Modal Close "X" Button */}
         <button 
           onClick={onClose}
@@ -246,8 +145,8 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
             <UserIcon size={20} className="text-accent-primary" />
             Provision Operator User
           </h3>
-          <p className="text-[0.8rem] text-text-muted m-0">
-            Configure identity credentials, clearance tier, department, and workspace permissions.
+          <p className="text-[0.8rem] text-text-muted m-0 font-medium">
+            Configure identity credentials, assigned base role, department, and company designation.
           </p>
         </div>
 
@@ -277,6 +176,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     disabled={submitting}
+                    className="w-full rounded-lg border border-color bg-card py-2 px-3 text-sm text-text-main outline-none focus:border-accent-primary"
                   />
                 </div>
                 <div>
@@ -287,6 +187,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     disabled={submitting}
+                    className="w-full rounded-lg border border-color bg-card py-2 px-3 text-sm text-text-main outline-none focus:border-accent-primary"
                   />
                 </div>
               </div>
@@ -298,7 +199,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
                   <input 
                     type="email" 
                     required 
-                    className="pl-[34px] w-full"
+                    className="pl-[34px] w-full rounded-lg border border-color bg-card py-2 px-3 text-sm text-text-main outline-none focus:border-accent-primary"
                     placeholder="operator@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -309,7 +210,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
             </div>
 
             {/* Clearance & Role Tier Selection */}
-            <div className="grid grid-cols-1 gap-4 border-t border-color pt-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-color pt-5">
               <div>
                 <label className="flex items-center gap-1.5 text-[0.75rem] text-text-muted font-semibold mb-1.5">
                   <ShieldCheck size={14} />
@@ -320,12 +221,18 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
                   onChange={(e) => setRoleId(e.target.value)}
                   disabled={submitting}
                   required
+                  className="w-full rounded-lg border border-color bg-card py-2 px-3 text-sm text-text-main outline-none focus:border-accent-primary"
                 >
                   <option value="" disabled>-- Select Base Role --</option>
                   {roles.map(r => (
                     <option key={r.id} value={r.id}>{r.name}</option>
                   ))}
                 </select>
+                {selectedRoleDescription && (
+                  <span className="text-[10px] text-text-muted mt-1.5 block leading-normal italic">
+                    {selectedRoleDescription}
+                  </span>
+                )}
               </div>
 
               <div>
@@ -339,6 +246,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
                   value={designation} 
                   onChange={(e) => setDesignation(e.target.value)}
                   disabled={submitting}
+                  className="w-full rounded-lg border border-color bg-card py-2 px-3 text-sm text-text-main outline-none focus:border-accent-primary"
                 />
               </div>
             </div>
@@ -353,6 +261,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
                 value={departmentId} 
                 onChange={(e) => setDepartmentId(e.target.value)}
                 disabled={submitting}
+                className="w-full rounded-lg border border-color bg-card py-2 px-3 text-sm text-text-main outline-none focus:border-accent-primary"
               >
                 <option value="">-- Unassigned (Root/Independent Operator) --</option>
                 {departments.map((dept) => (
@@ -363,81 +272,11 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
               </select>
             </div>
 
-            {/* Workspaces Assignment Checklist */}
-            <div className="border-t border-color pt-5">
-              <label className="flex items-center gap-1.5 text-[0.75rem] text-text-muted font-semibold mb-2.5">
-                <Layers size={14} />
-                Authorized Workspaces
-              </label>
-              
-              {activeWorkspaces.length === 0 ? (
-                <div className="p-3 bg-amber-500/5 border border-amber-500/15 rounded-lg text-[0.78rem] text-amber-500 flex items-center gap-2">
-                  <Cpu size={14} />
-                  <span>No active workspaces registered. Permissions locked.</span>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3.5 max-h-[220px] overflow-y-auto border border-color rounded-xl p-3.5 bg-black/5">
-                  {groupedWorkspaces.map((group) => {
-                    const groupIdentifiers = group.items.map(item => item.identifier);
-                    const allSelected = groupIdentifiers.every(id => selectedWorkspaces.includes(id));
-
-                    return (
-                      <div key={group.name} className="flex flex-col gap-2 border-b border-color pb-3 mb-1">
-                        {/* Category Header */}
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: group.color }} />
-                            <span className="text-[0.78rem] font-bold text-text-main">{group.name}</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleGroup(group.items)}
-                            disabled={submitting}
-                            className="bg-transparent border-none text-accent-primary text-[0.7rem] font-bold cursor-pointer p-0"
-                          >
-                            {allSelected ? 'Deselect All' : 'Select All'}
-                          </button>
-                        </div>
-
-                        {/* Checkboxes grid inside Category */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {group.items.map((ws) => {
-                            const isChecked = selectedWorkspaces.includes(ws.identifier);
-                            return (
-                              <label 
-                                key={ws.id} 
-                                className={`flex items-center gap-2 text-[0.78rem] cursor-pointer py-1.5 px-2.5 rounded-lg border transition-all duration-150 ${
-                                  isChecked 
-                                    ? 'border-accent-primary bg-accent-primary/5' 
-                                    : 'border-color bg-card'
-                                }`}
-                              >
-                                <input 
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={() => handleToggleWorkspace(ws.identifier)}
-                                  disabled={submitting}
-                                  className="cursor-pointer accent-accent-primary w-auto"
-                                />
-                                <span className={isChecked ? 'text-text-main font-semibold' : 'text-text-muted font-normal'}>
-                                  {ws.name}
-                                </span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
             {/* Modal Actions */}
-            <div className="flex gap-4 mt-4 border-t border-color pt-5">
+            <div className="flex gap-4 mt-2 border-t border-color pt-5">
               <button 
                 type="button" 
-                className="btn btn-secondary flex-1" 
+                className="w-full rounded-lg py-2.5 px-4 font-semibold border border-color bg-card text-text-muted transition-all hover:bg-card-hover hover:text-text-main cursor-pointer"
                 onClick={onClose}
                 disabled={submitting}
               >
@@ -445,7 +284,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
               </button>
               <button 
                 type="submit" 
-                className="btn btn-primary flex-1" 
+                className="w-full rounded-lg py-2.5 px-4 font-semibold border border-transparent bg-accent-primary text-white shadow-lg shadow-accent-primary/20 transition-all hover:brightness-110 cursor-pointer"
                 disabled={submitting}
               >
                 {submitting ? 'Provisioning...' : 'Provision Operator'}

@@ -89,7 +89,6 @@ export default function NexusLogoAnimated({
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 290 360"
         width={width}
-        height="auto"
         role="img"
         aria-label="B-Core Nexus logo"
         className={`block relative z-[1] ${className}`}

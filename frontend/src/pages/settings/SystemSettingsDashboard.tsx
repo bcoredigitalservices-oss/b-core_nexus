@@ -91,7 +91,7 @@ function Card({ icon, iconColor, title, badge, children }: { icon: React.ReactNo
 }
 
 const PALETTE_OPTIONS = [
-  { value: 'Stripe Blurple', label: 'Stripe Blurple' },
+  { value: 'Stripe Blurple', label: 'B-Core Warm Premium (Default)' },
   { value: 'Vercel Crisp', label: 'Vercel Crisp' },
   { value: 'Azure Cloud', label: 'Azure Cloud' },
   { value: 'Linear Cool', label: 'Linear Cool' },
@@ -271,8 +271,8 @@ export default function SystemSettingsDashboard() {
             </div>
           </Card>
 
-          {/* Global Defaults Card (Tier 0/1 reference only) */}
-          {currentUser && currentUser.role_tier <= 1 && (
+          {/* Global Defaults Card (Admin/system:write permissions only) */}
+          {currentUser && (currentUser.permissions?.includes('system:write') || currentUser.permissions?.includes('*:*')) && (
             <Card icon={<Palette size={20} />} iconColor="var(--accent-purple)" title="Global Default Settings">
               <div className="flex flex-col gap-6 p-6">
                 <p className="text-[0.85rem] text-[var(--text-muted)]">

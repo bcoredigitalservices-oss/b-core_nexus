@@ -101,6 +101,13 @@ export default function Sidebar({ isOpen, onClose, onCollapse, isMobile }) {
     ? (isOpen ? 'translate-x-0' : '-translate-x-full')
     : 'translate-x-0';
 
+  const handleAsideClick = (e) => {
+    if (isMobile) return;
+    const isInteractive = e.target.closest('a, button, input, select');
+    if (isInteractive) return;
+    handleCollapseToggle();
+  };
+
   return (
     <>
       {/* Mobile overlay backdrop */}
@@ -113,7 +120,8 @@ export default function Sidebar({ isOpen, onClose, onCollapse, isMobile }) {
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-screen bg-sidebar border-r border-color flex flex-col z-[200] overflow-hidden transition-[width,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${widthClass} ${transformClass} ${
+        onClick={handleAsideClick}
+        className={`fixed top-0 left-0 h-screen bg-sidebar border-r border-color flex flex-col z-[200] overflow-hidden transition-[width,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${widthClass} ${transformClass} cursor-pointer select-none ${
           isMobile ? 'shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : ''
         }`}
         aria-label="Primary navigation"
@@ -206,7 +214,7 @@ export default function Sidebar({ isOpen, onClose, onCollapse, isMobile }) {
                   {currentUser.full_name || currentUser.email}
                 </span>
                 <span className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">
-                  Tier {currentUser.role_tier ?? '?'}
+                  {currentUser.designation || (currentUser.permissions?.includes('*:*') ? 'System Admin' : 'Operator')}
                 </span>
               </div>
             </div>
