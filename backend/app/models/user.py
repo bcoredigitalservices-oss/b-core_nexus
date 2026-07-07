@@ -124,6 +124,13 @@ class User(CoreModel):
     def is_totp_enabled(self) -> bool:
         return self.mfa_enabled
 
+    @property
+    def functional_roles(self) -> list[str]:
+        """
+        Exposes role names as a list of strings for Pydantic serialization.
+        """
+        return [role.name for role in self.roles]
+
 class EmployeeProfile(Base):
     __tablename__ = "employee_profiles"
 
