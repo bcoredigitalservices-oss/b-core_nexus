@@ -322,7 +322,7 @@ export default function ExecutiveHome() {
   const orgName = (activeWorkspace as any)?.organization_name || 'B-Core Nexus';
   const userName = currentUser?.first_name && (currentUser as any)?.last_name
     ? `${currentUser.first_name} ${(currentUser as any).last_name}`
-    : currentUser?.email?.split('@')[0] || 'Operator';
+    : currentUser?.email?.split('@')[0] || 'User';
 
   const handleLaunch = (route: string) => {
     navigate(route);

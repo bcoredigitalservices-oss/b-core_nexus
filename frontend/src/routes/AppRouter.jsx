@@ -111,7 +111,7 @@ export function AppShellOrTierZero() {
 
 // ── RoleBasedIndexRoute Component ──────────────────────────────────────────
 export function RoleBasedIndexRoute() {
-  const { isBooting } = useAppContext();
+  const { isBooting, currentUser } = useAppContext();
 
   // If boot status is loading, render a standard loading panel
   if (isBooting) {
@@ -133,7 +133,16 @@ export function RoleBasedIndexRoute() {
     );
   }
 
-  // All users land on the single Unified App Launcher workspace grid
+  const isAdmin = 
+    currentUser?.permissions?.includes('*:*') || 
+    currentUser?.permissions?.includes('iam:manage') ||
+    currentUser?.functional_roles?.includes('admin') ||
+    currentUser?.functional_roles?.includes('manager');
+
+  if (isAdmin) {
+    return <ExecutiveDashboard />;
+  }
+
   return <AppLauncher />;
 }
 
