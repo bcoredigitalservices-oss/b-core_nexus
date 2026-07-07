@@ -220,7 +220,11 @@ export default function AdminSidebar({ isOpen, onClose, onCollapse, isMobile }: 
                             <span className="truncate">{item.label}</span>
                             {item.readOnly && <ReadOnlyBadge />}
                           </div>
-                          {item.label === 'Users' && (currentUser?.permissions?.includes('*:*') || currentUser?.functional_roles?.includes('admin')) && (
+                          {item.label === 'Users' && (
+                            currentUser?.permissions?.includes('*:*') || 
+                            currentUser?.permissions?.includes('iam:manage') || 
+                            currentUser?.permissions?.includes('user:invite')
+                          ) && (
                             <button
                               onClick={(e) => {
                                 e.preventDefault();

@@ -17,8 +17,7 @@ export default function Login() {
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [totpCode, setTotpCode] = useState('');
-  const [tempToken, setTempToken] = useState('');
-  const [isTierZeroMfa, setIsTierZeroMfa] = useState(false);
+
 
   /* ── MFA Setup intercept states ───────────────────────────────────────── */
   const [mfaSetupMode, setMfaSetupMode] = useState(false);
@@ -139,7 +138,7 @@ export default function Login() {
 
     setFormState('loading');
     setErrorMsg('');
-    setIsTierZeroMfa(false);
+    setSetupUri('');
 
     try {
       const body = new URLSearchParams();
@@ -166,7 +165,9 @@ export default function Login() {
           return;
         }
         if (data?.detail === "MFA_CODE_REQUIRED" || data?.detail === "MFA code required") {
-          setIsTierZeroMfa(true);
+          if (data.setup_uri) {
+            setSetupUri(data.setup_uri);
+          }
           setFormState('totp');
           return;
         }
@@ -180,11 +181,7 @@ export default function Login() {
 
       const data = await res.json();
 
-      if (data.status === 'requires_totp') {
-        setTempToken(data.temp_token);
-        setFormState('totp');
-        return;
-      }
+
 
       if (data.access_token) {
         saveTokenAndSession(data.access_token, data.refresh_token);
@@ -245,43 +242,16 @@ export default function Login() {
     setFormState('loading');
     setErrorMsg('');
 
-    if (isTierZeroMfa) {
-      try {
-        const body = new URLSearchParams();
-        body.append('username', email.trim());
-        body.append('password', password);
-        body.append('totp_code', totpCode.trim());
-
-        const res = await fetch(`${API_BASE}/auth/login`, {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body,
-        });
-
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          setError(data?.detail ?? 'Invalid verification code.');
-          setFormState('totp');
-          return;
-        }
-
-        const data = await res.json();
-        if (data.access_token) {
-          saveTokenAndSession(data.access_token, data.refresh_token);
-          handleSuccessAndRedirect();
-        }
-      } catch {
-        setError('Network error during TOTP verification.');
-        setFormState('totp');
-      }
-      return;
-    }
-
     try {
-      const res = await fetch(`${API_BASE}/auth/login/verify-totp`, {
+      const body = new URLSearchParams();
+      body.append('username', email.trim());
+      body.append('password', password);
+      body.append('totp_code', totpCode.trim());
+
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ temp_token: tempToken, code: totpCode }),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
       });
 
       if (!res.ok) {
@@ -507,6 +477,17 @@ export default function Login() {
                 noValidate
                 aria-label="TOTP verification form"
               >
+                {setupUri && (
+                  <div className="flex flex-col items-center gap-[20px] py-1">
+                    {/* QR Code Container */}
+                    <div 
+                      className="bg-white p-3 rounded-lg border border-[#E4E2DC] shadow-[0_8px_20px_rgba(0,0,0,0.03)] flex items-center justify-center animate-[fadeIn_0.3s_ease]"
+                    >
+                      <QRCodeSVG value={setupUri} size={150} level="M" />
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="totp-code" className="text-[10px] font-bold uppercase tracking-widest text-[#0F2E59] m-0">
                     Authenticator Code
@@ -554,7 +535,7 @@ export default function Login() {
                 <button
                   type="button"
                   className="bg-transparent border-none text-[#8C8980] text-[13px] font-bold cursor-pointer text-center p-2 transition-colors duration-200 hover:text-[#0F2E59]"
-                  onClick={() => { setFormState('idle'); setTotpCode(''); setErrorMsg(''); }}
+                  onClick={() => { setFormState('idle'); setTotpCode(''); setErrorMsg(''); setSetupUri(''); }}
                 >
                   ← Back to login
                 </button>
@@ -624,7 +605,7 @@ export default function Login() {
                 <button
                   type="button"
                   className="bg-transparent border-none text-[#8C8980] text-[13px] font-bold cursor-pointer text-center p-2 transition-colors duration-200 hover:text-[#0F2E59]"
-                  onClick={() => { setMfaSetupMode(false); setTotpCode(''); setFormState('idle'); setErrorMsg(''); }}
+                  onClick={() => { setMfaSetupMode(false); setTotpCode(''); setFormState('idle'); setErrorMsg(''); setSetupUri(''); }}
                 >
                   ← Back to login
                 </button>

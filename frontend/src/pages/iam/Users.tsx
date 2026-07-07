@@ -50,7 +50,12 @@ interface DepartmentItem {
 
 export default function Users() {
   const navigate = useNavigate();
-  const { token, authFetch } = useAppContext();
+  const { token, authFetch, currentUser } = useAppContext();
+
+  const canProvision = 
+    currentUser?.permissions?.includes('*:*') || 
+    currentUser?.permissions?.includes('iam:manage') ||
+    currentUser?.permissions?.includes('user:invite');
   
   const [users, setUsers] = useState<UserItem[]>([]);
   const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([]);
@@ -212,13 +217,15 @@ export default function Users() {
           </div>
         </div>
 
-        <button 
-          onClick={() => setProvisionModalOpen(true)} 
-          className="bg-[#C5A85C] text-[#0F2E59] hover:brightness-110 font-bold flex items-center gap-2 py-3 px-5 rounded-xl border border-transparent shadow-lg shadow-[#C5A85C]/10 transition-all duration-200 z-10 cursor-pointer"
-        >
-          <UserPlus size={16} />
-          Provision Operator
-        </button>
+        {canProvision && (
+          <button 
+            onClick={() => setProvisionModalOpen(true)} 
+            className="bg-[#C5A85C] text-[#0F2E59] hover:brightness-110 font-bold flex items-center gap-2 py-3 px-5 rounded-xl border border-transparent shadow-lg shadow-[#C5A85C]/10 transition-all duration-200 z-10 cursor-pointer"
+          >
+            <UserPlus size={16} />
+            Provision Operator
+          </button>
+        )}
       </div>
 
       {successMsg && (

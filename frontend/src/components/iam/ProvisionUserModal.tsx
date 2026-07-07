@@ -91,18 +91,18 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !roleId) return;
+    if (!email.trim() || !firstName.trim() || !lastName.trim() || !roleId) return;
 
     setSubmitting(true);
     setErrorMsg('');
 
     try {
-      const res = await authFetch('/iam/users/provision', {
+      const res = await authFetch('/iam/users/invite', {
         method: 'POST',
         body: JSON.stringify({
           email: email.trim(),
-          first_name: firstName.trim() || null,
-          last_name: lastName.trim() || null,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
           role_id: roleId,
           designation: designation.trim() || null,
           department_id: departmentId || null
@@ -169,9 +169,10 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[0.75rem] text-text-muted font-semibold mb-1.5">First Name</label>
+                  <label className="block text-[0.75rem] text-text-muted font-semibold mb-1.5">First Name *</label>
                   <input 
                     type="text" 
+                    required
                     placeholder="First name"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
@@ -180,9 +181,10 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
                   />
                 </div>
                 <div>
-                  <label className="block text-[0.75rem] text-text-muted font-semibold mb-1.5">Last Name</label>
+                  <label className="block text-[0.75rem] text-text-muted font-semibold mb-1.5">Last Name *</label>
                   <input 
                     type="text" 
+                    required
                     placeholder="Last name"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
