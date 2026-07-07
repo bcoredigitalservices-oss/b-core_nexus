@@ -41,7 +41,7 @@ export default function ExecutiveDashboard() {
         // Fetch all data in parallel
         const [orgRes, usersRes, deptsRes, worksRes] = await Promise.all([
           fetch(`${import.meta.env.VITE_API_URL}/api/v1/organization/profile`, { headers }),
-          fetch(`${import.meta.env.VITE_API_URL}/api/v1/iam/users`, { headers }),
+          fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/users`, { headers }),
           fetch(`${import.meta.env.VITE_API_URL}/api/v1/iam/departments`, { headers }),
           fetch(`${import.meta.env.VITE_API_URL}/api/v1/iam/workspaces`, { headers })
         ]);

@@ -306,8 +306,11 @@ export default function AppLauncher() {
   const { currentUser, activeWorkspace } = useAppContext();
   const navigate = useNavigate();
 
-  const roleTier: number = currentUser?.role_tier ?? 99;
-  const isSuperUser = roleTier <= 1;
+  const isSuperUser = 
+    currentUser?.permissions?.includes('*:*') || 
+    currentUser?.permissions?.includes('iam:manage') ||
+    currentUser?.functional_roles?.includes('admin') ||
+    currentUser?.functional_roles?.includes('manager');
 
   const permittedWorkspaceKeys: string[] = isSuperUser
     ? DEPARTMENTS.flatMap((d) => d.workspaces.map((w) => w.key))
@@ -317,14 +320,6 @@ export default function AppLauncher() {
   const userName = currentUser?.first_name && (currentUser as any)?.last_name
     ? `${currentUser.first_name} ${(currentUser as any).last_name}`
     : currentUser?.email?.split('@')[0] || 'Operator';
-
-  const roleTierLabel: Record<number, string> = {
-    0: 'Tier 0 — Genesis Admin',
-    1: 'Tier 1 — Executive',
-    2: 'Tier 2 — Manager',
-    3: 'Tier 3 — Operator',
-    4: 'Tier 4 — Viewer',
-  };
 
   const handleLaunch = (route: string) => {
     navigate(route);

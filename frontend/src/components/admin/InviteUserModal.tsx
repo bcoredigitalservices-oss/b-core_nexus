@@ -54,8 +54,8 @@ export default function InviteUserModal() {
         throw new Error('Please select a base role for the invitation.');
       }
 
-      // POST /api/v1/auth/invite (requires min_tier=0, which our currentUser is)
-      const data = await authFetch('/auth/invite', {
+      // POST /api/v1/iam/users/invite (requires min_tier=0, which our currentUser is)
+      const data = await authFetch('/iam/users/invite', {
         method: 'POST',
         body: JSON.stringify({
           email: email.trim(),

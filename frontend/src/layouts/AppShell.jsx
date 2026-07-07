@@ -4,6 +4,7 @@ import {
   Menu, Bell, Database, Server, User, ChevronDown, Settings, LogOut, LayoutGrid,
 } from 'lucide-react';
 import Sidebar, { SIDEBAR_WIDTH_EXPANDED, SIDEBAR_WIDTH_COLLAPSED } from '../components/navigation/Sidebar';
+import AdminSidebar from '../components/navigation/AdminSidebar';
 import { useAppContext } from '../context/AppContext';
 
 const MOBILE_BREAKPOINT = 768; // px
@@ -55,26 +56,37 @@ export default function AppShell() {
   }
 
   // Determine if layout should show structural sidebar
-  const showSidebar = !isWorkspaceAppRoute && !currentUser?.permissions?.includes('*:*');
+  const showSidebar = !isWorkspaceAppRoute;
+  const isAdmin = 
+    currentUser?.permissions?.includes('*:*') || 
+    currentUser?.permissions?.includes('iam:manage') ||
+    currentUser?.functional_roles?.includes('admin') ||
+    currentUser?.functional_roles?.includes('manager');
 
-  // Derived from Sidebar.jsx's own constants — this is the single source of
-  // truth for both the sidebar's rendered width and the content offset, so
-  // they can't drift out of sync the way the old hardcoded '72px' did against
-  // Sidebar's old `w-16` (64px) class.
+  // Derived from Sidebar's constants or AdminSidebar's fixed footprint
   const contentOffset = !isMobile && showSidebar
-    ? (sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED)
+    ? (sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : (isAdmin ? 260 : SIDEBAR_WIDTH_EXPANDED))
     : 0;
 
   return (
     <div className="flex w-screen h-screen overflow-hidden bg-main">
       {/* ── Sidebar ──────────────────────────────────────────────── */}
       {showSidebar && (
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          onCollapse={setSidebarCollapsed} // Tells AppShell if sidebar is 72px or 240px wide
-          isMobile={isMobile}
-        />
+        isAdmin ? (
+          <AdminSidebar 
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            onCollapse={setSidebarCollapsed}
+            isMobile={isMobile}
+          />
+        ) : (
+          <Sidebar
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            onCollapse={setSidebarCollapsed} // Tells AppShell if sidebar is 72px or 240px wide
+            isMobile={isMobile}
+          />
+        )
       )}
 
       {/* ── Main Layout Column (Header + Routed Content) ─────────── */}
