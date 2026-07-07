@@ -15,7 +15,6 @@ from app.core.auth.schemas import (
     UserRead,
     Token,
     VerifyTOTPRequest,
-    UserInviteRequest,
     UserRegisterRequest,
     OnboardVerifyRequest,
     OnboardCompleteRequest,
@@ -39,118 +38,8 @@ from app.core.auth.totp import (
     verify_totp_code
 )
 
-class OAuth2AliasAPIRouter(APIRouter):
-    def __init__(self, *args, **kwargs):
-        self._routes_list = []
-        super().__init__(*args, **kwargs)
-
-    @property
-    def routes(self):
-        app = None
-        try:
-            import inspect
-            from fastapi import FastAPI
-            for frame_info in inspect.stack():
-                frame = frame_info.frame
-                if "self" in frame.f_locals and isinstance(frame.f_locals["self"], FastAPI):
-                    app = frame.f_locals["self"]
-                    break
-        except Exception:
-            pass
-
-        if not app:
-            try:
-                import gc
-                from fastapi import FastAPI
-                for obj in gc.get_objects():
-                    if isinstance(obj, FastAPI):
-                        app = obj
-                        break
-            except Exception:
-                pass
-
-        if app:
-            if not any(r.path == "/api/core/auth/token" for r in app.routes):
-                app.add_api_route(
-                    "/api/core/auth/token",
-                    oauth2_token_alias,
-                    methods=["POST"],
-                    response_model=Token,
-                    tags=["Authentication"],
-                    summary="OAuth2 compatible token login alias"
-                )
-        return self._routes_list
-
-    @routes.setter
-    def routes(self, value):
-        self._routes_list = value
-
-auth_router = OAuth2AliasAPIRouter(prefix="/auth", tags=["Authentication"])
+auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
 router = auth_router
-
-@auth_router.post("/invite", status_code=status.HTTP_201_CREATED)
-async def invite_user(
-    payload: UserInviteRequest,
-    request: Request,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(RequiresPermission("user:invite"))
-):
-    # Check if user exists
-    result = await db.execute(select(User).filter(User.email == payload.email))
-    existing_user = result.scalars().first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User already exists"
-        )
-    
-    # Verify role exists
-    from app.models.user import Role
-    role_res = await db.execute(select(Role).where(Role.id == payload.role_id))
-    role = role_res.scalars().first()
-    if not role:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid role ID provided"
-        )
-    
-    # Generate secure JWT invitation token
-    token = create_invite_token(
-        email=payload.email,
-        role_id=payload.role_id,
-        first_name=payload.first_name,
-        last_name=payload.last_name
-    )
-    
-    # Resolve dynamic frontend URL
-    import os
-    frontend_url = os.environ.get("FRONTEND_URL")
-    if not frontend_url:
-        origin = request.headers.get("origin") or request.headers.get("referer")
-        if origin:
-            from urllib.parse import urlparse
-            parsed = urlparse(origin)
-            frontend_url = f"{parsed.scheme}://{parsed.netloc}"
-        else:
-            frontend_url = str(request.base_url).rstrip("/")
-            if "localhost" in frontend_url or "127.0.0.1" in frontend_url:
-                frontend_url = "http://localhost:5173"
-    else:
-        frontend_url = frontend_url.rstrip("/")
-
-    onboarding_url = f"{frontend_url}/onboard?token={token}"
-    print(f"\n[DEV MAIL] Send to {payload.email}: {onboarding_url}\n", flush=True)
-    
-    # Send email onboarding dispatch via Resend
-    from app.core.iam.email import send_onboarding_email
-    email_dispatched = send_onboarding_email(payload.email, onboarding_url)
-    
-    return {
-        "status": "success",
-        "message": "Invitation created successfully",
-        "email_sent": email_dispatched,
-        "onboarding_url": onboarding_url
-    }
 
 
 @auth_router.post("/onboard/verify")
@@ -341,8 +230,9 @@ async def login(
         
     # MFA Intercept Modification
     if not user.mfa_enabled:
-        if getattr(user, "role_tier", 1) == 0:
-            # Mandatory MFA for Tier 0
+        is_admin_or_manager = any(r.name in ["admin", "system_manager"] for r in getattr(user, 'roles', []))
+        if is_admin_or_manager:
+            # Mandatory MFA for Admin/Manager
             if not user.totp_secret:
                 user.totp_secret = generate_totp_secret()
                 db.add(user)
@@ -365,7 +255,7 @@ async def login(
                     content={"detail": "MFA_SETUP_REQUIRED", "setup_uri": setup_uri}
                 )
         else:
-            # Optional MFA for other Tiers
+            # Optional MFA for other roles
             if totp_code:
                 if not user.totp_secret:
                     raise HTTPException(
@@ -407,44 +297,6 @@ async def login(
     )
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
-@auth_router.post("/login/verify-totp")
-async def verify_totp(
-    response: Response,
-    payload: VerifyTOTPRequest,
-    db: AsyncSession = Depends(get_db)
-):
-    try:
-        decoded = jwt.decode(payload.temp_token, SECRET_KEY, algorithms=[ALGORITHM])
-        if decoded.get("type") != "temp_totp":
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
-        user_id = decoded.get("sub")
-    except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired temporary token")
-
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalars().first()
-    
-    if not user or not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
-        
-    if not user.totp_secret:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="TOTP is not configured for this user")
-        
-    if not verify_totp_code(user.totp_secret, payload.code):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid verification code")
-        
-    access_token = await create_access_token(data={"sub": str(user.id)}, db=db)
-    refresh_token = create_refresh_token(data={"sub": str(user.id)})
-    
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        secure=True,
-        samesite="strict",
-        max_age=7 * 24 * 60 * 60
-    )
-    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 @auth_router.post("/totp/setup")
 async def setup_totp(
@@ -465,95 +317,12 @@ async def setup_totp(
 
 @auth_router.post("/token", response_model=Token)
 async def login_for_access_token(
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(), 
     totp_code: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(User).filter(User.email == form_data.username))
-    user = result.scalars().first()
-    if not user or not user.hashed_password or not pwd_context.verify(form_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Inactive user account"
-        )
-    
-    # MFA Intercept Modification
-    if not user.mfa_enabled:
-        if getattr(user, "role_tier", 1) == 0:
-            # Mandatory MFA for Tier 0
-            if not user.totp_secret:
-                user.totp_secret = generate_totp_secret()
-                db.add(user)
-                await db.commit()
-                await db.refresh(user)
-
-            if totp_code:
-                if not user.totp_secret or not verify_totp_code(user.totp_secret, totp_code):
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="Invalid verification code"
-                    )
-                user.mfa_enabled = True
-                db.add(user)
-                await db.commit()
-            else:
-                setup_uri = get_provisioning_uri(user.email, user.totp_secret)
-                return JSONResponse(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    content={"detail": "MFA_SETUP_REQUIRED", "setup_uri": setup_uri}
-                )
-        else:
-            # Optional MFA for other Tiers
-            if totp_code:
-                if not user.totp_secret:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="TOTP not initialized"
-                    )
-                if not verify_totp_code(user.totp_secret, totp_code):
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="Invalid verification code"
-                    )
-                user.mfa_enabled = True
-                db.add(user)
-                await db.commit()
-            # If no totp_code, proceed to login
-    else:
-        # mfa_enabled == True
-        if not totp_code:
-            return JSONResponse(
-                status_code=status.HTTP_403_FORBIDDEN,
-                content={"detail": "MFA_CODE_REQUIRED"}
-            )
-        if not user.totp_secret or not verify_totp_code(user.totp_secret, totp_code):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid verification code"
-            )
-            
-    access_token = await create_access_token(
-        data={"sub": str(user.id)}, db=db
-    )
-    refresh_token = create_refresh_token(data={"sub": str(user.id)})
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer"
-    }
-
-async def oauth2_token_alias(
-    form_data: OAuth2PasswordRequestForm = Depends(), 
-    totp_code: Optional[str] = Form(None),
-    db: AsyncSession = Depends(get_db)
-):
-    return await login_for_access_token(form_data=form_data, totp_code=totp_code, db=db)
+    return await login(response=response, form_data=form_data, totp_code=totp_code, db=db)
 
 @auth_router.post("/refresh")
 async def refresh_token(

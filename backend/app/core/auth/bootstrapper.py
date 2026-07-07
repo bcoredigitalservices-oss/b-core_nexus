@@ -8,8 +8,12 @@ from app.core.auth.schemas import UserRead
 from app.core.auth.security import pwd_context
 
 async def initialize_system_admin(db: AsyncSession) -> UserRead:
-    # Step 1: Check if a Tier 0 (Root) user already exists
-    result = await db.execute(select(User).where(User.role_tier == 0))
+    # Step 1: Check if an admin user already exists
+    admin_email = os.getenv("ADMIN_INITIAL_EMAIL")
+    if not admin_email:
+        raise RuntimeError("ADMIN_INITIAL_EMAIL environment variable must be set.")
+        
+    result = await db.execute(select(User).where(User.email == admin_email))
     existing_root = result.scalars().first()
 
     # Step 2: If root user exists, brick the initialization phase
@@ -20,17 +24,15 @@ async def initialize_system_admin(db: AsyncSession) -> UserRead:
         )
 
     # Step 3: Read root credentials from environment variables
-    email = os.getenv("ADMIN_INITIAL_EMAIL")
     password = os.getenv("ADMIN_INITIAL_PASSWORD")
-    if not email or not password:
-        raise RuntimeError("ADMIN_INITIAL_EMAIL and ADMIN_INITIAL_PASSWORD environment variables must be set.")
+    if not password:
+        raise RuntimeError("ADMIN_INITIAL_PASSWORD environment variable must be set.")
 
     # Step 4: Hash the password and instantiate the User model
     hashed_password = pwd_context.hash(password)
     new_user = User(
-        email=email,
+        email=admin_email,
         hashed_password=hashed_password,
-        role_tier=0,
         is_active=True
     )
 
