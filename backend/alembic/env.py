@@ -32,6 +32,7 @@ from app.core.system.models import InstanceProfile
 from app.models.organization import Organization, Department
 from app.models.crm import *
 from app.models.sales import *
+from app.models.tasks import *
 
 target_metadata = Base.metadata
 

@@ -210,3 +210,44 @@ class SalesOrderLineItem(CoreModel):
     line_total: Mapped[float] = mapped_column(Float, default=0.0)
 
     sales_order = relationship("SalesOrder", back_populates="line_items")
+
+
+# ==========================================
+# Phase C: Collaboration (Quotation Messages)
+# ==========================================
+
+class QuotationMessage(CoreModel):
+    __tablename__ = "quotation_messages"
+    
+    quotation_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("quotations.id", ondelete="CASCADE"), nullable=False)
+    sender_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    attachment_url: Mapped[str] = mapped_column(String, nullable=True)
+    attachment_name: Mapped[str] = mapped_column(String, nullable=True)
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True, onupdate=func.now())
+
+    quotation = relationship("Quotation")
+    mentions = relationship("QuotationMessageMention", back_populates="message", cascade="all, delete")
+    read_receipts = relationship("QuotationMessageReadReceipt", back_populates="message", cascade="all, delete")
+
+
+class QuotationMessageMention(CoreModel):
+    __tablename__ = "quotation_message_mentions"
+    
+    message_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("quotation_messages.id", ondelete="CASCADE"), nullable=False)
+    mentioned_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False)
+    
+    message = relationship("QuotationMessage", back_populates="mentions")
+
+
+class QuotationMessageReadReceipt(CoreModel):
+    __tablename__ = "quotation_message_read_receipts"
+    
+    message_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("quotation_messages.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    read_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    
+    message = relationship("QuotationMessage", back_populates="read_receipts")

@@ -302,3 +302,53 @@ class SalesOrderRead(SalesOrderBase):
 class SalesOrderDetailRead(SalesOrderRead):
     line_items: List[SalesOrderLineItemRead] = []
     model_config = ConfigDict(from_attributes=True)
+
+
+# ---------------------------------------------------------
+# Phase C: Collaboration (Quotation Messages)
+# ---------------------------------------------------------
+
+class QuotationMessageMentionBase(BaseModel):
+    mentioned_user_id: uuid.UUID
+
+class QuotationMessageMentionCreate(QuotationMessageMentionBase):
+    pass
+
+class QuotationMessageMentionRead(QuotationMessageMentionBase):
+    id: uuid.UUID
+    message_id: uuid.UUID
+    is_read: bool
+    model_config = ConfigDict(from_attributes=True)
+
+
+class QuotationMessageReadReceiptRead(BaseModel):
+    id: uuid.UUID
+    message_id: uuid.UUID
+    user_id: uuid.UUID
+    read_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class QuotationMessageBase(BaseModel):
+    content: str
+    attachment_url: Optional[str] = None
+    attachment_name: Optional[str] = None
+
+class QuotationMessageCreate(QuotationMessageBase):
+    mentions: List[uuid.UUID] = []
+
+class QuotationMessageUpdate(BaseModel):
+    content: Optional[str] = None
+    attachment_url: Optional[str] = None
+    attachment_name: Optional[str] = None
+
+class QuotationMessageRead(QuotationMessageBase):
+    id: uuid.UUID
+    quotation_id: uuid.UUID
+    sender_id: uuid.UUID
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    mentions: List[QuotationMessageMentionRead] = []
+    read_receipts: List[QuotationMessageReadReceiptRead] = []
+    model_config = ConfigDict(from_attributes=True)
+
