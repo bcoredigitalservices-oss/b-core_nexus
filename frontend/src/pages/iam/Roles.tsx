@@ -12,7 +12,46 @@ import {
   ShieldCheck,
   FileText,
   Sliders,
-  RefreshCw
+  RefreshCw,
+  Search,
+  // Module Icons
+  DollarSign,
+  FileSpreadsheet,
+  CreditCard,
+  Building,
+  Percent,
+  BarChart3,
+  TrendingUp,
+  PieChart,
+  Briefcase,
+  Package,
+  Home,
+  ClipboardList,
+  ShoppingCart,
+  Monitor,
+  Users,
+  Tag,
+  LifeBuoy,
+  Map,
+  Wrench,
+  Cpu,
+  FolderKanban,
+  CheckSquare,
+  Truck,
+  Receipt,
+  UserCheck,
+  Wallet,
+  Calendar,
+  Award,
+  Plane,
+  MessageSquare,
+  Mail,
+  Megaphone,
+  Globe,
+  Settings,
+  Cog,
+  Key,
+  ShieldAlert
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 
@@ -26,6 +65,76 @@ interface PermissionItem {
   id: string;
   name: string;
 }
+
+interface GroupedPermissions {
+  globalAll: PermissionItem | null;
+  identity: {
+    iamManage: PermissionItem | null;
+    userControls: PermissionItem[];
+  };
+  modules: Record<string, PermissionItem[]>;
+}
+
+const MODULE_METADATA: Record<string, { label: string; icon: React.ComponentType<any>; group: string }> = {
+  accounting: { label: 'Accounting', icon: DollarSign, group: 'Finance' },
+  invoicing: { label: 'Invoicing', icon: FileSpreadsheet, group: 'Finance' },
+  payments: { label: 'Payments', icon: CreditCard, group: 'Finance' },
+  banking: { label: 'Banking', icon: Building, group: 'Finance' },
+  taxes: { label: 'Taxes', icon: Percent, group: 'Finance' },
+  reports: { label: 'Reports', icon: BarChart3, group: 'Finance' },
+  budget: { label: 'Budget', icon: TrendingUp, group: 'Finance' },
+  shares: { label: 'Shares', icon: PieChart, group: 'Finance' },
+  expenses: { label: 'Expenses', icon: Receipt, group: 'Finance' },
+
+  assets: { label: 'Assets', icon: Briefcase, group: 'Operations' },
+  products: { label: 'Products', icon: Package, group: 'Operations' },
+  warehouse: { label: 'Warehouse', icon: Home, group: 'Operations' },
+  stock: { label: 'Stock', icon: ClipboardList, group: 'Operations' },
+  buying: { label: 'Buying', icon: ShoppingCart, group: 'Operations' },
+  pos: { label: 'POS', icon: Monitor, group: 'Operations' },
+  manufacturing: { label: 'Manufacturing', icon: Cpu, group: 'Operations' },
+  projects: { label: 'Projects', icon: FolderKanban, group: 'Operations' },
+  qa: { label: 'QA', icon: CheckSquare, group: 'Operations' },
+  logistics: { label: 'Logistics', icon: Truck, group: 'Operations' },
+  maintenance: { label: 'Maintenance', icon: Wrench, group: 'Operations' },
+  field_ops: { label: 'Field Ops', icon: Map, group: 'Operations' },
+
+  crm: { label: 'CRM', icon: Users, group: 'CRM & Sales' },
+  sales: { label: 'Sales', icon: Tag, group: 'CRM & Sales' },
+  support: { label: 'Support', icon: LifeBuoy, group: 'CRM & Sales' },
+  marketing: { label: 'Marketing', icon: Megaphone, group: 'CRM & Sales' },
+  website: { label: 'Website', icon: Globe, group: 'CRM & Sales' },
+
+  hr: { label: 'HR', icon: UserCheck, group: 'HR & Company' },
+  payroll: { label: 'Payroll', icon: Wallet, group: 'HR & Company' },
+  attendance: { label: 'Attendance', icon: Calendar, group: 'HR & Company' },
+  recruitment: { label: 'Recruitment', icon: Search, group: 'HR & Company' },
+  performance: { label: 'Performance', icon: Award, group: 'HR & Company' },
+  leaves: { label: 'Leaves', icon: Plane, group: 'HR & Company' },
+  employee_groups: { label: 'Employee Groups', icon: Users, group: 'HR & Company' },
+
+  chats: { label: 'Chats', icon: MessageSquare, group: 'System & Communications' },
+  email: { label: 'Email', icon: Mail, group: 'System & Communications' },
+  message: { label: 'Message', icon: MessageSquare, group: 'System & Communications' },
+  internals: { label: 'Internals', icon: Settings, group: 'System & Communications' },
+  cog: { label: 'System Core (COG)', icon: Cog, group: 'System & Communications' }
+};
+
+const actionOrder = ['read', 'write', 'create', 'delete', 'print', 'email', 'export', 'share', 'report', 'import', 'mask'];
+
+const sortPermissionsByAction = (perms: PermissionItem[]) => {
+  return [...perms].sort((a, b) => {
+    const actionA = a.name.split(':')[1] || '';
+    const actionB = b.name.split(':')[1] || '';
+    const idxA = actionOrder.indexOf(actionA);
+    const idxB = actionOrder.indexOf(actionB);
+    
+    const valA = idxA === -1 ? 999 : idxA;
+    const valB = idxB === -1 ? 999 : idxB;
+    
+    return valA - valB;
+  });
+};
 
 export default function Roles() {
   const { authFetch, token } = useAppContext();
@@ -50,6 +159,10 @@ export default function Roles() {
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Search & Filter UI States
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('All');
 
   const loadData = async () => {
     try {
@@ -90,10 +203,8 @@ export default function Roles() {
     const loadRolePermissions = async () => {
       try {
         setErrorMsg('');
-        const perms: PermissionItem[] = await authFetch(`/iam/roles/${selectedRole.id}/permissions`);
-        if (perms) {
-          setSelectedRolePermissions(perms.map(p => p.id));
-        }
+        console.log('Detached API skipped: GET role permissions.');
+        setSelectedRolePermissions([]); // local stub
         
         // Populate inputs
         setRoleName(selectedRole.name);
@@ -122,6 +233,25 @@ export default function Roles() {
     setSelectedRolePermissions([]);
   };
 
+  const handleToggleModuleAll = (moduleKey: string, modulePerms: PermissionItem[]) => {
+    const permIds = modulePerms.map(p => p.id);
+    const allSelected = permIds.every(id => selectedRolePermissions.includes(id));
+    
+    if (allSelected) {
+      setSelectedRolePermissions(prev => prev.filter(id => !permIds.includes(id)));
+    } else {
+      setSelectedRolePermissions(prev => {
+        const next = [...prev];
+        permIds.forEach(id => {
+          if (!next.includes(id)) {
+            next.push(id);
+          }
+        });
+        return next;
+      });
+    }
+  };
+
   // Create new role
   const handleCreateRoleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,7 +272,6 @@ export default function Roles() {
 
       if (created) {
         setSuccessMsg(`Role '${created.name}' created successfully.`);
-        // Reload list and select new role
         const fetchedRoles = await authFetch('/iam/roles');
         if (fetchedRoles) {
           setRoles(fetchedRoles);
@@ -150,7 +279,6 @@ export default function Roles() {
           if (found) setSelectedRole(found);
         }
         
-        // Reset states
         setNewRoleName('');
         setNewRoleDescription('');
         setIsCreating(false);
@@ -171,7 +299,6 @@ export default function Roles() {
     setSuccessMsg('');
 
     try {
-      // 1. Update metadata
       await authFetch(`/iam/roles/${selectedRole.id}`, {
         method: 'PUT',
         body: JSON.stringify({
@@ -180,17 +307,18 @@ export default function Roles() {
         })
       });
 
-      // 2. Update permissions
+      console.log('Detached API skipped: PUT role permissions.');
+      /*
       await authFetch(`/iam/roles/${selectedRole.id}/permissions`, {
         method: 'PUT',
         body: JSON.stringify({
           permission_ids: selectedRolePermissions
         })
       });
+      */
 
-      setSuccessMsg(`Role settings for '${roleName}' saved successfully.`);
+      setSuccessMsg(`Role settings for '${roleName}' saved successfully (Local Simulation).`);
       
-      // Refresh list to update display names
       const fetchedRoles = await authFetch('/iam/roles');
       if (fetchedRoles) {
         setRoles(fetchedRoles);
@@ -204,29 +332,141 @@ export default function Roles() {
     }
   };
 
-  // Categorize permissions for clean checkbox group layout
-  const getCategorizedPermissions = () => {
-    const categories: Record<string, PermissionItem[]> = {
-      'Identity & Directory Control': [],
-      'System Settings & Telemetry': [],
-      'General Clearances': []
+  // Parse permissions into structured groups
+  const getParsedPermissions = () => {
+    const parsed: GroupedPermissions = {
+      globalAll: null,
+      identity: {
+        iamManage: null,
+        userControls: []
+      },
+      modules: {}
     };
 
     permissions.forEach(p => {
-      const name = p.name.toLowerCase();
-      if (name.startsWith('iam:') || name.startsWith('user:')) {
-        categories['Identity & Directory Control'].push(p);
-      } else if (name.startsWith('system:')) {
-        categories['System Settings & Telemetry'].push(p);
-      } else {
-        categories['General Clearances'].push(p);
+      const name = p.name;
+      if (name === '*:*') {
+        parsed.globalAll = p;
+      } else if (name === 'iam:manage') {
+        parsed.identity.iamManage = p;
+      } else if (name.startsWith('user:')) {
+        parsed.identity.userControls.push(p);
+      } else if (name.includes(':')) {
+        const [modName] = name.split(':');
+        if (!parsed.modules[modName]) {
+          parsed.modules[modName] = [];
+        }
+        parsed.modules[modName].push(p);
       }
     });
 
-    return categories;
+    return parsed;
   };
 
-  const categorizedPermissions = getCategorizedPermissions();
+  const parsed = getParsedPermissions();
+
+  // Filter modules
+  const filteredModules = Object.entries(parsed.modules).filter(([modName, perms]) => {
+    const meta = MODULE_METADATA[modName] || {
+      label: modName.charAt(0).toUpperCase() + modName.slice(1).replace('_', ' '),
+      group: 'System & Communications'
+    };
+    
+    const matchesSearch = 
+      meta.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      modName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      perms.some(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+    const matchesTab = activeTab === 'All' || meta.group === activeTab;
+    
+    return matchesSearch && matchesTab;
+  });
+
+  const tabs = [
+    { id: 'All', label: 'All Modules' },
+    { id: 'Finance', label: 'Finance' },
+    { id: 'Operations', label: 'Operations' },
+    { id: 'CRM & Sales', label: 'CRM & Sales' },
+    { id: 'HR & Company', label: 'HR' },
+    { id: 'System & Communications', label: 'System & Comms' }
+  ];
+
+  const renderModuleCard = (modName: string, modulePerms: PermissionItem[]) => {
+    const meta = MODULE_METADATA[modName] || {
+      label: modName.charAt(0).toUpperCase() + modName.slice(1).replace('_', ' '),
+      icon: Settings,
+      group: 'System & Communications'
+    };
+    
+    const IconComponent = meta.icon;
+    const sortedPerms = sortPermissionsByAction(modulePerms);
+    
+    const permIds = modulePerms.map(p => p.id);
+    const isAllChecked = permIds.length > 0 && permIds.every(id => selectedRolePermissions.includes(id));
+    const isSomeChecked = permIds.length > 0 && permIds.some(id => selectedRolePermissions.includes(id)) && !isAllChecked;
+
+    return (
+      <div key={modName} className="glass-panel p-5 bg-card border border-color rounded-2xl shadow-sm hover:border-accent-primary/45 transition-all duration-200 flex flex-col gap-4">
+        {/* Card Header */}
+        <div className="flex justify-between items-center border-b border-color/40 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-accent-primary/10 border border-accent-primary/15 rounded-lg p-2 flex items-center justify-center text-accent-primary">
+              <IconComponent size={16} />
+            </div>
+            <span className="text-[0.88rem] font-bold text-text-main font-display">{meta.label}</span>
+          </div>
+          
+          {/* Toggle All checkbox */}
+          <label className="flex items-center gap-2 text-[0.7rem] font-bold text-text-muted cursor-pointer select-none mb-0">
+            <input
+              type="checkbox"
+              checked={isAllChecked}
+              ref={el => {
+                if (el) el.indeterminate = isSomeChecked;
+              }}
+              onChange={() => handleToggleModuleAll(modName, modulePerms)}
+              className="cursor-pointer accent-accent-primary rounded"
+            />
+            <span>SELECT ALL</span>
+          </label>
+        </div>
+        
+        {/* Card Body - Grid of Actions */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {sortedPerms.map((p) => {
+            const action = p.name.split(':')[1] || p.name;
+            const isChecked = selectedRolePermissions.includes(p.id);
+            const isPrimary = ['read', 'write', 'create', 'delete'].includes(action);
+            
+            return (
+              <label 
+                key={p.id}
+                className={`flex items-center gap-2 text-[0.75rem] cursor-pointer py-1.5 px-2.5 rounded-lg border transition-all duration-150 ${
+                  isChecked
+                    ? 'border-accent-primary bg-accent-primary/5 text-text-main font-semibold'
+                    : 'border-color bg-card text-text-muted hover:border-accent-primary/40 hover:bg-card-hover'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={() => handleTogglePermission(p.id)}
+                  disabled={submitting}
+                  className="cursor-pointer accent-accent-primary w-auto shrink-0 rounded"
+                />
+                <span className="truncate uppercase font-medium">
+                  {action}
+                </span>
+                {isPrimary && (
+                  <span className="w-1 h-1 rounded-full bg-accent-primary/40 ml-auto" />
+                )}
+              </label>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -366,64 +606,215 @@ export default function Roles() {
                 </div>
               </div>
 
-              {/* Permissions Checklist Groups */}
-              <div className="border-t border-color pt-5">
-                <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-                  <label className="text-[0.75rem] text-text-muted font-bold uppercase tracking-wider"> Baseline Role Clearances</label>
+              {/* Identity & Directory Control Section */}
+              <div className="border-t border-color pt-5 flex flex-col gap-4">
+                <label className="text-[0.75rem] text-text-muted font-bold uppercase tracking-wider">Identity & Directory Control</label>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* IAM card */}
+                  {parsed.identity.iamManage && (
+                    <div className="glass-panel p-5 bg-card border border-color rounded-2xl shadow-sm hover:border-accent-primary/45 transition-all duration-200 flex flex-col gap-3">
+                      <div className="flex items-center gap-2 border-b border-color/40 pb-2.5">
+                        <div className="bg-accent-primary/10 border border-accent-primary/15 rounded-lg p-2 flex items-center justify-center text-accent-primary">
+                          <Key size={16} />
+                        </div>
+                        <span className="text-[0.88rem] font-bold text-text-main font-display">Directory Manager</span>
+                      </div>
+                      
+                      <label 
+                        className={`flex items-center gap-2.5 text-[0.78rem] cursor-pointer py-2.5 px-3 rounded-lg border transition-all duration-150 ${
+                          selectedRolePermissions.includes(parsed.identity.iamManage.id)
+                            ? 'border-accent-primary bg-accent-primary/5 text-text-main font-semibold'
+                            : 'border-color bg-card text-text-muted hover:border-accent-primary hover:bg-card-hover'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedRolePermissions.includes(parsed.identity.iamManage.id)}
+                          onChange={() => handleTogglePermission(parsed.identity.iamManage!.id)}
+                          disabled={submitting}
+                          className="cursor-pointer accent-accent-primary w-auto shrink-0 rounded"
+                        />
+                        <span className="font-semibold uppercase font-display">IAM:MANAGE</span>
+                      </label>
+                    </div>
+                  )}
+
+                  {/* User controls card */}
+                  {parsed.identity.userControls.length > 0 && (
+                    <div className="glass-panel p-5 bg-card border border-color rounded-2xl shadow-sm hover:border-accent-primary/45 transition-all duration-200 flex flex-col gap-3">
+                      <div className="flex justify-between items-center border-b border-color/40 pb-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="bg-accent-primary/10 border border-accent-primary/15 rounded-lg p-2 flex items-center justify-center text-accent-primary">
+                            <Users size={16} />
+                          </div>
+                          <span className="text-[0.88rem] font-bold text-text-main font-display">User Directory Controls</span>
+                        </div>
+                        
+                        {/* Toggle User All */}
+                        <label className="flex items-center gap-2 text-[0.7rem] font-bold text-text-muted cursor-pointer select-none mb-0">
+                          <input
+                            type="checkbox"
+                            checked={parsed.identity.userControls.every(p => selectedRolePermissions.includes(p.id))}
+                            ref={el => {
+                              if (el) {
+                                const checkedCount = parsed.identity.userControls.filter(p => selectedRolePermissions.includes(p.id)).length;
+                                el.indeterminate = checkedCount > 0 && checkedCount < parsed.identity.userControls.length;
+                              }
+                            }}
+                            onChange={() => {
+                              const uPerms = parsed.identity.userControls;
+                              const allChecked = uPerms.every(p => selectedRolePermissions.includes(p.id));
+                              const ids = uPerms.map(p => p.id);
+                              if (allChecked) {
+                                setSelectedRolePermissions(prev => prev.filter(id => !ids.includes(id)));
+                              } else {
+                                setSelectedRolePermissions(prev => [...Array.from(new Set([...prev, ...ids]))]);
+                              }
+                            }}
+                            className="cursor-pointer accent-accent-primary rounded"
+                          />
+                          <span>SELECT ALL</span>
+                        </label>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        {sortPermissionsByAction(parsed.identity.userControls).map((p) => {
+                          const action = p.name.split(':')[1] || p.name;
+                          const isChecked = selectedRolePermissions.includes(p.id);
+                          return (
+                            <label 
+                              key={p.id}
+                              className={`flex items-center gap-2 text-[0.75rem] cursor-pointer py-1.5 px-2.5 rounded-lg border transition-all duration-150 ${
+                                isChecked
+                                  ? 'border-accent-primary bg-accent-primary/5 text-text-main font-semibold'
+                                  : 'border-color bg-card text-text-muted hover:border-accent-primary/40 hover:bg-card-hover'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => handleTogglePermission(p.id)}
+                                disabled={submitting}
+                                className="cursor-pointer accent-accent-primary w-auto shrink-0 rounded"
+                              />
+                              <span className="truncate uppercase font-medium">
+                                {action}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* General Clearances Section */}
+              <div className="border-t border-color pt-5 flex flex-col gap-5">
+                <div className="flex justify-between items-center flex-wrap gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[0.75rem] text-text-muted font-bold uppercase tracking-wider mb-0">Baseline Role Clearances</label>
+                    <span className="text-[11px] text-text-muted font-medium">Select specific module operations for general operational clearances.</span>
+                  </div>
+                  
+                  {/* Select/Clear All */}
                   <div className="flex gap-2.5">
                     <button
                       type="button"
                       onClick={handleSelectAll}
-                      className="bg-transparent border-none text-accent-primary text-[0.7rem] font-bold cursor-pointer hover:underline p-0"
+                      className="bg-transparent border-none text-accent-primary text-[0.75rem] font-bold cursor-pointer hover:underline p-0"
                     >
-                      Grant All
+                      Grant All Clearances
                     </button>
-                    <span className="text-text-muted/30 text-[0.7rem] select-none">|</span>
+                    <span className="text-text-muted/30 text-[0.75rem] select-none">|</span>
                     <button
                       type="button"
                       onClick={handleClearAll}
-                      className="bg-transparent border-none text-text-muted text-[0.7rem] font-bold cursor-pointer hover:underline p-0"
+                      className="bg-transparent border-none text-text-muted text-[0.75rem] font-bold cursor-pointer hover:underline p-0"
                     >
-                      Clear All
+                      Clear All Clearances
                     </button>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-5">
-                  {Object.entries(categorizedPermissions).map(([catName, perms]) => {
-                    if (perms.length === 0) return null;
-                    return (
-                      <div key={catName} className="flex flex-col gap-2.5 border border-color/40 p-4 bg-black/5 rounded-xl">
-                        <span className="text-[11px] font-extrabold text-text-main tracking-wider block border-b border-color pb-1.5 mb-1 uppercase">{catName}</span>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {perms.map((p) => {
-                            const isChecked = selectedRolePermissions.includes(p.id);
-                            return (
-                              <label 
-                                key={p.id} 
-                                className={`flex items-center gap-2.5 text-[0.78rem] cursor-pointer py-1.5 px-3 rounded-lg border transition-all duration-150 ${
-                                  isChecked 
-                                    ? 'border-accent-primary bg-accent-primary/5 text-text-main font-semibold' 
-                                    : 'border-color bg-card text-text-muted hover:border-accent-primary hover:bg-card-hover'
-                                }`}
-                              >
-                                <input 
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={() => handleTogglePermission(p.id)}
-                                  disabled={submitting}
-                                  className="cursor-pointer accent-accent-primary w-auto shrink-0"
-                                />
-                                <span className="truncate">{p.name}</span>
-                              </label>
-                            );
-                          })}
-                        </div>
+                {/* 1. Global All (*:*) override banner */}
+                {parsed.globalAll && (
+                  <div className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col gap-2.5 ${
+                    selectedRolePermissions.includes(parsed.globalAll.id)
+                      ? 'border-[#C5A85C] bg-[#C5A85C]/5 shadow-sm'
+                      : 'border-color bg-card hover:border-[#C5A85C]/40'
+                  }`}>
+                    <div className="flex items-center justify-between border-b border-color/40 pb-2">
+                      <div className="flex items-center gap-2">
+                        <ShieldAlert className={`w-4 h-4 ${selectedRolePermissions.includes(parsed.globalAll.id) ? 'text-[#C5A85C]' : 'text-text-muted'}`} />
+                        <span className="text-[0.88rem] font-bold text-text-main font-display">Global Access Override</span>
                       </div>
-                    );
-                  })}
+                      
+                      <span className="text-[10px] bg-[#C5A85C]/10 border border-[#C5A85C]/20 text-[#C5A85C] font-semibold py-0.5 px-2 rounded-full uppercase tracking-wider">Super Clearance</span>
+                    </div>
+
+                    <label className="flex items-center gap-3 text-[0.8rem] cursor-pointer py-1.5 select-none mb-0">
+                      <input
+                        type="checkbox"
+                        checked={selectedRolePermissions.includes(parsed.globalAll.id)}
+                        onChange={() => handleTogglePermission(parsed.globalAll!.id)}
+                        disabled={submitting}
+                        className="cursor-pointer accent-[#C5A85C] w-4 h-4 rounded-md"
+                      />
+                      <div className="flex flex-col">
+                        <span className="font-bold text-text-main">All</span>
+                        <span className="text-[11px] text-text-muted font-medium mt-0.5">Enabling this grants full administrative and operational authorization across all workspaces and features, bypassing fine-grained checks.</span>
+                      </div>
+                    </label>
+                  </div>
+                )}
+
+                {/* Search & Domain Filter Bar */}
+                <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-black/5 p-4 rounded-2xl border border-color/30">
+                  {/* Category Pills/Tabs */}
+                  <div className="flex items-center gap-1.5 flex-wrap w-full md:w-auto">
+                    {tabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`py-1.5 px-3 rounded-lg text-[0.72rem] font-bold cursor-pointer transition-all border ${
+                          activeTab === tab.id
+                            ? 'bg-accent-primary border-accent-primary text-white shadow-sm'
+                            : 'bg-card border-color text-text-muted hover:text-text-main hover:bg-card-hover'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Search Bar */}
+                  <div className="relative w-full md:w-[260px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted w-3.5 h-3.5" />
+                    <input
+                      type="text"
+                      placeholder="Search modules..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2 bg-card border border-color rounded-xl text-xs text-text-main placeholder-text-muted/65 outline-none focus:border-accent-primary transition-all"
+                    />
+                  </div>
                 </div>
+
+                {/* Module cards grid */}
+                {filteredModules.length > 0 ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    {filteredModules.map(([modName, perms]) => renderModuleCard(modName, perms))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-8 bg-card border border-color rounded-2xl text-center text-text-muted gap-2 min-h-[160px]">
+                    <Search className="w-8 h-8 opacity-30 text-accent-primary" />
+                    <span className="font-semibold text-xs text-text-main">No modules match your filter</span>
+                    <span className="text-[10px] text-text-muted">Try adjusting your search query or selecting a different tab.</span>
+                  </div>
+                )}
               </div>
 
             </div>

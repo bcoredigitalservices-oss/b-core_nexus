@@ -214,7 +214,7 @@ export default function Sidebar({ isOpen, onClose, onCollapse, isMobile }) {
                   {currentUser.full_name || currentUser.email}
                 </span>
                 <span className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">
-                  {currentUser.designation || (currentUser.permissions?.includes('*:*') ? 'System Admin' : 'Operator')}
+                  {currentUser.designation || (currentUser.permissions?.includes('*:*') ? 'System Admin' : 'User')}
                 </span>
               </div>
             </div>
