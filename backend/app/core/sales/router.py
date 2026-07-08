@@ -349,7 +349,7 @@ async def update_sales_order(
 # Phase C: Collaboration (Quotation Messages)
 # ==========================================
 from app.models.sales import QuotationMessage, QuotationMessageMention, QuotationMessageReadReceipt
-from app.core.sales.schemas import QuotationMessageCreate, QuotationMessageRead
+from app.core.sales.schemas import QuotationMessageCreate, QuotationMessageRead, QuotationMessageMentionRead
 
 @router.post("/quotations/{quotation_id}/messages", response_model=QuotationMessageRead, status_code=status.HTTP_201_CREATED)
 async def create_quotation_message(
