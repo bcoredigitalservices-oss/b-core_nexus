@@ -74,4 +74,8 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: Optional[str] = None
 
 
-
+class SystemBootstrapRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=12)
+    first_name: str
+    last_name: str

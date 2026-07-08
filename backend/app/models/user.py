@@ -94,6 +94,24 @@ class User(CoreModel):
     def department_id(self, value: uuid.UUID | None):
         if self.employee_profile:
             self.employee_profile.department_id = value
+            
+    @property
+    def first_name(self) -> str | None:
+        return self.employee_profile.first_name if self.employee_profile else None
+
+    @first_name.setter
+    def first_name(self, value: str | None):
+        if self.employee_profile:
+            self.employee_profile.first_name = value
+
+    @property
+    def last_name(self) -> str | None:
+        return self.employee_profile.last_name if self.employee_profile else None
+
+    @last_name.setter
+    def last_name(self, value: str | None):
+        if self.employee_profile:
+            self.employee_profile.last_name = value
     
     _workspaces: Mapped[list["UserWorkspace"]] = relationship(
         "UserWorkspace",

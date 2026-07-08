@@ -15,11 +15,19 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend source code
 COPY . .
 
+# Copy entrypoint script and make it executable (handles Windows CRLF formatting issues too)
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh && \
+    sed -i 's/\r$//' /app/docker-entrypoint.sh
+
 # Set environment path to find modules correctly
 ENV PYTHONPATH=/app
 
 # Expose internal port 8000
 EXPOSE 8000
 
-# Run uvicorn server
+# Set the entrypoint to run migrations first
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+
+# Run uvicorn server (this gets passed to the entrypoint script)
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

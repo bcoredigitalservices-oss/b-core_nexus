@@ -64,51 +64,7 @@ async def init_db():
                 await session.execute(role_permissions.insert().values(role_id=admin_role.id, permission_id=super_permission.id))
                 await session.flush()
 
-            result = await session.execute(select(User).filter(User.email == "admin@bcore.local"))
-            admin = result.scalars().first()
-            if not admin:
-                print("Seeding initial Super Admin (admin@bcore.local)...")
-                admin = User(
-                    email="admin@bcore.local",
-                    password_hash=get_password_hash("admin123"),
-                    is_active=True,
-                    custom_attributes={"notes": "Bootstrap System Administrator"}
-                )
-                session.add(admin)
-                await session.flush()
-                
-                # create linked employee profile
-                profile = EmployeeProfile(
-                    user_id=admin.id,
-                    first_name="System",
-                    last_name="Administrator"
-                )
-                session.add(profile)
-                await session.flush()
-                
-                # link to admin role
-                await session.execute(user_roles.insert().values(user_id=admin.id, role_id=admin_role.id))
-                await session.flush()
-                # Assign *:* directly to admin user via user_permissions
-                await session.execute(user_permissions.insert().values(
-                    user_id=admin.id, permission_id=super_permission.id
-                ))
-                await session.commit()
-                print("Super Admin seeded successfully. Username: admin@bcore.local, Password: admin123")
-            else:
-                await session.commit()
-                print("Admin user already exists in the system.")
-                
-                # Ensure admin has *:* in user_permissions (idempotent)
-                admin_direct_check = await session.execute(
-                    select(user_permissions)
-                    .where(user_permissions.c.user_id == admin.id)
-                    .where(user_permissions.c.permission_id == super_permission.id)
-                )
-                if not admin_direct_check.first():
-                    await session.execute(user_permissions.insert().values(
-                        user_id=admin.id, permission_id=super_permission.id
-                    ))
+
 
             # Seed standard Departments based on the 8 core areas
             standard_departments = [
