@@ -132,6 +132,13 @@ class UserRoleUpdate(BaseModel):
 class CopyPermissionsRequest(BaseModel):
     source_user_id: uuid.UUID
 
+class UserStatusUpdate(BaseModel):
+    is_active: bool
+
+class AdminPasswordResetRequest(BaseModel):
+    new_password: str = Field(..., min_length=12)
+    require_mfa_reset: bool = False
+
 # ── Routes ───────────────────────────────────────────────────────────────────
 
 @router.post("/departments", status_code=status.HTTP_201_CREATED)
@@ -308,6 +315,109 @@ async def update_user_access(
         "is_totp_enabled": False,
         "department_id": user.department_id,
         "functional_roles": []
+    }
+
+@router.put("/users/{user_id}/status")
+async def update_user_status(
+    user_id: uuid.UUID,
+    payload: UserStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    _ = Depends(require_iam_privilege)
+):
+    res = await db.execute(select(User).where(User.id == user_id))
+    user = res.scalars().first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with ID {user_id} not found."
+        )
+        
+    user.is_active = payload.is_active
+    db.add(user)
+    await db.commit()
+    
+    # If the user is suspended (is_active=False), broadcast a force_logout signal
+    if not payload.is_active:
+        try:
+            from app.core.events.websocket import ws_manager
+            await ws_manager.broadcast({
+                "event_type": "force_logout",
+                "payload": {"target_user_id": str(user_id)}
+            })
+        except Exception as e:
+            print(f"[WS] ws_manager force_logout broadcast failed: {e}")
+
+        try:
+            from app.core.events.router import manager as event_manager
+            await event_manager.broadcast(
+                str(user_id),
+                {
+                    "event_type": "force_logout",
+                    "payload": {"target_user_id": str(user_id)}
+                }
+            )
+        except Exception as e:
+            print(f"[WS] event_manager force_logout broadcast failed: {e}")
+            
+    status_msg = "reactivated" if payload.is_active else "suspended"
+    return {
+        "status": "success",
+        "message": f"User successfully {status_msg}.",
+        "user_id": str(user.id),
+        "is_active": user.is_active
+    }
+
+@router.post("/users/{user_id}/reset-password")
+async def reset_user_password(
+    user_id: uuid.UUID,
+    payload: AdminPasswordResetRequest,
+    db: AsyncSession = Depends(get_db),
+    _ = Depends(require_iam_privilege)
+):
+    res = await db.execute(select(User).where(User.id == user_id))
+    user = res.scalars().first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with ID {user_id} not found."
+        )
+        
+    from app.core.auth.security import pwd_context
+    user.password_hash = pwd_context.hash(payload.new_password)
+    
+    if payload.require_mfa_reset:
+        user.mfa_enabled = False
+        user.mfa_secret = None
+        
+    db.add(user)
+    await db.commit()
+    
+    # Broadcast force_logout signal to invalidate old sessions
+    try:
+        from app.core.events.websocket import ws_manager
+        await ws_manager.broadcast({
+            "event_type": "force_logout",
+            "payload": {"target_user_id": str(user_id)}
+        })
+    except Exception as e:
+        print(f"[WS] ws_manager force_logout broadcast failed: {e}")
+
+    try:
+        from app.core.events.router import manager as event_manager
+        await event_manager.broadcast(
+            str(user_id),
+            {
+                "event_type": "force_logout",
+                "payload": {"target_user_id": str(user_id)}
+            }
+        )
+    except Exception as e:
+        print(f"[WS] event_manager force_logout broadcast failed: {e}")
+        
+    return {
+        "status": "success",
+        "message": "User password successfully reset. Existing sessions have been terminated.",
+        "user_id": str(user.id)
     }
 
 @router.get("/departments", response_model=List[DepartmentOut])

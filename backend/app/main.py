@@ -9,6 +9,9 @@ from app.core.auth.bootstrapper import init_router
 from app.core.system.router import router as system_router
 from app.core.organization.router import router as organization_router
 from app.core.iam.router import router as iam_router
+from app.core.crm.router import router as crm_router
+from app.core.sales.router import router as sales_router
+from app.core.tasks.router import router as tasks_router
 
 # ─── Eagerly import core models
 from app.models.organization import Department, Organization  # noqa: F401
@@ -263,6 +266,9 @@ app.include_router(auth_router, prefix="/api/v1")
 app.include_router(system_router, prefix="/api/v1")
 app.include_router(organization_router, prefix="/api/v1")
 app.include_router(iam_router, prefix="/api/v1")
+app.include_router(crm_router, prefix="/api/v1")
+app.include_router(sales_router, prefix="/api/v1")
+app.include_router(tasks_router, prefix="/api/v1")
 
 @app.get("/")
 async def root():
