@@ -7,8 +7,22 @@ import ProvisionUserModal from '../../components/iam/ProvisionUserModal';
 import EditUserAccessModal from '../../components/iam/EditUserAccessModal';
 
 export default function UsersDashboard() {
-  const { authFetch } = useAppContext();
+  const { authFetch, currentUser } = useAppContext();
   const [gridKey, setGridKey] = useState(0);
+
+  const canProvision = 
+    currentUser?.permissions?.includes('*:*') || 
+    currentUser?.permissions?.includes('iam:manage') ||
+    currentUser?.permissions?.includes('user:invite');
+
+  const canRevoke = 
+    currentUser?.permissions?.includes('*:*') || 
+    currentUser?.permissions?.includes('iam:manage') ||
+    currentUser?.permissions?.includes('user:write');
+
+  const canEditAccess = 
+    currentUser?.permissions?.includes('*:*') || 
+    currentUser?.permissions?.includes('iam:manage');
   const [revokingUser, setRevokingUser] = useState<string | null>(null);
 
   // Modal and editing states
@@ -49,12 +63,14 @@ export default function UsersDashboard() {
         </div>
 
         {/* Provision button in header */}
-        <button 
-          className="btn btn-primary z-10" 
-          onClick={() => setIsProvisionModalOpen(true)}
-        >
-          + Provision User
-        </button>
+        {canProvision && (
+          <button 
+            className="btn btn-primary z-10" 
+            onClick={() => setIsProvisionModalOpen(true)}
+          >
+            + Provision User
+          </button>
+        )}
       </div>
 
       <div className="glass-panel p-0 overflow-hidden">
@@ -107,8 +123,10 @@ export default function UsersDashboard() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="btn btn-secondary py-1.5 px-2.5 text-[0.75rem] h-7 inline-flex items-center"
+                      className="btn btn-secondary py-1.5 px-2.5 text-[0.75rem] h-7 inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                       onClick={() => setEditingUser(row)}
+                      disabled={!canEditAccess}
+                      title={!canEditAccess ? "Insufficient permissions" : undefined}
                     >
                       ✏️ Edit Access
                     </button>
@@ -116,7 +134,8 @@ export default function UsersDashboard() {
                       <button
                         className="bg-red-500/10 border border-red-500/25 text-red-400 py-1 px-3 h-7 rounded-lg text-[0.75rem] cursor-pointer inline-flex items-center gap-1.5 transition-all duration-200 font-semibold hover:bg-red-500/20 hover:border-red-500/45 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() => handleRevoke(row.id)}
-                        disabled={revokingUser === row.id}
+                        disabled={!canRevoke || revokingUser === row.id}
+                        title={!canRevoke ? "Insufficient permissions" : undefined}
                       >
                         <Lock size={12} />
                         {revokingUser === row.id ? 'Revoking...' : 'Revoke Session'}

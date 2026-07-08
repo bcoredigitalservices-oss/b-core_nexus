@@ -47,11 +47,7 @@ class VerifyTOTPRequest(BaseModel):
     temp_token: str
     code: str
 
-class UserInviteRequest(BaseModel):
-    email: str
-    first_name: str
-    last_name: str
-    role_id: UUID
+
 
 class OnboardVerifyRequest(BaseModel):
     token: str

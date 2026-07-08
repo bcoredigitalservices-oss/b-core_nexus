@@ -86,10 +86,10 @@ class DepartmentCreate(BaseModel):
     parent_id: Optional[uuid.UUID] = None
     organization_id: Optional[uuid.UUID] = None
 
-class UserProvision(BaseModel):
+class UserInvite(BaseModel):
     email: str = Field(..., min_length=3)
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
+    first_name: str = Field(..., min_length=1)
+    last_name: str = Field(..., min_length=1)
     role_id: uuid.UUID
     designation: Optional[str] = None
     department_id: Optional[uuid.UUID] = None
@@ -195,9 +195,9 @@ async def list_roles(db: AsyncSession = Depends(get_db), _ = Depends(require_iam
 
 # Workspaces creation endpoint removed
 
-@router.post("/users/provision", status_code=status.HTTP_201_CREATED)
-async def provision_user(
-    payload: UserProvision,
+@router.post("/users/invite", status_code=status.HTTP_201_CREATED)
+async def invite_user(
+    payload: UserInvite,
     request: Request,
     db: AsyncSession = Depends(get_db),
     _ = Depends(require_iam_privilege)
@@ -234,8 +234,8 @@ async def provision_user(
     token = create_invite_token(
         email=payload.email,
         role_id=payload.role_id,
-        first_name=payload.first_name or "",
-        last_name=payload.last_name or ""
+        first_name=payload.first_name,
+        last_name=payload.last_name
     )
     
     # Resolve dynamic frontend URL

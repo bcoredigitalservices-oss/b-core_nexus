@@ -8,7 +8,6 @@ from app.core.auth.schemas import UserRead, SystemBootstrapRequest
 from app.core.auth.security import pwd_context
 from app.models.user import EmployeeProfile, Role, Permission, user_roles, user_permissions
 from app.core.auth.totp import generate_totp_secret
-
 init_router = APIRouter()
 
 @init_router.post("/bootstrap", response_model=UserRead)

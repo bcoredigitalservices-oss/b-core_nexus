@@ -3,21 +3,21 @@
 @tailwind utilities;
 
 :root {
-  /* Default Theme: Stripe Blurple */
-  --bg-main: #F1F5F9;
+  /* Default Theme: B-Core Warm Premium */
+  --bg-main: #F6F5F0;
   --bg-card: #FFFFFF;
-  --bg-card-hover: #F8F9FA;
+  --bg-card-hover: #F4F1EA;
   --bg-input: #FFFFFF;
-  --border-color: #E2E8F0;
+  --border-color: #E4E2DC;
   
-  --text-main: #0A2540;
-  --text-muted: #64748B;
+  --text-main: #0F2E59;
+  --text-muted: #8E8B82;
   
   /* Brand Accent Default */
-  --accent-primary: #635BFF;
-  --accent-blue: #635BFF;
+  --accent-primary: #0F2E59;
+  --accent-blue: #0F2E59;
   --accent-green: #10B981;
-  --accent-purple: #8B5CF6;
+  --accent-purple: #C5A85C;
   --accent-danger: #EF4444;
   --accent-warning: #F59E0B;
   
@@ -27,7 +27,7 @@
 
   /* Theme-aware Sidebar and Header Defaults */
   --bg-sidebar: #FFFFFF;
-  --bg-header: rgba(255, 255, 255, 0.85);
+  --bg-header: rgba(255, 255, 255, 0.9);
   --sidebar-active-bg: color-mix(in srgb, var(--accent-primary) 8%, transparent);
   --sidebar-active-text: var(--accent-primary);
 
@@ -41,17 +41,17 @@
 
 /* ─── Light Mode Theme Presets ───────────────────────────────────────────── */
 [data-theme="Stripe Blurple"] {
-  --bg-main: #F1F5F9;
+  --bg-main: #F6F5F0;
   --bg-card: #FFFFFF;
-  --bg-card-hover: #F8F9FA;
+  --bg-card-hover: #F4F1EA;
   --bg-input: #FFFFFF;
-  --border-color: #E2E8F0;
-  --text-main: #0A2540;
-  --text-muted: #64748B;
-  --accent-primary: #635BFF;
-  --accent-blue: #635BFF;
+  --border-color: #E4E2DC;
+  --text-main: #0F2E59;
+  --text-muted: #8E8B82;
+  --accent-primary: #0F2E59;
+  --accent-blue: #0F2E59;
   --bg-sidebar: #FFFFFF;
-  --bg-header: rgba(255, 255, 255, 0.85);
+  --bg-header: rgba(255, 255, 255, 0.9);
   --sidebar-active-bg: color-mix(in srgb, var(--accent-primary) 8%, transparent);
   --sidebar-active-text: var(--accent-primary);
 }

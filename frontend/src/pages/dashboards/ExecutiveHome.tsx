@@ -313,8 +313,7 @@ export default function ExecutiveHome() {
   const { currentUser, activeWorkspace } = useAppContext();
   const navigate = useNavigate();
 
-  const roleTier: number = currentUser?.role_tier ?? 99;
-  const isSuperUser = roleTier <= 1;
+  const isSuperUser = currentUser?.permissions?.includes('*:*') || currentUser?.permissions?.includes('iam:manage');
 
   const permittedWorkspaceKeys: string[] = isSuperUser
     ? DEPARTMENTS.flatMap((d) => d.workspaces.map((w) => w.key))
@@ -324,14 +323,6 @@ export default function ExecutiveHome() {
   const userName = currentUser?.first_name && (currentUser as any)?.last_name
     ? `${currentUser.first_name} ${(currentUser as any).last_name}`
     : currentUser?.email?.split('@')[0] || 'Operator';
-
-  const roleTierLabel: Record<number, string> = {
-    0: 'Tier 0 — Genesis Admin',
-    1: 'Tier 1 — Executive',
-    2: 'Tier 2 — Manager',
-    3: 'Tier 3 — Operator',
-    4: 'Tier 4 — Viewer',
-  };
 
   const handleLaunch = (route: string) => {
     navigate(route);
@@ -380,7 +371,7 @@ export default function ExecutiveHome() {
               </h1>
               <div className="flex items-center gap-2">
                 <span className="text-[0.72rem] font-bold py-0.5 px-2.5 rounded-full bg-[#9d4edd]/12 text-accent-primary border border-[#9d4edd]/25">
-                  {roleTierLabel[roleTier] || `Tier ${roleTier}`}
+                  {currentUser?.designation || (currentUser?.permissions?.includes('*:*') ? 'System Admin' : 'IAM Executive')}
                 </span>
                 <span className="text-[0.75rem] text-text-muted">
                   · {orgName}
@@ -406,7 +397,7 @@ export default function ExecutiveHome() {
           {isSuperUser && (
             <span className="inline-flex items-center gap-1.5 text-[0.72rem] font-bold uppercase tracking-wider py-1 px-3 rounded-full bg-[#9d4edd]/12 text-accent-primary border border-[#9d4edd]/25">
               <ShieldCheck size={11} />
-              Global Access — Tier {roleTier}
+              Global Access
             </span>
           )}
         </div>

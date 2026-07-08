@@ -2,8 +2,6 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import AppShell from '../layouts/AppShell';
-import TierZeroLayout from '../layouts/TierZeroLayout';
-import TierOneLayout from '../layouts/TierOneLayout';
 import Dashboard from '../pages/Dashboard';
 import Login from '../pages/Login';
 import Onboarding from '../pages/Onboarding';
@@ -19,6 +17,8 @@ import AppLauncher from '../pages/dashboards/AppLauncher';
 import Departments from '../pages/iam/Departments';
 import Workspaces from '../pages/iam/Workspaces';
 import UsersPage from '../pages/iam/Users';
+import UserDetails from '../pages/iam/UserDetails';
+import Roles from '../pages/iam/Roles';
 import UniversalDataGrid from '../components/ui/UniversalDataGrid';
 import InventoryDashboard from '../pages/workspaces/inventory/InventoryDashboard';
 import ItemsWorkspace from '../pages/workspaces/inventory/ItemsWorkspace';
@@ -106,18 +106,12 @@ export function AppShellOrTierZero() {
     return <Navigate to="/login" replace />;
   }
 
-  if (currentUser?.permissions?.includes('*:*')) {
-    return <TierZeroLayout />;
-  }
-  if (currentUser?.permissions?.includes('iam:manage')) {
-    return <TierOneLayout />;
-  }
   return <AppShell />;
 }
 
 // ── RoleBasedIndexRoute Component ──────────────────────────────────────────
 export function RoleBasedIndexRoute() {
-  const { currentUser, isBooting } = useAppContext();
+  const { isBooting } = useAppContext();
 
   // If boot status is loading, render a standard loading panel
   if (isBooting) {
@@ -139,14 +133,8 @@ export function RoleBasedIndexRoute() {
     );
   }
 
-  if (currentUser?.permissions?.includes('*:*')) {
-    return <SystemAdminDashboard />;
-  } else if (currentUser?.permissions?.includes('iam:manage')) {
-    return <ExecutiveHome />;
-  } else {
-    // Tiers 2, 3, 4 all get the clean workspace launcher grid
-    return <AppLauncher />;
-  }
+  // All users land on the single Unified App Launcher workspace grid
+  return <AppLauncher />;
 }
 
 // ── AppRouter Component ────────────────────────────────────────────────────
@@ -346,7 +334,9 @@ export default function AppRouter() {
         <Route path="executive"  element={<ExecutiveDashboard />} />
 
         {/* Tier 0 Admin Dashboards */}
-        <Route path="users" element={<UsersDashboard />} />
+        <Route path="users" element={<UsersPage />} />
+        <Route path="users/:userId" element={<UserDetails />} />
+        <Route path="roles" element={<Roles />} />
         <Route path="event-engine" element={<EventEngineDashboard />} />
 
         {/* Settings */}

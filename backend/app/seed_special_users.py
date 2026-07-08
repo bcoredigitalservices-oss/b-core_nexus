@@ -19,9 +19,7 @@ async def seed():
             user_0 = User(
                 email=email_0,
                 hashed_password=get_password_hash("Dhruv@7440@sd"),
-                role_tier=0,
                 designation="Tier 0 Superadmin",
-                functional_roles=["SystemAdmin"],
                 is_active=True,
                 mfa_enabled=False,
                 totp_secret=None
@@ -30,7 +28,6 @@ async def seed():
             print(f"Created Tier 0 User: {email_0}")
         else:
             user_0.hashed_password = get_password_hash("Dhruv@7440@sd")
-            user_0.role_tier = 0
             user_0.designation = "Tier 0 Superadmin"
             user_0.is_active = True
             user_0.mfa_enabled = False
@@ -46,9 +43,7 @@ async def seed():
             user_1 = User(
                 email=email_1,
                 hashed_password=get_password_hash("Aman@7440#sd"),
-                role_tier=1,
                 designation="Tier 1 Executive",
-                functional_roles=["Executive"],
                 is_active=True,
                 mfa_enabled=False,
                 totp_secret=None
@@ -57,7 +52,6 @@ async def seed():
             print(f"Created Tier 1 User: {email_1}")
         else:
             user_1.hashed_password = get_password_hash("Aman@7440#sd")
-            user_1.role_tier = 1
             user_1.designation = "Tier 1 Executive"
             user_1.is_active = True
             user_1.mfa_enabled = False
