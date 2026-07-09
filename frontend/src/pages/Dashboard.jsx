@@ -10,6 +10,26 @@ const STAT_CARDS = [
   { label: 'System Status', value: 'Online', icon: <Database size={20} />, color: 'var(--accent-warning)' },
 ];
 
+const LINK_PERMISSION_MAP = {
+  '/users':           ['iam:manage', 'user:read', '*:*'],
+  '/departments':     ['iam:manage', '*:*'],
+  '/directory':       ['iam:manage', '*:*'],
+  '/events':          ['iam:manage', '*:*'],
+  '/event-engine':    ['iam:manage', '*:*'],
+  '/catalog':         ['iam:manage', '*:*'],
+  '/settings/org':    ['iam:manage', 'system:write', '*:*'],
+};
+
+function canSeeLink(item, currentUser) {
+  const required = LINK_PERMISSION_MAP[item.path];
+  if (!required) return true;
+  if (!currentUser) return false;
+  const perms = currentUser.permissions || [];
+  const roles = currentUser.functional_roles || [];
+  if (perms.includes('*:*') || roles.includes('admin')) return true;
+  return required.some(p => perms.includes(p));
+}
+
 export default function Dashboard() {
   const { navigationMatrix, currentUser, isApiLive } = useAppContext();
 
@@ -18,7 +38,7 @@ export default function Dashboard() {
       {/* Welcome banner */}
       <div className="rounded-[14px] border border-[var(--border-color)] bg-gradient-to-br from-[rgba(0,242,254,0.08)] to-[rgba(157,78,221,0.08)] px-8 py-7">
         <h1 className="mb-1 font-[family-name:var(--font-display)] text-2xl">
-          Welcome back{currentUser?.full_name ? `, ${currentUser.full_name}` : ''}
+          Welcome back{currentUser?.first_name ? `, ${currentUser.first_name}` : ''}
         </h1>
         <p className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
           B-Core Nexus Headless ERP
@@ -73,24 +93,28 @@ export default function Dashboard() {
       )}
 
       {/* Sidebar navigation shortcuts */}
-      <div className="glass-panel">
-        <h3 className="mb-4 flex items-center gap-1.5 text-base">
-          <Shield size={16} />
-          Workspace Modules
-        </h3>
-        <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
-          {navigationMatrix.sidebar_links.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className="group flex items-center justify-between gap-2 rounded-[10px] border border-[var(--border-color)] bg-[var(--bg-card-hover)] px-4 py-3 text-sm text-[var(--text-muted)] no-underline transition-all duration-200 hover:border-[rgba(0,242,254,0.3)] hover:bg-[rgba(0,242,254,0.06)] hover:text-[var(--text-main)]"
-            >
-              {link.label}
-              <ArrowUpRight size={14} className="opacity-0 transition-opacity duration-200 group-hover:opacity-70" />
-            </Link>
-          ))}
+      {navigationMatrix.sidebar_links?.filter((link) => canSeeLink(link, currentUser)).length > 0 && (
+        <div className="glass-panel">
+          <h3 className="mb-4 flex items-center gap-1.5 text-base">
+            <Shield size={16} />
+            Workspace Modules
+          </h3>
+          <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
+            {navigationMatrix.sidebar_links
+              .filter((link) => canSeeLink(link, currentUser))
+              .map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className="group flex items-center justify-between gap-2 rounded-[10px] border border-[var(--border-color)] bg-[var(--bg-card-hover)] px-4 py-3 text-sm text-[var(--text-muted)] no-underline transition-all duration-200 hover:border-[rgba(0,242,254,0.3)] hover:bg-[rgba(0,242,254,0.06)] hover:text-[var(--text-main)]"
+                >
+                  {link.label}
+                  <ArrowUpRight size={14} className="opacity-0 transition-opacity duration-200 group-hover:opacity-70" />
+                </Link>
+              ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

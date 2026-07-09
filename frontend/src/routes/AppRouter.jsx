@@ -12,13 +12,14 @@ import CatalogDashboard from '../pages/dashboards/CatalogDashboard';
 import EventEngineDashboard from '../pages/dashboards/EventEngineDashboard';
 import SystemSettingsDashboard from '../pages/settings/SystemSettingsDashboard';
 import OrganisationSetup from '../pages/settings/OrganisationSetup';
+import MyProfileSettings from '../pages/settings/MyProfileSettings';
 import ExecutiveHome from '../pages/dashboards/ExecutiveHome';
 import AppLauncher from '../pages/dashboards/AppLauncher';
+import UserHomeDashboard from '../pages/dashboards/UserHomeDashboard';
 import Departments from '../pages/iam/Departments';
 import Workspaces from '../pages/iam/Workspaces';
 import UsersPage from '../pages/iam/Users';
 import UserDetails from '../pages/iam/UserDetails';
-import Roles from '../pages/iam/Roles';
 import UniversalDataGrid from '../components/ui/UniversalDataGrid';
 import InventoryDashboard from '../pages/workspaces/inventory/InventoryDashboard';
 import ItemsWorkspace from '../pages/workspaces/inventory/ItemsWorkspace';
@@ -78,6 +79,7 @@ import EmployeeDirectory from '../pages/workspaces/hr/EmployeeDirectory';
 import OperationsDashboard from '../pages/workspaces/operations/OperationsDashboard';
 import ActiveProjects from '../pages/workspaces/operations/ActiveProjects';
 import Sandbox from '../pages/Sandbox';
+import PermissionDenied from '../pages/PermissionDenied';
 
 // ── AppShellOrTierZero Layout Router Wrapper ──────────────────────────────
 export function AppShellOrTierZero() {
@@ -109,11 +111,40 @@ export function AppShellOrTierZero() {
   return <AppShell />;
 }
 
+// ── ProtectedRoute Component ──────────────────────────────────────────────
+export function ProtectedRoute({ children, workspaceKey }) {
+  const { currentUser } = useAppContext();
+
+  if (!currentUser) return null;
+
+  const perms = currentUser.permissions || [];
+  const roles = currentUser.functional_roles || [];
+  const hasAccess =
+    perms.includes('*:*') ||
+    roles.includes('admin') ||
+    perms.some((p) => {
+      if (workspaceKey === 'operations') {
+        const opsKeys = ['field_ops', 'maintenance', 'manufacturing', 'projects', 'qa', 'qt', 'logistics'];
+        return opsKeys.some(ok => p.startsWith(`${ok}:`));
+      }
+      if (workspaceKey === 'finance') {
+        const finKeys = ['accounting', 'invoicing', 'payments', 'banking', 'taxes', 'reports', 'budget', 'shares'];
+        return finKeys.some(fk => p.startsWith(`${fk}:`));
+      }
+      return p.startsWith(`${workspaceKey}:`);
+    });
+
+  if (!hasAccess) {
+    return <PermissionDenied moduleName={workspaceKey.toUpperCase()} requiredPermission={`${workspaceKey}:read`} />;
+  }
+
+  return children;
+}
+
 // ── RoleBasedIndexRoute Component ──────────────────────────────────────────
 export function RoleBasedIndexRoute() {
-  const { isBooting, currentUser } = useAppContext();
+  const { isBooting } = useAppContext();
 
-  // If boot status is loading, render a standard loading panel
   if (isBooting) {
     return (
       <div 
@@ -133,17 +164,9 @@ export function RoleBasedIndexRoute() {
     );
   }
 
-  const isAdmin = 
-    currentUser?.permissions?.includes('*:*') || 
-    currentUser?.permissions?.includes('iam:manage') ||
-    currentUser?.functional_roles?.includes('admin') ||
-    currentUser?.functional_roles?.includes('manager');
-
-  if (isAdmin) {
-    return <ExecutiveDashboard />;
-  }
-
-  return <AppLauncher />;
+  // All authenticated users land on the unified dashboard.
+  // Admin sections are shown/hidden inside UserHomeDashboard based on permissions.
+  return <UserHomeDashboard />;
 }
 
 // ── AppRouter Component ────────────────────────────────────────────────────
@@ -160,7 +183,8 @@ export default function AppRouter() {
         {/* Default index: role-based dashboard landing */}
         <Route index element={<RoleBasedIndexRoute />} />
 
-        {/* Workspace Launcher */}
+        {/* Workspace Launcher (accessible by all) */}
+        <Route path="workspaces" element={<AppLauncher />} />
         <Route path="workspace" element={<ExecutiveHome />} />
         <Route 
           path="workspace/spedex"  
@@ -280,34 +304,34 @@ export default function AppRouter() {
         <Route path="workspaces/procurement/taxes" element={<ProcurementModuleWorkspace type="taxes" />} />
         <Route path="workspaces/procurement/analytics" element={<PurchaseAnalytics />} />
 
-        <Route path="workspace/crm" element={<CrmDashboard />} />
-        <Route path="workspace/crm/pipeline" element={<PipelineLeads />} />
-        <Route path="workspace/crm/customers" element={<Customers />} />
-        <Route path="workspace/crm/sales-orders" element={<SalesOrders />} />
-        <Route path="workspace/crm/sales" element={<SalesOrders />} />
-        <Route path="workspace/crm/quotations" element={<Quotations />} />
-        <Route path="workspace/crm/contacts" element={<Contacts />} />
-        <Route path="workspace/crm/deals" element={<Deals />} />
-        <Route path="workspace/crm/call-log" element={<CallLog />} />
-        <Route path="workspace/crm/tasks" element={<TasksToDo />} />
-        <Route path="workspace/crm/interactions" element={<InteractionHistory />} />
-        <Route path="workspace/crm/pos" element={<PosWorkspace />} />
-        <Route path="workspace/crm/support" element={<SupportWorkspace />} />
-        <Route path="workspaces/finance" element={<FinanceDashboard />} />
-        <Route path="workspaces/finance/dashboard" element={<FinanceDashboard />} />
-        <Route path="workspaces/finance/accounting" element={<ChartOfAccounts />} />
-        <Route path="workspaces/finance/accounts" element={<ChartOfAccounts />} />
-        <Route path="workspaces/finance/invoicing" element={<Invoicing />} />
-        <Route path="workspaces/finance/payments" element={<Payments />} />
-        <Route path="workspaces/finance/banking" element={<Banking />} />
-        <Route path="workspaces/finance/taxes" element={<Taxes />} />
-        <Route path="workspaces/finance/reports" element={<ReportsView />} />
-        <Route path="workspaces/finance/budgets" element={<Budget />} />
-        <Route path="workspaces/finance/shares" element={<ShareManagement />} />
-        <Route path="workspaces/hr" element={<HrDashboard />} />
-        <Route path="workspaces/hr/employees" element={<EmployeeDirectory />} />
-        <Route path="workspaces/operations" element={<OperationsDashboard />} />
-        <Route path="workspaces/operations/projects" element={<ActiveProjects />} />
+        <Route path="workspace/crm" element={<ProtectedRoute workspaceKey="crm"><CrmDashboard /></ProtectedRoute>} />
+        <Route path="workspace/crm/pipeline" element={<ProtectedRoute workspaceKey="crm"><PipelineLeads /></ProtectedRoute>} />
+        <Route path="workspace/crm/customers" element={<ProtectedRoute workspaceKey="crm"><Customers /></ProtectedRoute>} />
+        <Route path="workspace/crm/sales-orders" element={<ProtectedRoute workspaceKey="crm"><SalesOrders /></ProtectedRoute>} />
+        <Route path="workspace/crm/sales" element={<ProtectedRoute workspaceKey="crm"><SalesOrders /></ProtectedRoute>} />
+        <Route path="workspace/crm/quotations" element={<ProtectedRoute workspaceKey="crm"><Quotations /></ProtectedRoute>} />
+        <Route path="workspace/crm/contacts" element={<ProtectedRoute workspaceKey="crm"><Contacts /></ProtectedRoute>} />
+        <Route path="workspace/crm/deals" element={<ProtectedRoute workspaceKey="crm"><Deals /></ProtectedRoute>} />
+        <Route path="workspace/crm/call-log" element={<ProtectedRoute workspaceKey="crm"><CallLog /></ProtectedRoute>} />
+        <Route path="workspace/crm/tasks" element={<ProtectedRoute workspaceKey="crm"><TasksToDo /></ProtectedRoute>} />
+        <Route path="workspace/crm/interactions" element={<ProtectedRoute workspaceKey="crm"><InteractionHistory /></ProtectedRoute>} />
+        <Route path="workspace/crm/pos" element={<ProtectedRoute workspaceKey="pos"><PosWorkspace /></ProtectedRoute>} />
+        <Route path="workspace/crm/support" element={<ProtectedRoute workspaceKey="support"><SupportWorkspace /></ProtectedRoute>} />
+        <Route path="workspaces/finance" element={<ProtectedRoute workspaceKey="finance"><FinanceDashboard /></ProtectedRoute>} />
+        <Route path="workspaces/finance/dashboard" element={<ProtectedRoute workspaceKey="finance"><FinanceDashboard /></ProtectedRoute>} />
+        <Route path="workspaces/finance/accounting" element={<ProtectedRoute workspaceKey="finance"><ChartOfAccounts /></ProtectedRoute>} />
+        <Route path="workspaces/finance/accounts" element={<ProtectedRoute workspaceKey="finance"><ChartOfAccounts /></ProtectedRoute>} />
+        <Route path="workspaces/finance/invoicing" element={<ProtectedRoute workspaceKey="finance"><Invoicing /></ProtectedRoute>} />
+        <Route path="workspaces/finance/payments" element={<ProtectedRoute workspaceKey="finance"><Payments /></ProtectedRoute>} />
+        <Route path="workspaces/finance/banking" element={<ProtectedRoute workspaceKey="finance"><Banking /></ProtectedRoute>} />
+        <Route path="workspaces/finance/taxes" element={<ProtectedRoute workspaceKey="finance"><Taxes /></ProtectedRoute>} />
+        <Route path="workspaces/finance/reports" element={<ProtectedRoute workspaceKey="finance"><ReportsView /></ProtectedRoute>} />
+        <Route path="workspaces/finance/budgets" element={<ProtectedRoute workspaceKey="finance"><Budget /></ProtectedRoute>} />
+        <Route path="workspaces/finance/shares" element={<ProtectedRoute workspaceKey="finance"><ShareManagement /></ProtectedRoute>} />
+        <Route path="workspaces/hr" element={<ProtectedRoute workspaceKey="hr"><HrDashboard /></ProtectedRoute>} />
+        <Route path="workspaces/hr/employees" element={<ProtectedRoute workspaceKey="hr"><EmployeeDirectory /></ProtectedRoute>} />
+        <Route path="workspaces/operations" element={<ProtectedRoute workspaceKey="operations"><OperationsDashboard /></ProtectedRoute>} />
+        <Route path="workspaces/operations/projects" element={<ProtectedRoute workspaceKey="operations"><ActiveProjects /></ProtectedRoute>} />
 
         <Route 
           path="routes"  
@@ -345,11 +369,11 @@ export default function AppRouter() {
         {/* Tier 0 Admin Dashboards */}
         <Route path="users" element={<UsersPage />} />
         <Route path="users/:userId" element={<UserDetails />} />
-        <Route path="roles" element={<Roles />} />
+        <Route path="roles" element={<Navigate to="/users?tab=roles" replace />} />
         <Route path="event-engine" element={<EventEngineDashboard />} />
 
         {/* Settings */}
-        <Route path="settings/profile" element={<Dashboard />} />
+        <Route path="settings/profile" element={<MyProfileSettings />} />
         <Route path="settings/org"     element={<OrganisationSetup />} />
         <Route path="settings/config"  element={<SystemSettingsDashboard />} />
 

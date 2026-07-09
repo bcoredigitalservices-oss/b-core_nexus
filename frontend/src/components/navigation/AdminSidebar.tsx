@@ -72,7 +72,6 @@ export default function AdminSidebar({ isOpen, onClose, onCollapse, isMobile }: 
       title: 'Identity & Structure',
       items: [
         { label: 'Users', path: '/users', icon: <Users size={17} /> },
-        { label: 'Roles & Permissions', path: '/roles', icon: <Shield size={17} /> },
         { label: 'Departments', path: '/departments', icon: <Layers size={17} /> }
       ]
     },
@@ -261,8 +260,8 @@ export default function AdminSidebar({ isOpen, onClose, onCollapse, isMobile }: 
                   {currentUser.email?.[0]?.toUpperCase() ?? 'A'}
                 </div>
                 <div className="flex flex-col overflow-hidden leading-none">
-                  <span className="text-[12px] font-semibold text-text-main truncate whitespace-nowrap max-w-[140px]" title={currentUser.full_name || currentUser.email}>
-                    {currentUser.full_name || currentUser.email}
+                  <span className="text-[12px] font-semibold text-text-main truncate whitespace-nowrap max-w-[140px]" title={currentUser.first_name ? `${currentUser.first_name} ${currentUser.last_name || ''}`.trim() : currentUser.email}>
+                    {currentUser.first_name ? `${currentUser.first_name} ${currentUser.last_name || ''}`.trim() : currentUser.email}
                   </span>
                   <span className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">
                     {(currentUser?.permissions?.includes('*:*') || currentUser?.functional_roles?.includes('admin')) ? 'System Admin' : 'Admin'}

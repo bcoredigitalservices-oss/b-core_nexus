@@ -154,7 +154,12 @@ const sortPermissionsByAction = (perms: PermissionItem[]) => {
 export default function UserDetails() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const { authFetch, token } = useAppContext();
+  const { authFetch, token, currentUser } = useAppContext();
+
+  const canToggleStatus = 
+    currentUser?.permissions?.includes('*:*') || 
+    currentUser?.permissions?.includes('iam:manage') ||
+    currentUser?.permissions?.includes('user:write');
 
   // Tab State
   const [activeTab, setActiveTab] = useState<'details' | 'rbac' | 'logs' | 'settings'>('details');
@@ -163,6 +168,7 @@ export default function UserDetails() {
   const [allRoles, setAllRoles] = useState<RoleItem[]>([]);
   const [allPermissions, setAllPermissions] = useState<PermissionItem[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
 
   // Form Fields
   const [email, setEmail] = useState('');
@@ -174,6 +180,28 @@ export default function UserDetails() {
   const [selectedRoleId, setSelectedRoleId] = useState('');
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>([]);
   const [customNotes, setCustomNotes] = useState('');
+  const [copyingFromUserId, setCopyingFromUserId] = useState('');
+
+  const handleToggleStatus = async () => {
+    const actionText = isActive ? "deactivate (suspend)" : "activate (restore)";
+    if (confirm(`Are you sure you want to ${actionText} this user?`)) {
+      setSubmitting(true);
+      setErrorMsg('');
+      setSuccessMsg('');
+      try {
+        await authFetch(`/iam/users/${userId}/status`, { 
+          method: 'PUT',
+          body: JSON.stringify({ is_active: !isActive })
+        });
+        setSuccessMsg(`User status successfully updated.`);
+        setIsActive(!isActive);
+      } catch (err: any) {
+        setErrorMsg(err.message || `Failed to ${actionText} user`);
+      } finally {
+        setSubmitting(false);
+      }
+    }
+  };
 
   // Search & Filter UI States
   const [searchTerm, setSearchTerm] = useState('');
@@ -208,12 +236,27 @@ export default function UserDetails() {
         const data: UserDetailsData = await authFetch(`/iam/users/${userId}/details`);
         if (data) {
           setEmail(data.email);
-          setFirstName(data.first_name || '');
-          setLastName(data.last_name || '');
           setDesignation(data.designation || '');
           setDepartmentId(data.department_id || '');
           setIsActive(data.is_active);
           setCustomNotes(data.custom_attributes?.notes || '');
+
+          // Fallback fetch first_name and last_name from user list since details API doesn't expose them
+          try {
+            const allUsersList = await authFetch('/auth/users');
+            if (allUsersList) setAllUsers(allUsersList);
+            const matchedUser = allUsersList?.find((u: any) => String(u.id) === String(userId));
+            if (matchedUser) {
+              setFirstName(matchedUser.first_name || '');
+              setLastName(matchedUser.last_name || '');
+            } else {
+              setFirstName(data.first_name || '');
+              setLastName(data.last_name || '');
+            }
+          } catch (err) {
+            setFirstName(data.first_name || '');
+            setLastName(data.last_name || '');
+          }
 
           // Map base role (take first assigned role)
           if (data.roles && data.roles.length > 0) {
@@ -270,6 +313,37 @@ export default function UserDetails() {
     }
   };
 
+  const handleCopyPermissions = async (sourceUserId: string) => {
+    if (!sourceUserId) return;
+    const sourceUser = allUsers.find(u => u.id === sourceUserId);
+    const sourceName = sourceUser ? (sourceUser.first_name ? `${sourceUser.first_name} ${sourceUser.last_name || ''}` : sourceUser.email) : 'selected user';
+    
+    if (confirm(`Are you sure you want to overwrite all permissions for this operator with the permissions of '${sourceName}'?`)) {
+      setSubmitting(true);
+      setErrorMsg('');
+      setSuccessMsg('');
+      try {
+        const res = await authFetch(`/iam/users/${userId}/copy-permissions`, {
+          method: 'POST',
+          body: JSON.stringify({ source_user_id: sourceUserId })
+        });
+        
+        // Re-fetch direct permissions to update checkboxes on screen
+        const directPerms = await authFetch(`/iam/users/${userId}/permissions`);
+        if (directPerms) {
+          setSelectedPermissionIds(directPerms.map((p: any) => p.id));
+        }
+        
+        setSuccessMsg(res.message || 'Permissions profile duplicated successfully.');
+        setCopyingFromUserId('');
+      } catch (err: any) {
+        setErrorMsg(err.message || 'Failed to copy permissions.');
+      } finally {
+        setSubmitting(false);
+      }
+    }
+  };
+
   const handleSave = async () => {
     if (!userId) return;
     setSubmitting(true);
@@ -277,17 +351,15 @@ export default function UserDetails() {
     setErrorMsg('');
 
     try {
-      console.log('Detached APIs skipped: Saving designation, department, role, and permission overrides locally.');
-      /*
-      // 1. Save general access metadata (Role, Designation, Department, Names)
-      await authFetch(`/iam/users/${userId}/access`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          designation: designation.trim() || null,
-          role_id: selectedRoleId || null,
-          department_id: departmentId || null
-        })
-      });
+      // 1. Save user base role
+      if (selectedRoleId) {
+        await authFetch(`/iam/users/${userId}/roles`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            role_id: selectedRoleId
+          })
+        });
+      }
 
       // 2. Save direct permission overrides
       await authFetch(`/iam/users/${userId}/permissions`, {
@@ -296,9 +368,8 @@ export default function UserDetails() {
           permission_ids: selectedPermissionIds
         })
       });
-      */
 
-      setSuccessMsg('User profile configurations updated successfully (Local Simulation).');
+      setSuccessMsg('User profile configurations updated successfully.');
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to save access profile.');
     } finally {
@@ -398,61 +469,54 @@ export default function UserDetails() {
     const isSomeChecked = permIds.length > 0 && permIds.some(id => selectedPermissionIds.includes(id)) && !isAllChecked;
 
     return (
-      <div key={modName} className="glass-panel p-5 bg-card border border-color rounded-2xl shadow-sm hover:border-accent-primary/45 transition-all duration-200 flex flex-col gap-4">
+      <div key={modName} className="bg-card border border-color rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden">
         {/* Card Header */}
-        <div className="flex justify-between items-center border-b border-color/40 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="bg-accent-primary/10 border border-accent-primary/15 rounded-lg p-2 flex items-center justify-center text-accent-primary">
-              <IconComponent size={16} />
+        <div className="flex justify-between items-center px-4 py-3 bg-card-hover border-b border-color">
+          <div className="flex items-center gap-2">
+            <div className="bg-accent-primary/10 rounded-md p-1.5 flex items-center justify-center text-accent-primary">
+              <IconComponent size={14} />
             </div>
-            <span className="text-[0.88rem] font-bold text-text-main font-display">{meta.label}</span>
+            <span className="text-[0.82rem] font-bold text-text-main">{meta.label}</span>
           </div>
           
-          {/* Toggle All checkbox */}
-          <label className="flex items-center gap-2 text-[0.7rem] font-bold text-text-muted cursor-pointer select-none mb-0">
-            <input
-              type="checkbox"
-              checked={isAllChecked}
-              ref={el => {
-                if (el) el.indeterminate = isSomeChecked;
-              }}
-              onChange={() => handleToggleModuleAll(modName, modulePerms)}
-              className="cursor-pointer accent-accent-primary rounded"
-            />
-            <span>SELECT ALL</span>
-          </label>
+          {/* SELECT ALL toggle */}
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={() => handleToggleModuleAll(modName, modulePerms)}
+            className={`text-[0.65rem] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md border cursor-pointer transition-all ${
+              isAllChecked
+                ? 'bg-accent-primary border-accent-primary text-white'
+                : 'bg-card border-color text-text-muted hover:border-accent-primary hover:text-accent-primary'
+            }`}
+          >
+            {isAllChecked ? 'Clear All' : 'Select All'}
+          </button>
         </div>
         
-        {/* Card Body - Grid of Actions */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {/* Card Body - Clean chip buttons grid */}
+        <div className="grid grid-cols-2 gap-2 p-4">
           {sortedPerms.map((p) => {
             const action = p.name.split(':')[1] || p.name;
             const isChecked = selectedPermissionIds.includes(p.id);
-            const isPrimary = ['read', 'write', 'create', 'delete'].includes(action);
             
             return (
-              <label 
+              <button
                 key={p.id}
-                className={`flex items-center gap-2 text-[0.75rem] cursor-pointer py-1.5 px-2.5 rounded-lg border transition-all duration-150 ${
+                type="button"
+                disabled={submitting}
+                onClick={() => handleTogglePermission(p.id)}
+                className={`flex items-center justify-between px-3 py-2 rounded-lg border text-[0.75rem] font-bold uppercase tracking-wide cursor-pointer transition-all duration-150 ${
                   isChecked
-                    ? 'border-accent-primary bg-accent-primary/5 text-text-main font-semibold'
-                    : 'border-color bg-card text-text-muted hover:border-accent-primary/40 hover:bg-card-hover'
+                    ? 'border-accent-primary bg-accent-primary/8 text-accent-primary'
+                    : 'border-color bg-card text-text-muted hover:border-accent-primary/50 hover:text-text-main'
                 }`}
               >
-                <input
-                  type="checkbox"
-                  checked={isChecked}
-                  onChange={() => handleTogglePermission(p.id)}
-                  disabled={submitting}
-                  className="cursor-pointer accent-accent-primary w-auto shrink-0 rounded"
-                />
-                <span className="truncate uppercase font-medium">
-                  {action}
-                </span>
-                {isPrimary && (
-                  <span className="w-1 h-1 rounded-full bg-accent-primary/40 ml-auto" />
-                )}
-              </label>
+                <span>{action}</span>
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ml-2 ${
+                  isChecked ? 'bg-accent-primary' : 'bg-card-hover border border-color'
+                }`} />
+              </button>
             );
           })}
         </div>
@@ -495,9 +559,9 @@ export default function UserDetails() {
               <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold border ${
                 isActive 
                   ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
-                  : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                  : 'bg-red-500/10 text-red-400 border-red-500/20'
               } uppercase tracking-wider`}>
-                {isActive ? 'Active' : 'Pending Claim'}
+                {isActive ? 'Active' : 'Suspended'}
               </span>
             </h2>
           </div>
@@ -511,6 +575,25 @@ export default function UserDetails() {
           >
             Impersonate
           </button>
+          {isActive ? (
+            <button 
+              onClick={handleToggleStatus}
+              disabled={submitting || !canToggleStatus}
+              className="py-2.5 px-4 border border-red-500/25 bg-red-500/10 text-red-400 text-[0.78rem] font-bold rounded-lg cursor-pointer transition hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={!canToggleStatus ? "Insufficient permissions" : undefined}
+            >
+              Deactivate Account
+            </button>
+          ) : (
+            <button 
+              onClick={handleToggleStatus}
+              disabled={submitting || !canToggleStatus}
+              className="py-2.5 px-4 border border-emerald-500/25 bg-emerald-500/10 text-emerald-400 text-[0.78rem] font-bold rounded-lg cursor-pointer transition hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={!canToggleStatus ? "Insufficient permissions" : undefined}
+            >
+              Activate Account
+            </button>
+          )}
           <button 
             onClick={handleSave}
             disabled={submitting}
@@ -699,6 +782,39 @@ export default function UserDetails() {
                   )}
                 </div>
 
+                {/* Copy Permissions Profile Section */}
+                <div className="bg-accent-primary/5 border border-accent-primary/10 rounded-2xl p-4 flex flex-col gap-3">
+                  <div className="flex flex-col gap-0.5">
+                    <label className="block text-[0.72rem] text-text-main font-bold uppercase tracking-wider">Duplicate Clearances Profile</label>
+                    <span className="text-[10px] text-text-muted font-medium">Easily duplicate another operator's direct permission clearances to this user profile.</span>
+                  </div>
+                  <div className="flex gap-3">
+                    <select
+                      value={copyingFromUserId}
+                      onChange={(e) => setCopyingFromUserId(e.target.value)}
+                      disabled={submitting}
+                      className="w-full rounded-lg border border-color bg-card py-2 px-3 text-xs text-text-main outline-none focus:border-accent-primary cursor-pointer h-[36px]"
+                    >
+                      <option value="">-- Select Operator to Copy From --</option>
+                      {allUsers
+                        .filter(u => String(u.id) !== String(userId))
+                        .map(u => (
+                          <option key={u.id} value={u.id}>
+                            {u.first_name ? `${u.first_name} ${u.last_name || ''} (${u.email})` : u.email}
+                          </option>
+                        ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyPermissions(copyingFromUserId)}
+                      disabled={submitting || !copyingFromUserId}
+                      className="py-2 px-4 bg-accent-primary text-white font-bold text-[0.75rem] rounded-lg shadow shadow-accent-primary/10 hover:brightness-110 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap h-[36px] flex items-center justify-center"
+                    >
+                      Copy Clearances
+                    </button>
+                  </div>
+                </div>
+
                 {/* Identity & Directory Control Section */}
                 <div className="border-t border-color pt-5 flex flex-col gap-4">
                   <label className="text-[0.75rem] text-text-muted font-bold uppercase tracking-wider">Identity & Directory Control</label>
@@ -706,58 +822,52 @@ export default function UserDetails() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* IAM card */}
                     {parsed.identity.iamManage && (
-                      <div className="glass-panel p-5 bg-card border border-color rounded-2xl shadow-sm hover:border-accent-primary/45 transition-all duration-200 flex flex-col gap-3">
-                        <div className="flex items-center gap-2 border-b border-color/40 pb-2.5">
-                          <div className="bg-accent-primary/10 border border-accent-primary/15 rounded-lg p-2 flex items-center justify-center text-accent-primary">
-                            <Key size={16} />
+                      <div className="bg-card border border-color rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden">
+                        <div className="flex justify-between items-center px-4 py-3 bg-card-hover border-b border-color">
+                          <div className="flex items-center gap-2">
+                            <div className="bg-accent-primary/10 rounded-md p-1.5 text-accent-primary">
+                              <Key size={14} />
+                            </div>
+                            <span className="text-[0.82rem] font-bold text-text-main">Directory Manager</span>
                           </div>
-                          <span className="text-[0.88rem] font-bold text-text-main font-display">Directory Manager</span>
                         </div>
-                        
-                        <label 
-                          className={`flex items-center gap-2.5 text-[0.78rem] cursor-pointer py-2.5 px-3 rounded-lg border transition-all duration-150 ${
-                            selectedPermissionIds.includes(parsed.identity.iamManage.id)
-                              ? 'border-accent-primary bg-accent-primary/5 text-text-main font-semibold'
-                              : 'border-color bg-card text-text-muted hover:border-accent-primary hover:bg-card-hover'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedPermissionIds.includes(parsed.identity.iamManage.id)}
-                            onChange={() => handleTogglePermission(parsed.identity.iamManage!.id)}
+                        <div className="p-4">
+                          <button
+                            type="button"
                             disabled={submitting}
-                            className="cursor-pointer accent-accent-primary w-auto shrink-0 rounded"
-                          />
-                          <span className="font-semibold uppercase font-display">IAM:MANAGE</span>
-                        </label>
+                            onClick={() => handleTogglePermission(parsed.identity.iamManage!.id)}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-[0.75rem] font-bold uppercase tracking-wide cursor-pointer transition-all ${
+                              selectedPermissionIds.includes(parsed.identity.iamManage.id)
+                                ? 'border-accent-primary bg-accent-primary/8 text-accent-primary'
+                                : 'border-color bg-card text-text-muted hover:border-accent-primary/50 hover:text-text-main'
+                            }`}
+                          >
+                            <span>IAM:MANAGE</span>
+                            <span className={`w-2 h-2 rounded-full ${
+                              selectedPermissionIds.includes(parsed.identity.iamManage.id) ? 'bg-accent-primary' : 'bg-card-hover border border-color'
+                            }`} />
+                          </button>
+                        </div>
                       </div>
                     )}
 
                     {/* User controls card */}
-                    {parsed.identity.userControls.length > 0 && (
-                      <div className="glass-panel p-5 bg-card border border-color rounded-2xl shadow-sm hover:border-accent-primary/45 transition-all duration-200 flex flex-col gap-3">
-                        <div className="flex justify-between items-center border-b border-color/40 pb-2.5">
-                          <div className="flex items-center gap-2.5">
-                            <div className="bg-accent-primary/10 border border-accent-primary/15 rounded-lg p-2 flex items-center justify-center text-accent-primary">
-                              <Users size={16} />
+                    {parsed.identity.userControls.length > 0 && (() => {
+                      const uPerms = parsed.identity.userControls;
+                      const allChecked = uPerms.every(p => selectedPermissionIds.includes(p.id));
+                      return (
+                        <div className="bg-card border border-color rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden">
+                          <div className="flex justify-between items-center px-4 py-3 bg-card-hover border-b border-color">
+                            <div className="flex items-center gap-2">
+                              <div className="bg-accent-primary/10 rounded-md p-1.5 text-accent-primary">
+                                <Users size={14} />
+                              </div>
+                              <span className="text-[0.82rem] font-bold text-text-main">User Directory Controls</span>
                             </div>
-                            <span className="text-[0.88rem] font-bold text-text-main font-display">User Directory Controls</span>
-                          </div>
-                          
-                          {/* Toggle User All */}
-                          <label className="flex items-center gap-2 text-[0.7rem] font-bold text-text-muted cursor-pointer select-none mb-0">
-                            <input
-                              type="checkbox"
-                              checked={parsed.identity.userControls.every(p => selectedPermissionIds.includes(p.id))}
-                              ref={el => {
-                                if (el) {
-                                  const checkedCount = parsed.identity.userControls.filter(p => selectedPermissionIds.includes(p.id)).length;
-                                  el.indeterminate = checkedCount > 0 && checkedCount < parsed.identity.userControls.length;
-                                }
-                              }}
-                              onChange={() => {
-                                const uPerms = parsed.identity.userControls;
-                                const allChecked = uPerms.every(p => selectedPermissionIds.includes(p.id));
+                            <button
+                              type="button"
+                              disabled={submitting}
+                              onClick={() => {
                                 const ids = uPerms.map(p => p.id);
                                 if (allChecked) {
                                   setSelectedPermissionIds(prev => prev.filter(id => !ids.includes(id)));
@@ -765,41 +875,42 @@ export default function UserDetails() {
                                   setSelectedPermissionIds(prev => [...Array.from(new Set([...prev, ...ids]))]);
                                 }
                               }}
-                              className="cursor-pointer accent-accent-primary rounded"
-                            />
-                            <span>SELECT ALL</span>
-                          </label>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-2">
-                          {sortPermissionsByAction(parsed.identity.userControls).map((p) => {
-                            const action = p.name.split(':')[1] || p.name;
-                            const isChecked = selectedPermissionIds.includes(p.id);
-                            return (
-                              <label 
-                                key={p.id}
-                                className={`flex items-center gap-2 text-[0.75rem] cursor-pointer py-1.5 px-2.5 rounded-lg border transition-all duration-150 ${
-                                  isChecked
-                                    ? 'border-accent-primary bg-accent-primary/5 text-text-main font-semibold'
-                                    : 'border-color bg-card text-text-muted hover:border-accent-primary/40 hover:bg-card-hover'
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={() => handleTogglePermission(p.id)}
+                              className={`text-[0.65rem] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md border cursor-pointer transition-all ${
+                                allChecked
+                                  ? 'bg-accent-primary border-accent-primary text-white'
+                                  : 'bg-card border-color text-text-muted hover:border-accent-primary hover:text-accent-primary'
+                              }`}
+                            >
+                              {allChecked ? 'Clear All' : 'Select All'}
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 p-4">
+                            {sortPermissionsByAction(uPerms).map((p) => {
+                              const action = p.name.split(':')[1] || p.name;
+                              const isChecked = selectedPermissionIds.includes(p.id);
+                              return (
+                                <button
+                                  key={p.id}
+                                  type="button"
                                   disabled={submitting}
-                                  className="cursor-pointer accent-accent-primary w-auto shrink-0 rounded"
-                                />
-                                <span className="truncate uppercase font-medium">
-                                  {action}
-                                </span>
-                              </label>
-                            );
-                          })}
+                                  onClick={() => handleTogglePermission(p.id)}
+                                  className={`flex items-center justify-between px-3 py-2 rounded-lg border text-[0.75rem] font-bold uppercase tracking-wide cursor-pointer transition-all ${
+                                    isChecked
+                                      ? 'border-accent-primary bg-accent-primary/8 text-accent-primary'
+                                      : 'border-color bg-card text-text-muted hover:border-accent-primary/50 hover:text-text-main'
+                                  }`}
+                                >
+                                  <span>{action}</span>
+                                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ml-2 ${
+                                    isChecked ? 'bg-accent-primary' : 'bg-card-hover border border-color'
+                                  }`} />
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -847,19 +958,27 @@ export default function UserDetails() {
                         <span className="text-[10px] bg-[#C5A85C]/10 border border-[#C5A85C]/20 text-[#C5A85C] font-semibold py-0.5 px-2 rounded-full uppercase tracking-wider">Super Clearance</span>
                       </div>
 
-                      <label className="flex items-center gap-3 text-[0.8rem] cursor-pointer py-1.5 select-none mb-0">
-                        <input
-                          type="checkbox"
-                          checked={selectedPermissionIds.includes(parsed.globalAll.id)}
-                          onChange={() => handleTogglePermission(parsed.globalAll!.id)}
-                          disabled={submitting}
-                          className="cursor-pointer accent-[#C5A85C] w-4 h-4 rounded-md"
-                        />
+                      <button
+                        type="button"
+                        disabled={submitting}
+                        onClick={() => handleTogglePermission(parsed.globalAll!.id)}
+                        className="flex items-center justify-between gap-4 py-1.5 w-full text-left cursor-pointer select-none"
+                      >
                         <div className="flex flex-col">
-                          <span className="font-bold text-text-main">All</span>
+                          <span className="font-bold text-text-main text-[0.85rem]">Grant Super Clearance — All Access</span>
                           <span className="text-[11px] text-text-muted font-medium mt-0.5">Enabling this grants full administrative and operational authorization across all workspaces and features, bypassing fine-grained checks.</span>
                         </div>
-                      </label>
+                        {/* Toggle Switch */}
+                        <div className={`relative w-11 h-6 rounded-full border transition-all duration-200 flex-shrink-0 ${
+                          selectedPermissionIds.includes(parsed.globalAll.id)
+                            ? 'bg-[#C5A85C] border-[#C5A85C]'
+                            : 'bg-card-hover border-color'
+                        }`}>
+                          <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all duration-200 ${
+                            selectedPermissionIds.includes(parsed.globalAll.id) ? 'left-5' : 'left-0.5'
+                          }`} />
+                        </div>
+                      </button>
                     </div>
                   )}
 

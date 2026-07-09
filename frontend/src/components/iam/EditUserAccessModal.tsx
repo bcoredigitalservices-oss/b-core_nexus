@@ -188,15 +188,13 @@ export default function EditUserAccessModal({ user, onClose, onSuccess }: EditUs
     setErrorMsg('');
 
     try {
-      console.log('Detached APIs skipped in modal: Saving user metadata locally.');
-      /*
-      // 1. Save user details (designation, department, role)
+      // 1. Save user access details (role, designation, department)
       await authFetch(`/iam/users/${user.id}/access`, {
         method: 'PUT',
         body: JSON.stringify({
-          designation: designation.trim() || null,
-          department_id: departmentId || null,
-          role_id: roleId || null
+          role_id: roleId || null,
+          designation: designation || null,
+          department_id: departmentId || null
         })
       });
 
@@ -207,7 +205,6 @@ export default function EditUserAccessModal({ user, onClose, onSuccess }: EditUs
           permission_ids: selectedPermissionIds
         })
       });
-      */
 
       // Call onSuccess and onClose
       onSuccess();

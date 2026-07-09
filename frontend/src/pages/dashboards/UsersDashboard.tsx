@@ -15,7 +15,7 @@ export default function UsersDashboard() {
     currentUser?.permissions?.includes('iam:manage') ||
     currentUser?.permissions?.includes('user:invite');
 
-  const canRevoke = 
+  const canToggleStatus = 
     currentUser?.permissions?.includes('*:*') || 
     currentUser?.permissions?.includes('iam:manage') ||
     currentUser?.permissions?.includes('user:write');
@@ -23,22 +23,26 @@ export default function UsersDashboard() {
   const canEditAccess = 
     currentUser?.permissions?.includes('*:*') || 
     currentUser?.permissions?.includes('iam:manage');
-  const [revokingUser, setRevokingUser] = useState<string | null>(null);
+  const [updatingStatusUserId, setUpdatingStatusUserId] = useState<string | null>(null);
 
   // Modal and editing states
   const [isProvisionModalOpen, setIsProvisionModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any | null>(null);
 
-  const handleRevoke = async (userId: string) => {
-    if (confirm("Are you sure you want to revoke this user's active session and disable access?")) {
-      setRevokingUser(userId);
+  const handleToggleStatus = async (userId: string, currentActive: boolean) => {
+    const actionText = currentActive ? "deactivate (suspend)" : "activate (restore)";
+    if (confirm(`Are you sure you want to ${actionText} this user?`)) {
+      setUpdatingStatusUserId(userId);
       try {
-        await authFetch(`/auth/users/${userId}/revoke`, { method: 'POST' });
+        await authFetch(`/iam/users/${userId}/status`, { 
+          method: 'PUT',
+          body: JSON.stringify({ is_active: !currentActive })
+        });
         setGridKey(prev => prev + 1);
       } catch (err: any) {
-        alert(err.message || "Failed to revoke session");
+        alert(err.message || `Failed to ${actionText} user`);
       } finally {
-        setRevokingUser(null);
+        setUpdatingStatusUserId(null);
       }
     }
   };
@@ -117,7 +121,7 @@ export default function UsersDashboard() {
                 )
               },
               {
-                key: 'revoke_session',
+                key: 'status_control',
                 label: 'Control',
                 render: (_: any, row: any) => (
                   <div className="flex items-center gap-2">
@@ -133,18 +137,23 @@ export default function UsersDashboard() {
                     {row.is_active ? (
                       <button
                         className="bg-red-500/10 border border-red-500/25 text-red-400 py-1 px-3 h-7 rounded-lg text-[0.75rem] cursor-pointer inline-flex items-center gap-1.5 transition-all duration-200 font-semibold hover:bg-red-500/20 hover:border-red-500/45 disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={() => handleRevoke(row.id)}
-                        disabled={!canRevoke || revokingUser === row.id}
-                        title={!canRevoke ? "Insufficient permissions" : undefined}
+                        onClick={() => handleToggleStatus(row.id, true)}
+                        disabled={!canToggleStatus || updatingStatusUserId === row.id}
+                        title={!canToggleStatus ? "Insufficient permissions" : undefined}
                       >
                         <Lock size={12} />
-                        {revokingUser === row.id ? 'Revoking...' : 'Revoke Session'}
+                        {updatingStatusUserId === row.id ? 'Suspending...' : 'Deactivate'}
                       </button>
                     ) : (
-                      <span className="text-text-muted text-[0.75rem] inline-flex items-center gap-1 font-semibold">
-                        <Unlock size={12} className="opacity-50" />
-                        Revoked
-                      </span>
+                      <button
+                        className="bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 py-1 px-3 h-7 rounded-lg text-[0.75rem] cursor-pointer inline-flex items-center gap-1.5 transition-all duration-200 font-semibold hover:bg-emerald-500/20 hover:border-emerald-500/45 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => handleToggleStatus(row.id, false)}
+                        disabled={!canToggleStatus || updatingStatusUserId === row.id}
+                        title={!canToggleStatus ? "Insufficient permissions" : undefined}
+                      >
+                        <Unlock size={12} />
+                        {updatingStatusUserId === row.id ? 'Activating...' : 'Activate'}
+                      </button>
                     )}
                   </div>
                 )
