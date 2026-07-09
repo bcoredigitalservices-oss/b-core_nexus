@@ -25,7 +25,7 @@ This document provides a comprehensive mapping of B-Core Nexus React frontend co
 | **App Bootloader** | `GET /api/v1/system/preferences` | Retrieve combined default and personalized UI settings (theme, font, sounds). | [AppContext.jsx:L250](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/context/AppContext.jsx#L250) | [system/router.py:L285](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/system/router.py#L285) | **Fully Implemented** |
 | **User Profile Menu** | `PUT /api/v1/system/preferences/personal` | Update user-specific UI settings. | [AppContext.jsx:L283](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/context/AppContext.jsx#L283) | [system/router.py:L306](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/system/router.py#L306) | **Fully Implemented** |
 | **User Profile Menu** (Admin) | `PUT /api/v1/system/preferences/global` | Update default UI preferences for all users system-wide. | [AppContext.jsx:L304](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/context/AppContext.jsx#L304) | [system/router.py:L325](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/system/router.py#L325) | **Fully Implemented** |
-| **MFA Configuration** | `POST /api/v1/auth/totp/setup` | Generate a new TOTP secret key and provisioning URI. | Custom profile logic | [auth/router.py:L301](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/auth/router.py#L301) | **Fully Implemented** |
+| **MFA Configuration** | `POST /api/v1/auth/totp/setup` | Generate a new TOTP secret key and provisioning URI. | [MyProfileSettings.tsx:L50](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/settings/MyProfileSettings.tsx#L50) | [auth/router.py:L301](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/auth/router.py#L301) | **Fully Implemented** — Route `/settings/profile` now renders real profile page |
 
 ---
 
@@ -35,6 +35,9 @@ This document provides a comprehensive mapping of B-Core Nexus React frontend co
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Organisation Settings** | `GET /api/v1/organization/profile` | Read organization settings (legal name, tax id, currency, contact email/phone, vertical). | [OrganisationSetup.tsx:L49](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/settings/OrganisationSetup.tsx#L49), [ExecutiveDashboard.tsx:L43](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/dashboards/ExecutiveDashboard.tsx#L43) | [organization/router.py:L28](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/organization/router.py#L28) | **Fully Implemented** |
 | **Organisation Settings** | `PUT /api/v1/organization/profile` | Update organization settings. | [OrganisationSetup.tsx:L78](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/settings/OrganisationSetup.tsx#L78) | [organization/router.py:L58](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/organization/router.py#L58) | **Fully Implemented** |
+
+| **User Home Dashboard** | `GET /api/v1/organization/profile` | Load org name and info for user home. | [UserHomeDashboard.tsx:L410](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/dashboards/UserHomeDashboard.tsx#L410) | [organization/router.py:L28](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/organization/router.py#L28) | **Fully Implemented** |
+| **User Home Dashboard** | `GET /api/v1/iam/departments` | Load department info shown on user home. | [UserHomeDashboard.tsx:L435](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/dashboards/UserHomeDashboard.tsx#L435) | [iam/router.py:L313](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/iam/router.py#L313) | **Fully Implemented** |
 
 ---
 
@@ -59,8 +62,9 @@ This document provides a comprehensive mapping of B-Core Nexus React frontend co
 | **Roles / Permissions** | `PUT /api/v1/iam/roles/{roleId}` | Edit Role metadata. | [Roles.tsx:L175](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/iam/Roles.tsx#L175) | [iam/router.py:L511](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/iam/router.py#L511) | **Fully Implemented** |
 | **Roles / Permissions** | `GET /api/v1/iam/roles/{roleId}/permissions` | List permissions assigned to Role. | [Roles.tsx:L93](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/iam/Roles.tsx#L93) | [iam/router.py:L536](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/iam/router.py#L536) | **Fully Implemented** |
 | **Roles / Permissions** | `PUT /api/v1/iam/roles/{roleId}/permissions` | Overwrite permissions mapped to Role. | [Roles.tsx:L184](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/iam/Roles.tsx#L184) | [iam/router.py:L555](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/iam/router.py#L555) | **Fully Implemented** |
-| **Roles Promotion** | `PUT /api/v1/iam/users/{userId}/roles` | Promote user to a different base role. | Custom admin forms | [iam/router.py:L583](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/iam/router.py#L583) | **Fully Implemented** |
-| **Permissions Copying** | `POST /api/v1/iam/users/{userId}/copy-permissions` | Copy all permissions from a source user to a target user. | Custom admin forms | [iam/router.py:L448](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/iam/router.py#L448) | **Fully Implemented** |
+| **Roles Promotion** | `PUT /api/v1/iam/users/{userId}/roles` | Promote user to a different base role. | [UserDetails.tsx:L356](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/iam/UserDetails.tsx#L356) | [iam/router.py:L583](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/iam/router.py#L583) | **Fully Implemented** |
+| **Permissions Copying** | `POST /api/v1/iam/users/{userId}/copy-permissions` | Copy all permissions from a source user to a target user. | [UserDetails.tsx:L326](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/iam/UserDetails.tsx#L326) | [iam/router.py:L448](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/iam/router.py#L448) | **Fully Implemented** |
+| **User Status Toggle** | `PUT /api/v1/iam/users/{userId}/status` | Toggle user active/inactive status. | [Users.tsx:L271](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/iam/Users.tsx#L271), [UserDetails.tsx:L192](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/iam/UserDetails.tsx#L192), [UsersDashboard.tsx:L37](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/dashboards/UsersDashboard.tsx#L37) | [iam/router.py](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/backend/app/core/iam/router.py) | **Fully Implemented** |
 
 ---
 
@@ -95,20 +99,33 @@ These workspaces have functional dashboard screens in the frontend, but their da
 
 ---
 
-## 7. Universal Core Modules
+## 7. Tasks
+
+| Frontend View / Component | API Route / Method | Description | Frontend File Reference | Backend Handler File | Status / Discrepancy |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **User Home Dashboard** | `GET /api/v1/tasks/my` | Fetch task list assigned to the currently logged-in user. | [UserHomeDashboard.tsx:L401](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/dashboards/UserHomeDashboard.tsx#L401) | tasks router | **Fully Implemented** |
+| **Tasks To Do (CRM)** | `GET /api/v1/tasks` | Fetch all tasks visible to user. | [TasksToDo.tsx:L98](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/workspaces/crm/TasksToDo.tsx#L98) | tasks router | **Fully Implemented** |
+| **Tasks To Do (CRM)** | `PUT /api/v1/tasks/{id}` | Update task status/details. | [TasksToDo.tsx:L142](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/workspaces/crm/TasksToDo.tsx#L142), [UserHomeDashboard.tsx:L486](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/dashboards/UserHomeDashboard.tsx#L486) | tasks router | **Fully Implemented** |
+| **Create Task Modal** | `POST /api/v1/tasks` | Create a new task. | [CreateTaskModal.tsx:L140](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/components/iam/CreateTaskModal.tsx#L140) | tasks router | **Fully Implemented** |
+
+---
+
+## 8. Universal Core Modules
 
 | Frontend View / Component | API Route / Method | Description | Frontend File Reference | Backend Handler File | Status / Discrepancy |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Directory Grids** | `GET /api/v1/directory` | Fetch base profile directory items. | [AppRouter.jsx:L160](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/routes/AppRouter.jsx#L160), [Sandbox.jsx:L49](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/Sandbox.jsx#L49) | None | **Unimplemented in Core**. The `directory` core sub-router is missing from `main.py` mounting list. |
 | **Directory Profiles** | `GET /api/v1/directory/profiles` | Query user contact cards. | [UniversalDataGrid.jsx:L11](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/components/ui/UniversalDataGrid.jsx#L11) | None | **Unimplemented in Core**. The `directory` core sub-router is missing from `main.py` mounting list. |
 | **Universal Catalog** | `GET /api/v1/catalog/items` | Query core inventory item entries. | [CatalogDashboard.tsx:L131](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/dashboards/CatalogDashboard.tsx#L131), [Sandbox.jsx:L52](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/Sandbox.jsx#L52) | None | **Unimplemented in Core**. The `catalog` core sub-router is missing from `main.py` mounting list. |
-| **Catalog Groups** | `GET /api/v1/catalog/groups` | Fetch catalog categories list. | [CatalogDashboard.tsx:L28](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/dashboards/CatalogDashboard.tsx#L28) | None | **Unimplemented in Core**. The `catalog` core sub-router is missing from `main.py` mounting list. |
+| **Catalog Groups** | `GET /api/v1/catalog/groups` | Fetch catalog categories list. | [CatalogDashboard.tsx:L28](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/dashboards/CatalogDashboard.tsx#L28), [CreateItemModal.tsx:L51](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/components/catalog/CreateItemModal.tsx#L51) | None | **Unimplemented in Core**. The `catalog` core sub-router is missing from `main.py` mounting list. |
 | **Catalog Bulk Import** | `POST /api/v1/catalog/items/import` | Bulk insert catalog entries. | [BulkImportModal.tsx:L184](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/components/catalog/BulkImportModal.tsx#L184) | None | **Unimplemented in Core**. The `catalog` core sub-router is missing from `main.py` mounting list. |
+| **Catalog Create Group** | `POST /api/v1/catalog/groups` | Create a new catalog group/category. | [CreateItemGroupModal.tsx:L32](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/components/catalog/CreateItemGroupModal.tsx#L32) | None | **Unimplemented in Core**. |
+| **Create Catalog Item** | `POST /api/v1/catalog/items` | Create a new catalog item. | [CreateItemModal.tsx:L86](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/components/catalog/CreateItemModal.tsx#L86) | None | **Unimplemented in Core**. |
 | **Event History** | `GET /api/v1/events` | Inspect logs and triggers of background actions. | [AppRouter.jsx:L175](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/routes/AppRouter.jsx#L175), [Sandbox.jsx:L55](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/pages/Sandbox.jsx#L55) | None | **Unimplemented in Core**. The `events` core sub-router is missing from `main.py` mounting list. |
 
 ---
 
-## 8. WebSockets
+## 9. WebSockets
 
 | Frontend Component | WS Connection URI | Description | Frontend File Reference | Backend Handler File | Status / Discrepancy |
 | :--- | :--- | :--- | :--- | :--- | :--- |

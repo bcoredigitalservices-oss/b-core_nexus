@@ -175,7 +175,7 @@ export default function AppShell() {
                 </div>
                 <div className="hidden md:flex flex-col text-left leading-none">
                   <span className="text-[12px] font-semibold text-text-main max-w-[130px] truncate">
-                    {currentUser?.full_name || currentUser?.email || 'Admin'}
+                    {currentUser?.first_name ? `${currentUser.first_name} ${currentUser.last_name || ''}`.trim() : (currentUser?.email || 'Admin')}
                   </span>
                   <span className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">
                     {currentUser?.permissions?.includes('*:*') ? 'Admin' : 'User'}
@@ -192,7 +192,7 @@ export default function AppShell() {
                     onClick={() => { navigate('/settings/profile'); setUserMenuOpen(false); }}
                     role="menuitem"
                   >
-                    <Settings size={14} /> System Settings
+                    <Settings size={14} /> My Profile
                   </button>
                   <div className="h-px bg-border my-1" />
                   <button

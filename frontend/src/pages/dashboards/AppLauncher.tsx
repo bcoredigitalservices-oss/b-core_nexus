@@ -261,40 +261,35 @@ function DepartmentCard({ dept, permittedWorkspaceKeys, onLaunch, isSuperUser }:
         </span>
       </div>
 
-      {/* Workspace icon grid */}
+      {/* Workspace icon grid - only permitted workspaces */}
       <div className="flex flex-wrap gap-2.5">
-        {dept.workspaces.map((ws) => {
-          const permitted = isSuperUser || permittedWorkspaceKeys.includes(ws.key);
-          const isHov = hoveredWs === ws.key;
+        {dept.workspaces
+          .filter(ws => isSuperUser || permittedWorkspaceKeys.includes(ws.key))
+          .map((ws) => {
+            const isHov = hoveredWs === ws.key;
 
-          return (
-            <button
-              key={ws.key}
-              title={ws.label}
-              disabled={!permitted}
-              onClick={() => permitted && onLaunch(ws.route, ws.key)}
-              onMouseEnter={() => setHoveredWs(ws.key)}
-              onMouseLeave={() => setHoveredWs(null)}
-              className={`flex flex-col items-center gap-1.5 py-2.5 px-3 rounded-xl transition-all duration-200 relative min-w-[64px] border ${
-                permitted 
-                  ? 'cursor-pointer opacity-100' 
-                  : 'cursor-not-allowed opacity-40'
-              }`}
-              style={{
-                background: isHov && permitted ? `${ws.color}18` : 'rgba(255,255,255,0.03)',
-                borderColor: isHov && permitted ? `${ws.color}50` : 'rgba(255,255,255,0.06)',
-                color: permitted ? (isHov ? ws.color : 'var(--text-muted)') : 'rgba(255,255,255,0.18)',
-                transform: isHov && permitted ? 'translateY(-2px)' : 'translateY(0)',
-              }}
-            >
-              <span className="text-inherit">{ws.icon}</span>
-              <span className="text-[0.62rem] font-semibold text-center tracking-wide white-space-nowrap">
-                {ws.label}
-              </span>
-              {!permitted && <Lock size={8} className="absolute bottom-1.5 right-1.5 opacity-40" />}
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={ws.key}
+                title={ws.label}
+                onClick={() => onLaunch(ws.route, ws.key)}
+                onMouseEnter={() => setHoveredWs(ws.key)}
+                onMouseLeave={() => setHoveredWs(null)}
+                className="flex flex-col items-center gap-1.5 py-2.5 px-3 rounded-xl transition-all duration-200 relative min-w-[64px] border cursor-pointer opacity-100"
+                style={{
+                  background: isHov ? `${ws.color}18` : 'rgba(255,255,255,0.03)',
+                  borderColor: isHov ? `${ws.color}50` : 'rgba(255,255,255,0.06)',
+                  color: isHov ? ws.color : 'var(--text-muted)',
+                  transform: isHov ? 'translateY(-2px)' : 'translateY(0)',
+                }}
+              >
+                <span className="text-inherit">{ws.icon}</span>
+                <span className="text-[0.62rem] font-semibold text-center tracking-wide white-space-nowrap">
+                  {ws.label}
+                </span>
+              </button>
+            );
+          })}
       </div>
     </div>
   );
@@ -357,27 +352,31 @@ export default function AppLauncher() {
           </p>
         </div>
 
-        {/* ── Department Cards Grid ── */}
+        {/* ── Department Cards Grid — only show depts with at least one permitted workspace ── */}
         <div className="dept-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-          {DEPARTMENTS.map((dept) => (
-            <DepartmentCard
-              key={dept.id}
-              dept={dept}
-              permittedWorkspaceKeys={permittedWorkspaceKeys}
-              onLaunch={handleLaunch}
-              isSuperUser={isSuperUser}
-            />
-          ))}
+          {DEPARTMENTS
+            .filter(dept =>
+              isSuperUser || dept.workspaces.some(ws => permittedWorkspaceKeys.includes(ws.key))
+            )
+            .map((dept) => (
+              <DepartmentCard
+                key={dept.id}
+                dept={dept}
+                permittedWorkspaceKeys={permittedWorkspaceKeys}
+                onLaunch={handleLaunch}
+                isSuperUser={isSuperUser}
+              />
+            ))}
         </div>
 
-        {/* ── Access Hint Footer ── */}
-        {!isSuperUser && (
-          <div className="flex items-center gap-2.5 py-4 px-6 rounded-xl bg-[#ffb703]/5 border border-[#ffb703]/15 text-[0.82rem] text-text-muted">
-            <Lock size={14} className="text-[#ffb703]" />
-            <span>
-              <strong className="text-[#ffb703]">Limited access.</strong>{' '}
-              Some workspace modules may be restricted. Contact your Tier 1 Executive Administrator to request additional access.
-            </span>
+        {/* ── Empty state if no access at all ── */}
+        {!isSuperUser && !DEPARTMENTS.some(dept => dept.workspaces.some(ws => permittedWorkspaceKeys.includes(ws.key))) && (
+          <div className="flex flex-col items-center justify-center py-20 bg-amber-500/5 border border-amber-500/15 rounded-2xl text-center gap-3">
+            <Lock size={32} className="text-amber-400" />
+            <p className="font-bold text-text-main text-lg">No workspace access assigned</p>
+            <p className="text-sm text-text-muted max-w-[400px] leading-relaxed">
+              Your account has no workspace modules enabled yet. Contact your System Administrator to request access.
+            </p>
           </div>
         )}
 

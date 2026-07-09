@@ -1,21 +1,57 @@
-# B-Core Nexus Frontend API Mapping Documentation
+# B-Core Nexus — Frontend Documentation
 
-This folder contains the official documentation mapping the **React Frontend** components and pages to their corresponding **FastAPI Backend** API endpoints.
+This folder contains the official developer documentation for the **B-Core Nexus** React frontend.
 
-## Directory Contents
+---
 
-1. **[api_mapping.md](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/documentation/api_mapping.md)**:
-   A comprehensive register of all API endpoints referenced by the frontend, categorized by functional areas. It highlights:
-   - Frontend files making the call and their line numbers.
-   - The HTTP method and URL endpoints.
-   - The corresponding Python handler files in the backend.
-   - Discrepancies, missing endpoints, or legacy stubs requiring backend resolution.
-2. **[frontend_workflow.md](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/documentation/frontend_workflow.md)**:
-   A guide explaining the high-level workflows of the React frontend, detailing:
-   - The app bootstrapping lifecycle sequence.
-   - Authentication, MFA intercepts, and onboarding steps.
-   - Real-time updates via WebSockets.
-   - Layout boundaries and RBAC access routing.
+## 📁 Files in this Folder
 
-## Key Purpose
-This documentation serves as a development blueprint to bridge the frontend views with the stateless backend core. Since some pluggable workspace controllers (like Finance, HR, Operations, CRM, and Catalog/Directory Core) are in the process of migration to the new string-based Roles & Permissions model, this mapping explicitly marks which endpoints are currently handled by the backend and which ones are placeholders (relying on frontend cache/sandbox fallbacks).
+### 1. [frontend_api_reference.md](./frontend_api_reference.md) ⭐ New
+> **Start here for API information.**
+
+A complete, up-to-date list of **every API endpoint called by the frontend**, organized by domain. For each endpoint you'll see:
+- HTTP method and path
+- Which frontend file(s) make the call
+- Implementation status (✅ Working / ⚠️ Partial / ❌ Missing backend handler)
+
+**Total endpoints documented: 70** — 47 implemented, 2 partial, 21 missing.
+
+---
+
+### 2. [api_mapping.md](./api_mapping.md)
+The older, detailed mapping document that cross-references frontend components with their backend Python handler files. Includes line number references and notes on discrepancies. Use this when you need to trace a specific call to its exact backend implementation line.
+
+---
+
+### 3. [frontend_workflow.md](./frontend_workflow.md)
+High-level guide explaining frontend architecture and workflows:
+- App bootstrap lifecycle (token → `/auth/me` → preferences → navigation matrix)
+- MFA login intercept logic (mandatory for Admin/Manager, optional for Operators)
+- RBAC routing and permission checks
+- WebSocket real-time subscription patterns
+
+---
+
+### 4. [dashboard_access_bugs.md](./dashboard_access_bugs.md)
+Tracks known issues and bugs related to dashboard routing and role-based access control.
+
+---
+
+## Recent Changes (2026-07-09)
+
+| Area | Change |
+|:---|:---|
+| **My Profile Settings** | New page at `/settings/profile` with TOTP/MFA Security PIN setup via `POST /auth/totp/setup` |
+| **Provision Operator Modal** | Fixed empty dropdown bug — now accepts pre-fetched `departments` and `roles` as props |
+| **User Home Dashboard** | Connected to `/organization/profile`, `/tasks/my`, `/iam/departments` with permission-gated UI |
+| **Email Dispatch** | Resend API key injected into Docker; `email.py` switched to `http.client` to fix Cloudflare WAF blocking |
+| **AppShell Menu** | "System Settings" menu item renamed to "My Profile" to correctly reflect the route |
+| **IAM Users Page** | Role column label corrected from "Operator" to actual role name |
+
+---
+
+## Architecture Notes
+
+- **Auth flow**: All authenticated requests go through the Axios client in [`src/services/api/client.ts`](../src/services/api/client.ts) which automatically attaches `Bearer` tokens and handles 401 → refresh → retry.
+- **Base URL**: `VITE_API_URL/api/v1` (set in `.env` or passed as Docker build arg)
+- **Context provider**: [`AppContext.jsx`](../src/context/AppContext.jsx) is the single source of truth for `currentUser`, `token`, `preferences`, and the `authFetch` helper.

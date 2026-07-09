@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import {
   Users, Package, Shield, Cpu, LayoutDashboard, Activity,
   Briefcase, User, Settings, DollarSign, UserPlus, Plus,
@@ -33,6 +33,29 @@ const ICON_MAP = {
   server:       <Server      size={18} />,
   folder:       <FolderOpen  size={18} />,
 };
+
+// ─── Permission key → path map for sidebar link filtering ────────────────────
+// If a user lacks the required permission, the link is hidden entirely.
+const LINK_PERMISSION_MAP = {
+  '/users':           ['iam:manage', 'user:read', '*:*'],
+  '/departments':     ['iam:manage', '*:*'],
+  '/directory':       ['iam:manage', '*:*'],
+  '/events':          ['iam:manage', '*:*'],
+  '/event-engine':    ['iam:manage', '*:*'],
+  '/catalog':         ['iam:manage', '*:*'],
+  '/settings/org':    ['iam:manage', 'system:write', '*:*'],
+};
+
+// Returns true if user can see this link (no restriction = visible to all)
+function canSeeLink(item, currentUser) {
+  const required = LINK_PERMISSION_MAP[item.path];
+  if (!required) return true; // no restriction — show to everyone
+  if (!currentUser) return false;
+  const perms = currentUser.permissions || [];
+  const roles = currentUser.functional_roles || [];
+  if (perms.includes('*:*') || roles.includes('admin')) return true;
+  return required.some(p => perms.includes(p));
+}
 
 function NavIcon({ name }) {
   return ICON_MAP[name] ?? <Layers size={18} />;
@@ -129,7 +152,7 @@ export default function Sidebar({ isOpen, onClose, onCollapse, isMobile }) {
         {/* ── Brand Header ──────────────────────────────────────────── */}
         <div className="flex items-center justify-between p-4 border-b border-color h-16 shrink-0">
           {!effectiveCollapsed && (
-            <div className="flex items-center gap-2.5 overflow-hidden whitespace-nowrap">
+            <Link to="/" className="flex items-center gap-2.5 overflow-hidden whitespace-nowrap no-underline text-inherit cursor-pointer">
               <div className="w-8.5 h-8.5 bg-card border border-color rounded-lg flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(99,91,255,0.15)]">
                 <img src="/favicon.svg" alt="B-Core Logo" className="w-5 h-5" />
               </div>
@@ -139,7 +162,7 @@ export default function Sidebar({ isOpen, onClose, onCollapse, isMobile }) {
                   {systemSettings?.organization_name ?? 'Nexus ERP'}
                 </span>
               </div>
-            </div>
+            </Link>
           )}
 
           {/* Desktop collapse toggle */}
@@ -175,7 +198,14 @@ export default function Sidebar({ isOpen, onClose, onCollapse, isMobile }) {
           {!effectiveCollapsed && (
             <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted px-2 pb-1.5 opacity-70">Workspaces</p>
           )}
-          {navigationMatrix.sidebar_links.map((item) => (
+          <SidebarLink
+            item={{ label: 'My Workplace', path: '/', icon: 'dashboard' }}
+            collapsed={effectiveCollapsed}
+            onClick={isMobile ? onClose : undefined}
+          />
+          {navigationMatrix.sidebar_links
+            ?.filter(item => canSeeLink(item, currentUser))
+            .map((item) => (
             <SidebarLink
               key={item.path}
               item={item}
@@ -211,7 +241,7 @@ export default function Sidebar({ isOpen, onClose, onCollapse, isMobile }) {
               </div>
               <div className="flex flex-col overflow-hidden leading-none">
                 <span className="text-[12px] font-semibold text-text-main truncate whitespace-nowrap">
-                  {currentUser.full_name || currentUser.email}
+                  {currentUser.first_name ? `${currentUser.first_name} ${currentUser.last_name || ''}`.trim() : currentUser.email}
                 </span>
                 <span className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">
                   {currentUser.designation || (currentUser.permissions?.includes('*:*') ? 'System Admin' : 'User')}

@@ -12,7 +12,9 @@ import { useAppContext } from '../../context/AppContext';
 interface ProvisionUserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (data?: any) => void;
+  departments?: Department[];
+  roles?: Role[];
 }
 
 interface Department {
@@ -27,7 +29,13 @@ interface Role {
   description?: string | null;
 }
 
-export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: ProvisionUserModalProps) {
+export default function ProvisionUserModal({ 
+  isOpen, 
+  onClose, 
+  onSuccess,
+  departments: departmentsProp,
+  roles: rolesProp
+}: ProvisionUserModalProps) {
   const { token, authFetch } = useAppContext();
 
   // Metadata context lists
@@ -56,13 +64,22 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
         setLoading(true);
         setErrorMsg('');
         
-        const depts = await authFetch('/iam/departments');
-        if (depts) setDepartments(depts);
+        if (departmentsProp && departmentsProp.length > 0) {
+          setDepartments(departmentsProp);
+        } else {
+          const depts = await authFetch('/iam/departments');
+          if (depts) setDepartments(depts);
+        }
 
-        const fetchedRoles = await authFetch('/iam/roles');
-        if (fetchedRoles && fetchedRoles.length > 0) {
-          setRoles(fetchedRoles);
-          setRoleId(fetchedRoles[0].id);
+        if (rolesProp && rolesProp.length > 0) {
+          setRoles(rolesProp);
+          setRoleId(rolesProp[0].id);
+        } else {
+          const fetchedRoles = await authFetch('/iam/roles');
+          if (fetchedRoles && fetchedRoles.length > 0) {
+            setRoles(fetchedRoles);
+            setRoleId(fetchedRoles[0].id);
+          }
         }
       } catch (err: any) {
         console.error('Failed to load provisioning form metadata:', err);
@@ -73,7 +90,7 @@ export default function ProvisionUserModal({ isOpen, onClose, onSuccess }: Provi
     };
     
     loadFormData();
-  }, [isOpen, token, authFetch]);
+  }, [isOpen, token, authFetch, departmentsProp, rolesProp]);
 
   // Prevent background scroll when modal is open
   useEffect(() => {
