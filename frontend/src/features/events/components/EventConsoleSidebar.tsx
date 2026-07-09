@@ -1,6 +1,46 @@
 import React from 'react';
 import { Shield, Activity, Send, Wifi, Inbox } from 'lucide-react';
 
+interface DirectoryEntry {
+  id: string;
+  name: string;
+  profile_type: string;
+}
+
+interface CatalogEntry {
+  id: string;
+  sku: string;
+  title: string;
+}
+
+interface EventEntry {
+  id: string;
+  event_type: string;
+  entity_id: string;
+  created_at: string;
+  created_by: string;
+  payload: { message?: string; [key: string]: unknown };
+}
+
+interface EventConsoleState {
+  entity_id: string;
+  entity_type: string;
+  message: string;
+  event_type: string;
+}
+
+interface EventConsoleSidebarProps {
+  roleTier: number;
+  getRoleLabel: (tier: number) => string;
+  localDirectory: DirectoryEntry[];
+  localCatalog: CatalogEntry[];
+  eventConsole: EventConsoleState;
+  setEventConsole: React.Dispatch<React.SetStateAction<EventConsoleState>>;
+  handlePostEvent: (e: React.FormEvent) => void;
+  localEvents: EventEntry[];
+  getEntityNameById: (id: string) => string;
+}
+
 const labelClass = 'mb-1.5 block text-xs font-medium text-[var(--text-muted)]';
 const fieldClass =
   'w-full rounded-md border border-[var(--border-color)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-main)] outline-none transition-colors focus:border-[var(--accent-blue)]';
@@ -15,7 +55,7 @@ export default function EventConsoleSidebar({
   handlePostEvent,
   localEvents,
   getEntityNameById,
-}) {
+}: EventConsoleSidebarProps) {
   return (
     <section className="flex flex-col gap-6">
       {/* Identity Info Panel */}

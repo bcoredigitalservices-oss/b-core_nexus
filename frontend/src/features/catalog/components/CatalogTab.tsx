@@ -1,9 +1,24 @@
 import React, { useState } from 'react';
 import { Plus, Package, ShieldCheck, Hash } from 'lucide-react';
 
-export default function CatalogTab({ localCatalog, setLocalCatalog, roleTier, logSystemEvent }) {
+interface CatalogItem {
+  id: string;
+  sku: string;
+  title: string;
+  is_active: boolean;
+  custom_attributes: Record<string, unknown>;
+}
+
+interface CatalogTabProps {
+  localCatalog: CatalogItem[];
+  setLocalCatalog: React.Dispatch<React.SetStateAction<CatalogItem[]>>;
+  roleTier: number;
+  logSystemEvent: (entityId: string, entityType: string, eventType: string, payload: Record<string, unknown>) => void;
+}
+
+export default function CatalogTab({ localCatalog, setLocalCatalog, roleTier, logSystemEvent }: CatalogTabProps) {
   const [catForm, setCatForm] = useState({ sku: '', title: '', attributes: '' });
-  const [attrError, setAttrError] = useState('');
+  const [attrError, setAttrError] = useState<string>('');
 
   const handleAddCatalog = (e) => {
     e.preventDefault();

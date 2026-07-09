@@ -96,9 +96,77 @@ const SOUNDS = {
   error: makeBeepDataUri(300, 250),
 };
 
+// ─── TypeScript Interfaces ────────────────────────────────────────────────────
+export interface Preferences {
+  theme: string;
+  mode: string;
+  font: string;
+  sounds: boolean;
+}
+
+export interface NavItem {
+  label: string;
+  path: string;
+  icon: string;
+  required_tier?: number;
+}
+
+export interface NavigationMatrix {
+  sidebar_links: NavItem[];
+  quick_actions: NavItem[];
+  settings_modules: NavItem[];
+}
+
+export interface CurrentUser {
+  id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  designation?: string;
+  permissions: string[];
+  functional_roles?: string[];
+  is_active: boolean;
+  [key: string]: unknown;
+}
+
+export interface SystemSettings {
+  organization_name: string;
+  base_currency: string;
+  timezone: string;
+  is_initialized: boolean;
+}
+
+export interface AppContextValue {
+  token: string;
+  setToken: React.Dispatch<React.SetStateAction<string>>;
+  currentUser: CurrentUser | null;
+  navigationMatrix: NavigationMatrix;
+  systemSettings: SystemSettings;
+  activeWorkspace: unknown;
+  setActiveWorkspace: React.Dispatch<React.SetStateAction<unknown>>;
+  isApiLive: boolean;
+  isBooting: boolean;
+  login: (username: string, password: string) => Promise<string>;
+  logout: () => void;
+  authFetch: (path: string, options?: Record<string, unknown>) => Promise<unknown>;
+  inviteModalOpen: boolean;
+  setInviteModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  preferences: Preferences;
+  globalDefaults: Preferences;
+  fetchPreferences: () => Promise<void>;
+  updatePersonalPreference: (key: string, value: unknown) => Promise<void>;
+  updateGlobalPreference: (key: string, value: unknown) => Promise<void>;
+  playUISound: (soundType: string) => void;
+  theme: string;
+  setTheme: (val: string) => void;
+  mode: string;
+  setMode: (val: string) => void;
+  font: string;
+  setFont: (val: string) => void;
+}
+
 // ─── Context ──────────────────────────────────────────────────────────────────
-/** @type {import('react').Context<any>} */
-export const AppContext = createContext(null);
+export const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }) {
   const [token, setToken]                       = useState(() => localStorage.getItem('bcore_token') || sessionStorage.getItem('bcore_token') || '');
@@ -426,10 +494,7 @@ export function AppProvider({ children }) {
 }
 
 // ── Convenience hook ──────────────────────────────────────────────────────────
-/**
- * @returns {any}
- */
-export function useAppContext() {
+export function useAppContext(): AppContextValue {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error('useAppContext must be used inside <AppProvider>');
   return ctx;

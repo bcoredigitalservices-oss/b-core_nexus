@@ -112,7 +112,12 @@ export function AppShellOrTierZero() {
 }
 
 // ── ProtectedRoute Component ──────────────────────────────────────────────
-export function ProtectedRoute({ children, workspaceKey }) {
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  workspaceKey: string;
+}
+
+export function ProtectedRoute({ children, workspaceKey }: ProtectedRouteProps) {
   const { currentUser } = useAppContext();
 
   if (!currentUser) return null;

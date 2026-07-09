@@ -1,13 +1,38 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Lock, CheckCircle2, XCircle, Copy, Check, Building2, Truck, User, Inbox } from 'lucide-react';
 
+interface DirectoryProfile {
+  id: string;
+  profile_type: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  is_active: boolean;
+  custom_attributes: Record<string, unknown>;
+}
+
+interface DirectoryTabProps {
+  localDirectory: DirectoryProfile[];
+  setLocalDirectory: React.Dispatch<React.SetStateAction<DirectoryProfile[]>>;
+  roleTier: number;
+  logSystemEvent: (entityId: string, entityType: string, eventType: string, payload: Record<string, unknown>) => void;
+}
+
+interface TypeBadgeProps {
+  type: string;
+}
+
+interface CopyableIdProps {
+  id: string;
+}
+
 const TYPE_META = {
   CUSTOMER: { label: 'Customer', icon: User, ring: 'ring-sky-400/30', text: 'text-sky-300', dot: 'bg-sky-400', bg: 'bg-sky-400/10' },
   VENDOR: { label: 'Vendor', icon: Truck, ring: 'ring-amber-400/30', text: 'text-amber-300', dot: 'bg-amber-400', bg: 'bg-amber-400/10' },
   SITE: { label: 'Internal Site', icon: Building2, ring: 'ring-emerald-400/30', text: 'text-emerald-300', dot: 'bg-emerald-400', bg: 'bg-emerald-400/10' },
 };
 
-function TypeBadge({ type }) {
+function TypeBadge({ type }: TypeBadgeProps) {
   const meta = TYPE_META[type] ?? TYPE_META.CUSTOMER;
   const Icon = meta.icon;
   return (
@@ -18,8 +43,8 @@ function TypeBadge({ type }) {
   );
 }
 
-function CopyableId({ id }) {
-  const [copied, setCopied] = useState(false);
+function CopyableId({ id }: CopyableIdProps) {
+  const [copied, setCopied] = useState<boolean>(false);
   const short = `${id.slice(0, 8)}…${id.slice(-4)}`;
 
   const handleCopy = async () => {
@@ -48,9 +73,9 @@ function CopyableId({ id }) {
   );
 }
 
-export default function DirectoryTab({ localDirectory, setLocalDirectory, roleTier, logSystemEvent }) {
+export default function DirectoryTab({ localDirectory, setLocalDirectory, roleTier, logSystemEvent }: DirectoryTabProps) {
   const [dirForm, setDirForm] = useState({ profile_type: 'CUSTOMER', name: '', email: '', phone: '', attributes: '' });
-  const [denied, setDenied] = useState(false);
+  const [denied, setDenied] = useState<boolean>(false);
 
   const canEdit = roleTier <= 2;
 

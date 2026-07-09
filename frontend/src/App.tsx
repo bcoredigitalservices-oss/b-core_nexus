@@ -7,7 +7,7 @@ import GlobalBlockerScreen from './components/ui/GlobalBlockerScreen';
 
 function AppContent() {
   const { token, currentUser } = useAppContext();
-  const [blockerMessage, setBlockerMessage] = useState(null);
+  const [blockerMessage, setBlockerMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) {
@@ -15,8 +15,8 @@ function AppContent() {
       return;
     }
 
-    let socket = null;
-    let reconnectTimeout = null;
+    let socket: WebSocket | null = null;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const connect = () => {
       const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001';

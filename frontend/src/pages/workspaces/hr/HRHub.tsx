@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 
 export default function HRHub() {
-  const [healthStatus, setHealthStatus] = useState('Checking backend status...');
+  const [healthStatus, setHealthStatus] = useState<string>('Checking backend status...');
 
   useEffect(() => {
     const checkHealth = async () => {

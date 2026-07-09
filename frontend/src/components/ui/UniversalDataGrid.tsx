@@ -22,6 +22,29 @@ import { useAppContext } from '../../context/AppContext';
  *   />
  */
 
+export interface ColumnDef {
+  key: string;
+  label: string;
+  sortable?: boolean;
+  render?: (value: unknown, row: Record<string, unknown>) => React.ReactNode;
+}
+
+interface UniversalDataGridProps {
+  endpointUrl: string;
+  columns?: ColumnDef[];
+  title?: string;
+  pageSize?: number;
+  onAdd?: (() => void) | null;
+  onView?: ((row: Record<string, unknown>) => void) | null;
+  onEdit?: ((row: Record<string, unknown>) => void) | null;
+  emptyMessage?: string;
+  className?: string;
+}
+
+interface SortIconProps {
+  colKey: string;
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function deepGet(obj, key) {
   return key.split('.').reduce((acc, k) => acc?.[k], obj);
@@ -52,20 +75,20 @@ export default function UniversalDataGrid({
   onEdit        = null,
   emptyMessage  = 'No records found.',
   className     = '',
-}) {
+}: UniversalDataGridProps) {
   const { token } = useAppContext();
 
   // ── State ──────────────────────────────────────────────────────────────────
-  const [data,        setData]        = useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [error,       setError]       = useState(null);
-  const [search,      setSearch]      = useState('');
-  const [page,        setPage]        = useState(1);
-  const [sortKey,     setSortKey]     = useState(null);
-  const [sortDir,     setSortDir]     = useState('asc');
+  const [data,        setData]        = useState<Record<string, unknown>[]>([]);
+  const [loading,     setLoading]     = useState<boolean>(true);
+  const [error,       setError]       = useState<string | null>(null);
+  const [search,      setSearch]      = useState<string>('');
+  const [page,        setPage]        = useState<number>(1);
+  const [sortKey,     setSortKey]     = useState<string | null>(null);
+  const [sortDir,     setSortDir]     = useState<'asc' | 'desc'>('asc');
 
-  const searchRef   = useRef(null);
-  const abortRef    = useRef(null);
+  const searchRef   = useRef<HTMLInputElement>(null);
+  const abortRef    = useRef<AbortController | null>(null);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
@@ -164,7 +187,7 @@ export default function UniversalDataGrid({
     return highlight(String(raw), search);
   };
 
-  const SortIcon = ({ colKey }) => {
+  const SortIcon = ({ colKey }: SortIconProps) => {
     if (sortKey !== colKey) return <ChevronUp size={12} className="opacity-30" />;
     return sortDir === 'asc'
       ? <ChevronUp   size={12} className="text-accent-primary" />

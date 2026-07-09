@@ -21,7 +21,7 @@ const STATS = [
 ];
 
 export default function VirtualGridTab() {
-  const parentRef = useRef(null);
+  const parentRef = useRef<HTMLDivElement>(null);
 
   const rowVirtualizer = useVirtualizer({
     count: VIRTUAL_LIST_SIZE,

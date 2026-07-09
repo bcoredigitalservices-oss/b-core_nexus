@@ -13,6 +13,30 @@ import { useAppContext } from '../../context/AppContext';
 export const SIDEBAR_WIDTH_EXPANDED = 240;
 export const SIDEBAR_WIDTH_COLLAPSED = 72;
 
+interface NavItem {
+  path: string;
+  label: string;
+  icon: string;
+  required_tier?: number;
+}
+
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onCollapse?: (collapsed: boolean) => void;
+  isMobile: boolean;
+}
+
+interface SidebarLinkProps {
+  item: NavItem;
+  collapsed: boolean;
+  onClick?: () => void;
+}
+
+interface NavIconProps {
+  name: string;
+}
+
 // ─── Icon mapper (backend sends string names) ─────────────────────────────────
 const ICON_MAP = {
   directory:    <Users       size={18} />,
@@ -57,11 +81,11 @@ function canSeeLink(item, currentUser) {
   return required.some(p => perms.includes(p));
 }
 
-function NavIcon({ name }) {
+function NavIcon({ name }: NavIconProps) {
   return ICON_MAP[name] ?? <Layers size={18} />;
 }
 
-function SidebarLink({ item, collapsed, onClick }) {
+function SidebarLink({ item, collapsed, onClick }: SidebarLinkProps) {
   return (
     <NavLink
       to={item.path}
@@ -95,7 +119,7 @@ function SidebarLink({ item, collapsed, onClick }) {
 }
 
 // ─── Main Sidebar Component ───────────────────────────────────────────────────
-export default function Sidebar({ isOpen, onClose, onCollapse, isMobile }) {
+export default function Sidebar({ isOpen, onClose, onCollapse, isMobile }: SidebarProps) {
   const { navigationMatrix, systemSettings, currentUser, logout } = useAppContext();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);

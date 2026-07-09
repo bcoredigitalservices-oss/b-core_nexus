@@ -17,10 +17,10 @@ export default function AppShell() {
   const isWorkspaceAppRoute = (location.pathname.startsWith('/workspace/') || location.pathname.startsWith('/workspaces/')) && !isHub;
 
   // ── Responsive & Navigation Sync States ────────────────────────────────────
-  const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BREAKPOINT);
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile Drawer Toggle
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // Desktop Width State
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < MOBILE_BREAKPOINT);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false); // Mobile Drawer Toggle
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false); // Desktop Width State
+  const [userMenuOpen, setUserMenuOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const handler = () => {
