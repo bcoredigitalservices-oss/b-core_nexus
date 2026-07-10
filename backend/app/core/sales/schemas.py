@@ -182,6 +182,7 @@ class QuotationLineItemRead(QuotationLineItemBase):
 # Quotations
 # ---------------------------------------------------------
 class QuotationBase(BaseModel):
+    reference_number: Optional[str] = None
     quotation_number: str
     version: int = 1
     parent_quotation_id: Optional[uuid.UUID] = None
@@ -204,6 +205,7 @@ class QuotationBase(BaseModel):
     internal_notes: Optional[str] = None
     customer_notes: Optional[str] = None
     lead_id: Optional[uuid.UUID] = None
+    deal_id: Optional[uuid.UUID] = None
 
 class QuotationCreate(QuotationBase):
     pass
@@ -266,6 +268,7 @@ class SalesOrderLineItemRead(SalesOrderLineItemBase):
 # Sales Orders
 # ---------------------------------------------------------
 class SalesOrderBase(BaseModel):
+    reference_number: Optional[str] = None
     order_number: str
     quotation_id: uuid.UUID
     customer_id: uuid.UUID
@@ -305,50 +308,5 @@ class SalesOrderDetailRead(SalesOrderRead):
 
 
 # ---------------------------------------------------------
-# Phase C: Collaboration (Quotation Messages)
+# Deprecated Phase C Collaboration (Quotation Messages) schemas have been moved to app/core/common/schemas.py
 # ---------------------------------------------------------
-
-class QuotationMessageMentionBase(BaseModel):
-    mentioned_user_id: uuid.UUID
-
-class QuotationMessageMentionCreate(QuotationMessageMentionBase):
-    pass
-
-class QuotationMessageMentionRead(QuotationMessageMentionBase):
-    id: uuid.UUID
-    message_id: uuid.UUID
-    is_read: bool
-    model_config = ConfigDict(from_attributes=True)
-
-
-class QuotationMessageReadReceiptRead(BaseModel):
-    id: uuid.UUID
-    message_id: uuid.UUID
-    user_id: uuid.UUID
-    read_at: datetime
-    model_config = ConfigDict(from_attributes=True)
-
-
-class QuotationMessageBase(BaseModel):
-    content: str
-    attachment_url: Optional[str] = None
-    attachment_name: Optional[str] = None
-
-class QuotationMessageCreate(QuotationMessageBase):
-    mentions: List[uuid.UUID] = []
-
-class QuotationMessageUpdate(BaseModel):
-    content: Optional[str] = None
-    attachment_url: Optional[str] = None
-    attachment_name: Optional[str] = None
-
-class QuotationMessageRead(QuotationMessageBase):
-    id: uuid.UUID
-    quotation_id: uuid.UUID
-    sender_id: uuid.UUID
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    mentions: List[QuotationMessageMentionRead] = []
-    read_receipts: List[QuotationMessageReadReceiptRead] = []
-    model_config = ConfigDict(from_attributes=True)
-

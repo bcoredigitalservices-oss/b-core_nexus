@@ -33,6 +33,8 @@ from app.models.organization import Organization, Department
 from app.models.crm import *
 from app.models.sales import *
 from app.models.tasks import *
+from app.models.message import *
+from app.models.notification import *
 
 target_metadata = Base.metadata
 

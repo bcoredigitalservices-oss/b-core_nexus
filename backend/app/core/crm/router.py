@@ -8,9 +8,10 @@ from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.core.auth.security import RequiresPermission, User
+from app.core.common.rls import apply_ownership_filter, check_ownership
 from app.models.crm import (
     Contact, Lead, LeadContactLink, LeadActivity, LeadTag, LeadAttachment,
-    Customer, CustomerAddress, CustomerContactLink
+    Customer, CustomerAddress, CustomerContactLink, Deal
 )
 from app.core.crm.schemas import (
     ContactCreate, ContactUpdate, ContactRead,
@@ -21,24 +22,11 @@ from app.core.crm.schemas import (
     LeadAttachmentCreate, LeadAttachmentRead,
     CustomerCreate, CustomerUpdate, CustomerRead, CustomerDetailRead,
     CustomerAddressCreate, CustomerAddressUpdate, CustomerAddressRead,
-    CustomerContactLinkCreate, CustomerContactLinkRead
+    CustomerContactLinkCreate, CustomerContactLinkRead,
+    DealCreate, DealUpdate, DealRead
 )
 
 router = APIRouter(prefix="/crm", tags=["CRM"])
-
-
-# --- Helper for Ownership Check ---
-def apply_ownership_filter(query, current_user: User, model):
-    if "*:*" not in current_user.permissions:
-        return query.where(model.owner_id == current_user.id)
-    return query
-
-def check_ownership(record, current_user: User):
-    if "*:*" not in current_user.permissions and getattr(record, "owner_id", None) != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: You do not own this record."
-        )
 
 
 # ==========================================
@@ -64,7 +52,7 @@ async def list_contacts(
     current_user: User = Depends(RequiresPermission("crm:read"))
 ):
     query = select(Contact).where(Contact.is_active == True)
-    query = apply_ownership_filter(query, current_user, Contact)
+    query = apply_ownership_filter(query, current_user, Contact, "contact")
     res = await db.execute(query)
     return res.scalars().all()
 
@@ -80,7 +68,7 @@ async def get_contact(
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
     
-    check_ownership(contact, current_user)
+    await check_ownership(contact, current_user, db, "contact", "read")
     return contact
 
 
@@ -96,7 +84,7 @@ async def update_contact(
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
         
-    check_ownership(contact, current_user)
+    await check_ownership(contact, current_user, db, "contact", "write")
     
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(contact, key, value)
@@ -117,7 +105,7 @@ async def delete_contact(
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
         
-    check_ownership(contact, current_user)
+    await check_ownership(contact, current_user, db, "contact", "write", require_true_owner=True)
     contact.is_active = False
     await db.commit()
     return None
@@ -134,7 +122,7 @@ async def get_contact_leads(
     contact = res.scalars().first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-    check_ownership(contact, current_user)
+    await check_ownership(contact, current_user, db, "contact", "read")
     
     links_res = await db.execute(
         select(LeadContactLink)
@@ -154,7 +142,7 @@ async def get_contact_customers(
     contact = res.scalars().first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-    check_ownership(contact, current_user)
+    await check_ownership(contact, current_user, db, "contact", "read")
     
     links_res = await db.execute(
         select(CustomerContactLink)
@@ -199,7 +187,7 @@ async def list_leads(
     current_user: User = Depends(RequiresPermission("crm:read"))
 ):
     query = select(Lead).where(Lead.is_active == True)
-    query = apply_ownership_filter(query, current_user, Lead)
+    query = apply_ownership_filter(query, current_user, Lead, "lead")
     res = await db.execute(query)
     return res.scalars().all()
 
@@ -221,7 +209,7 @@ async def get_lead(
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
         
-    check_ownership(lead, current_user)
+    await check_ownership(lead, current_user, db, "lead", "read")
     return lead
 
 
@@ -237,7 +225,7 @@ async def update_lead(
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
         
-    check_ownership(lead, current_user)
+    await check_ownership(lead, current_user, db, "lead", "write")
     
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(lead, key, value)
@@ -258,7 +246,7 @@ async def delete_lead(
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
         
-    check_ownership(lead, current_user)
+    await check_ownership(lead, current_user, db, "lead", "write", require_true_owner=True)
     lead.is_active = False
     await db.commit()
     return None
@@ -280,7 +268,7 @@ async def convert_lead(
     
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
-    check_ownership(lead, current_user)
+    await check_ownership(lead, current_user, db, "lead", "write")
     
     if lead.is_converted:
         raise HTTPException(status_code=400, detail="Lead is already converted")
@@ -308,6 +296,17 @@ async def convert_lead(
     lead.is_converted = True
     lead.pipeline_stage = "converted"
     
+    # Create an initial Deal
+    deal = Deal(
+        owner_id=current_user.id,
+        customer_id=customer.id,
+        lead_id=lead.id,
+        deal_name=f"{customer_name} Deal",
+        pipeline_stage="discovery",
+        is_active=True
+    )
+    db.add(deal)
+    
     await db.commit()
     await db.refresh(customer)
     return customer
@@ -329,7 +328,7 @@ async def create_lead_activity(
     lead = res.scalars().first()
     if not lead:
         raise HTTPException(404, "Lead not found")
-    check_ownership(lead, current_user)
+    await check_ownership(lead, current_user, db, "lead", "write")
     
     activity = LeadActivity(**payload.model_dump(), lead_id=lead_id, created_by_id=current_user.id)
     db.add(activity)
@@ -346,7 +345,7 @@ async def list_lead_activities(
     res = await db.execute(select(Lead).where(Lead.id == lead_id))
     lead = res.scalars().first()
     if not lead: raise HTTPException(404, "Lead not found")
-    check_ownership(lead, current_user)
+    await check_ownership(lead, current_user, db, "lead", "read")
     
     act_res = await db.execute(select(LeadActivity).where(LeadActivity.lead_id == lead_id).order_by(LeadActivity.created_at.desc()))
     return act_res.scalars().all()
@@ -362,7 +361,7 @@ async def add_lead_contact(
     res = await db.execute(select(Lead).where(Lead.id == lead_id))
     lead = res.scalars().first()
     if not lead: raise HTTPException(404, "Lead not found")
-    check_ownership(lead, current_user)
+    await check_ownership(lead, current_user, db, "lead", "write")
     
     c_res = await db.execute(select(Contact).where(Contact.id == payload.contact_id))
     if not c_res.scalars().first(): raise HTTPException(404, "Contact not found")
@@ -385,7 +384,7 @@ async def remove_lead_contact(
     res = await db.execute(select(Lead).where(Lead.id == lead_id))
     lead = res.scalars().first()
     if not lead: raise HTTPException(404, "Lead not found")
-    check_ownership(lead, current_user)
+    await check_ownership(lead, current_user, db, "lead", "write")
     
     await db.execute(delete(LeadContactLink).where(LeadContactLink.lead_id == lead_id, LeadContactLink.contact_id == contact_id))
     await db.commit()
@@ -403,7 +402,7 @@ async def add_lead_tag(
     res = await db.execute(select(Lead).where(Lead.id == lead_id))
     lead = res.scalars().first()
     if not lead: raise HTTPException(404, "Lead not found")
-    check_ownership(lead, current_user)
+    await check_ownership(lead, current_user, db, "lead", "write")
     
     tag = LeadTag(lead_id=lead_id, tag_name=payload.tag_name)
     db.add(tag)
@@ -421,7 +420,7 @@ async def remove_lead_tag(
     res = await db.execute(select(Lead).where(Lead.id == lead_id))
     lead = res.scalars().first()
     if not lead: raise HTTPException(404, "Lead not found")
-    check_ownership(lead, current_user)
+    await check_ownership(lead, current_user, db, "lead", "write")
     
     await db.execute(delete(LeadTag).where(LeadTag.id == tag_id, LeadTag.lead_id == lead_id))
     await db.commit()
@@ -451,7 +450,7 @@ async def list_customers(
     current_user: User = Depends(RequiresPermission("crm:read"))
 ):
     query = select(Customer).where(Customer.is_active == True)
-    query = apply_ownership_filter(query, current_user, Customer)
+    query = apply_ownership_filter(query, current_user, Customer, "customer")
     res = await db.execute(query)
     return res.scalars().all()
 
@@ -471,7 +470,7 @@ async def get_customer(
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
         
-    check_ownership(customer, current_user)
+    await check_ownership(customer, current_user, db, "customer", "read")
     return customer
 
 
@@ -487,7 +486,7 @@ async def update_customer(
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
         
-    check_ownership(customer, current_user)
+    await check_ownership(customer, current_user, db, "customer", "write")
     
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(customer, key, value)
@@ -507,7 +506,7 @@ async def add_customer_address(
     res = await db.execute(select(Customer).where(Customer.id == customer_id))
     customer = res.scalars().first()
     if not customer: raise HTTPException(404, "Customer not found")
-    check_ownership(customer, current_user)
+    await check_ownership(customer, current_user, db, "customer", "write")
     
     address = CustomerAddress(**payload.model_dump(), customer_id=customer_id)
     db.add(address)
@@ -526,7 +525,7 @@ async def update_customer_address(
     res = await db.execute(select(Customer).where(Customer.id == customer_id))
     customer = res.scalars().first()
     if not customer: raise HTTPException(404, "Customer not found")
-    check_ownership(customer, current_user)
+    await check_ownership(customer, current_user, db, "customer", "write")
     
     addr_res = await db.execute(select(CustomerAddress).where(CustomerAddress.id == address_id, CustomerAddress.customer_id == customer_id))
     address = addr_res.scalars().first()
@@ -549,7 +548,7 @@ async def add_customer_contact(
     res = await db.execute(select(Customer).where(Customer.id == customer_id))
     customer = res.scalars().first()
     if not customer: raise HTTPException(404, "Customer not found")
-    check_ownership(customer, current_user)
+    await check_ownership(customer, current_user, db, "customer", "write")
     
     c_res = await db.execute(select(Contact).where(Contact.id == payload.contact_id))
     if not c_res.scalars().first(): raise HTTPException(404, "Contact not found")
@@ -572,8 +571,96 @@ async def remove_customer_contact(
     res = await db.execute(select(Customer).where(Customer.id == customer_id))
     customer = res.scalars().first()
     if not customer: raise HTTPException(404, "Customer not found")
-    check_ownership(customer, current_user)
+    await check_ownership(customer, current_user, db, "customer", "write")
     
     await db.execute(delete(CustomerContactLink).where(CustomerContactLink.customer_id == customer_id, CustomerContactLink.contact_id == contact_id))
     await db.commit()
     return {"status": "success"}
+
+# ==========================================
+# Deals
+# ==========================================
+
+@router.post("/deals", response_model=DealRead, status_code=status.HTTP_201_CREATED)
+async def create_deal(
+    payload: DealCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RequiresPermission("crm:create"))
+):
+    deal = Deal(**payload.model_dump(), owner_id=current_user.id)
+    db.add(deal)
+    await db.commit()
+    await db.refresh(deal)
+    return deal
+
+@router.get("/deals", response_model=List[DealRead])
+async def list_deals(
+    customer_id: Optional[uuid.UUID] = None,
+    lead_id: Optional[uuid.UUID] = None,
+    pipeline_stage: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RequiresPermission("crm:read"))
+):
+    query = select(Deal)
+    if customer_id:
+        query = query.where(Deal.customer_id == customer_id)
+    if lead_id:
+        query = query.where(Deal.lead_id == lead_id)
+    if pipeline_stage:
+        query = query.where(Deal.pipeline_stage == pipeline_stage)
+        
+    query = apply_ownership_filter(query, current_user, Deal, "deal")
+    res = await db.execute(query)
+    return res.scalars().all()
+
+@router.get("/deals/{deal_id}", response_model=DealRead)
+async def get_deal(
+    deal_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RequiresPermission("crm:read"))
+):
+    res = await db.execute(select(Deal).where(Deal.id == deal_id))
+    deal = res.scalars().first()
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+        
+    await check_ownership(deal, current_user, db, "deal", "read")
+    return deal
+
+@router.put("/deals/{deal_id}", response_model=DealRead)
+async def update_deal(
+    deal_id: uuid.UUID,
+    payload: DealUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RequiresPermission("crm:write"))
+):
+    res = await db.execute(select(Deal).where(Deal.id == deal_id))
+    deal = res.scalars().first()
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+        
+    await check_ownership(deal, current_user, db, "deal", "write")
+    
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(deal, k, v)
+        
+    await db.commit()
+    await db.refresh(deal)
+    return deal
+
+@router.delete("/deals/{deal_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_deal(
+    deal_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RequiresPermission("crm:write"))
+):
+    res = await db.execute(select(Deal).where(Deal.id == deal_id))
+    deal = res.scalars().first()
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+        
+    await check_ownership(deal, current_user, db, "deal", "write", require_true_owner=True)
+    
+    # Soft delete
+    deal.is_active = False
+    await db.commit()

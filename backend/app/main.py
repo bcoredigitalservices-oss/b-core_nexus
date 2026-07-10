@@ -12,10 +12,16 @@ from app.core.iam.router import router as iam_router
 from app.core.crm.router import router as crm_router
 from app.core.sales.router import router as sales_router
 from app.core.tasks.router import router as tasks_router
+from app.core.crm.shares_router import router as shares_router
+from app.core.common.router import router as search_router
+from app.core.common.messages_router import router as messages_router
+from app.core.common.notifications_router import router as notifications_router
 
 # ─── Eagerly import core models
 from app.models.organization import Department, Organization  # noqa: F401
 from app.models.user import User, UserWorkspace  # noqa: F401
+from app.models.message import Message, MessageMention, MessageReadReceipt # noqa: F401
+from app.models.notification import Notification # noqa: F401
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -269,6 +275,10 @@ app.include_router(iam_router, prefix="/api/v1")
 app.include_router(crm_router, prefix="/api/v1")
 app.include_router(sales_router, prefix="/api/v1")
 app.include_router(tasks_router, prefix="/api/v1")
+app.include_router(shares_router, prefix="/api/v1/crm")
+app.include_router(search_router, prefix="/api/v1")
+app.include_router(messages_router, prefix="/api/v1")
+app.include_router(notifications_router, prefix="/api/v1")
 
 @app.get("/")
 async def root():
