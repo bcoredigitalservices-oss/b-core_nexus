@@ -19,7 +19,8 @@ from app.core.auth.schemas import (
     OnboardVerifyRequest,
     OnboardCompleteRequest,
     OnboardPasswordRequest,
-    RefreshTokenRequest
+    RefreshTokenRequest,
+    UserProfileUpdate
 )
 from app.core.auth.security import (
     pwd_context,
@@ -386,6 +387,34 @@ async def refresh_token(
 
 @auth_router.get("/me", response_model=UserRead)
 async def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@auth_router.put("/me/profile", response_model=UserRead)
+async def update_users_me_profile(
+    payload: UserProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    if not current_user.employee_profile:
+        from app.models.user import EmployeeProfile
+        current_user.employee_profile = EmployeeProfile(user_id=current_user.id)
+    
+    if payload.first_name is not None:
+        current_user.first_name = payload.first_name
+    if payload.last_name is not None:
+        current_user.last_name = payload.last_name
+    if payload.mobile_no is not None:
+        current_user.mobile_no = payload.mobile_no
+    if payload.gender is not None:
+        current_user.gender = payload.gender
+    if payload.birth_date is not None:
+        current_user.birth_date = payload.birth_date
+    if payload.bio is not None:
+        current_user.bio = payload.bio
+        
+    db.add(current_user)
+    await db.commit()
+    await db.refresh(current_user)
     return current_user
 
 @auth_router.get("/users", response_model=list[UserRead])

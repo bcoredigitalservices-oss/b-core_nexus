@@ -1,6 +1,6 @@
 import uuid
-from datetime import datetime
-from sqlalchemy import Table, Column, String, DateTime, ForeignKey, Boolean, JSON, UniqueConstraint
+from datetime import datetime, date
+from sqlalchemy import Table, Column, String, DateTime, ForeignKey, Boolean, JSON, UniqueConstraint, Date
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -112,6 +112,42 @@ class User(CoreModel):
     def last_name(self, value: str | None):
         if self.employee_profile:
             self.employee_profile.last_name = value
+
+    @property
+    def mobile_no(self) -> str | None:
+        return self.employee_profile.mobile_no if self.employee_profile else None
+
+    @mobile_no.setter
+    def mobile_no(self, value: str | None):
+        if self.employee_profile:
+            self.employee_profile.mobile_no = value
+
+    @property
+    def gender(self) -> str | None:
+        return self.employee_profile.gender if self.employee_profile else None
+
+    @gender.setter
+    def gender(self, value: str | None):
+        if self.employee_profile:
+            self.employee_profile.gender = value
+
+    @property
+    def birth_date(self) -> date | None:
+        return self.employee_profile.birth_date if self.employee_profile else None
+
+    @birth_date.setter
+    def birth_date(self, value: date | None):
+        if self.employee_profile:
+            self.employee_profile.birth_date = value
+
+    @property
+    def bio(self) -> str | None:
+        return self.employee_profile.bio if self.employee_profile else None
+
+    @bio.setter
+    def bio(self, value: str | None):
+        if self.employee_profile:
+            self.employee_profile.bio = value
     
     _workspaces: Mapped[list["UserWorkspace"]] = relationship(
         "UserWorkspace",
@@ -157,6 +193,10 @@ class EmployeeProfile(Base):
     first_name: Mapped[str | None] = mapped_column(String, nullable=True)
     last_name: Mapped[str | None] = mapped_column(String, nullable=True)
     phone: Mapped[str | None] = mapped_column(String, nullable=True)
+    mobile_no: Mapped[str | None] = mapped_column(String, nullable=True)
+    gender: Mapped[str | None] = mapped_column(String, nullable=True)
+    birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    bio: Mapped[str | None] = mapped_column(String, nullable=True)
     hire_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     
     department_id: Mapped[uuid.UUID | None] = mapped_column(

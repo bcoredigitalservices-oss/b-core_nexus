@@ -10,6 +10,7 @@ from sqlalchemy.future import select
 from app.database import get_db
 from app.core.auth.security import get_current_user, create_invite_token
 from app.core.auth.models import User
+from app.core.auth.schemas import UserProfileUpdate, UserRead
 from app.models.user import Role, user_roles, Permission, role_permissions, user_permissions
 from app.models.organization import Organization, Department, DepartmentOut
 from app.core.iam.email import send_onboarding_email
@@ -268,6 +269,44 @@ async def invite_user(
         "designation": payload.designation,
         "email_sent": email_dispatched
     }
+
+@router.put("/users/{user_id}/profile", response_model=UserRead)
+async def update_user_profile_admin(
+    user_id: uuid.UUID,
+    payload: UserProfileUpdate,
+    db: AsyncSession = Depends(get_db),
+    _ = Depends(require_iam_privilege)
+):
+    res = await db.execute(select(User).where(User.id == user_id))
+    user = res.scalars().first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with ID {user_id} not found."
+        )
+        
+    if not user.employee_profile:
+        from app.models.user import EmployeeProfile
+        user.employee_profile = EmployeeProfile(user_id=user.id)
+        
+    if payload.first_name is not None:
+        user.first_name = payload.first_name
+    if payload.last_name is not None:
+        user.last_name = payload.last_name
+    if payload.mobile_no is not None:
+        user.mobile_no = payload.mobile_no
+    if payload.gender is not None:
+        user.gender = payload.gender
+    if payload.birth_date is not None:
+        user.birth_date = payload.birth_date
+    if payload.bio is not None:
+        user.bio = payload.bio
+        
+    db.add(user)
+    await db.flush()
+    await db.commit()
+    await db.refresh(user)
+    return user
 
 @router.put("/users/{user_id}/access")
 async def update_user_access(

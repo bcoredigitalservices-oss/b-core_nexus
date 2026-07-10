@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from uuid import UUID
 from typing import Optional, Dict, Any
+from datetime import date
 
 class UserBase(BaseModel):
     # Use plain str so Pydantic v2 strict email validation doesn't reject
@@ -8,6 +9,10 @@ class UserBase(BaseModel):
     email: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    mobile_no: Optional[str] = None
+    gender: Optional[str] = None
+    birth_date: Optional[date] = None
+    bio: Optional[str] = None
     designation: Optional[str] = None
     custom_attributes: Dict[str, Any] = Field(default_factory=dict)
     functional_roles: list[str] = Field(default_factory=list)
@@ -31,6 +36,14 @@ class UserUpdate(BaseModel):
     custom_attributes: Optional[Dict[str, Any]] = None
     password: Optional[str] = Field(None, min_length=12)
     functional_roles: Optional[list[str]] = None
+
+class UserProfileUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    mobile_no: Optional[str] = None
+    gender: Optional[str] = None
+    birth_date: Optional[date] = None
+    bio: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str
