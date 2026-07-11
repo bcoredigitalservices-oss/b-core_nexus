@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.core.auth.security import RequiresPermission, User
+from app.core.common.rls import apply_ownership_filter, check_ownership
 from app.models.sales import (
     ProductCategory, Product, ProductAttachment,
     PriceList, PriceListItem,
@@ -27,20 +28,6 @@ from app.core.sales.schemas import (
 )
 
 router = APIRouter(prefix="/sales", tags=["Sales"])
-
-
-# --- Helper for Ownership Check ---
-def apply_ownership_filter(query, current_user: User, model):
-    if "*:*" not in current_user.permissions:
-        return query.where(model.owner_id == current_user.id)
-    return query
-
-def check_ownership(record, current_user: User):
-    if "*:*" not in current_user.permissions and getattr(record, "owner_id", None) != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: You do not own this record."
-        )
 
 
 # ==========================================
@@ -182,7 +169,7 @@ async def list_quotations(
     current_user: User = Depends(RequiresPermission("sales:read"))
 ):
     query = select(Quotation)
-    query = apply_ownership_filter(query, current_user, Quotation)
+    query = apply_ownership_filter(query, current_user, Quotation, "quotation")
     res = await db.execute(query)
     return res.scalars().all()
 
@@ -199,7 +186,7 @@ async def get_quotation(
     )
     quotation = res.scalars().first()
     if not quotation: raise HTTPException(404, "Quotation not found")
-    check_ownership(quotation, current_user)
+    await check_ownership(quotation, current_user, db, "quotation", "read")
     return quotation
 
 @router.put("/quotations/{quotation_id}", response_model=QuotationRead)
@@ -212,7 +199,7 @@ async def update_quotation(
     res = await db.execute(select(Quotation).where(Quotation.id == quotation_id))
     quotation = res.scalars().first()
     if not quotation: raise HTTPException(404, "Quotation not found")
-    check_ownership(quotation, current_user)
+    await check_ownership(quotation, current_user, db, "quotation", "write")
     
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(quotation, key, value)
@@ -230,7 +217,7 @@ async def add_quotation_line_item(
     res = await db.execute(select(Quotation).where(Quotation.id == quotation_id))
     quotation = res.scalars().first()
     if not quotation: raise HTTPException(404, "Quotation not found")
-    check_ownership(quotation, current_user)
+    await check_ownership(quotation, current_user, db, "quotation", "write")
     
     line = QuotationLineItem(**payload.model_dump(), quotation_id=quotation_id)
     db.add(line)
@@ -259,7 +246,7 @@ async def convert_quotation_to_order(
     )
     quotation = res.scalars().first()
     if not quotation: raise HTTPException(404, "Quotation not found")
-    check_ownership(quotation, current_user)
+    await check_ownership(quotation, current_user, db, "quotation", "write")
     
     # We allow conversion even if not fully 'accepted' to give flexibility,
     # but we will mark it accepted if it wasn't.
@@ -306,7 +293,7 @@ async def list_sales_orders(
     current_user: User = Depends(RequiresPermission("sales:read"))
 ):
     query = select(SalesOrder)
-    query = apply_ownership_filter(query, current_user, SalesOrder)
+    query = apply_ownership_filter(query, current_user, SalesOrder, "sales_order")
     res = await db.execute(query)
     return res.scalars().all()
 
@@ -323,7 +310,7 @@ async def get_sales_order(
     )
     order = res.scalars().first()
     if not order: raise HTTPException(404, "Sales Order not found")
-    check_ownership(order, current_user)
+    await check_ownership(order, current_user, db, "sales_order", "read")
     return order
 
 @router.put("/orders/{order_id}", response_model=SalesOrderRead)
@@ -336,7 +323,7 @@ async def update_sales_order(
     res = await db.execute(select(SalesOrder).where(SalesOrder.id == order_id))
     order = res.scalars().first()
     if not order: raise HTTPException(404, "Sales Order not found")
-    check_ownership(order, current_user)
+    await check_ownership(order, current_user, db, "sales_order", "write")
     
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(order, key, value)
@@ -345,136 +332,6 @@ async def update_sales_order(
     return order
 
 
-# ==========================================
-# Phase C: Collaboration (Quotation Messages)
-# ==========================================
-from app.models.sales import QuotationMessage, QuotationMessageMention, QuotationMessageReadReceipt
-from app.core.sales.schemas import QuotationMessageCreate, QuotationMessageRead, QuotationMessageMentionRead
-
-@router.post("/quotations/{quotation_id}/messages", response_model=QuotationMessageRead, status_code=status.HTTP_201_CREATED)
-async def create_quotation_message(
-    quotation_id: uuid.UUID,
-    payload: QuotationMessageCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(RequiresPermission("sales:write"))
-):
-    # Verify quotation access
-    res = await db.execute(select(Quotation).where(Quotation.id == quotation_id))
-    quotation = res.scalars().first()
-    if not quotation:
-        raise HTTPException(status_code=404, detail="Quotation not found")
-    check_ownership(quotation, current_user)
-    
-    # Create the message
-    message = QuotationMessage(
-        quotation_id=quotation_id,
-        sender_id=current_user.id,
-        content=payload.content,
-        attachment_url=payload.attachment_url,
-        attachment_name=payload.attachment_name
-    )
-    db.add(message)
-    await db.flush()
-    
-    # Process @mentions
-    for user_id in payload.mentions:
-        mention = QuotationMessageMention(
-            message_id=message.id,
-            mentioned_user_id=user_id,
-            is_read=False
-        )
-        db.add(mention)
-        
-    await db.commit()
-    
-    # Reload with relations
-    res = await db.execute(
-        select(QuotationMessage).where(QuotationMessage.id == message.id).options(
-            selectinload(QuotationMessage.mentions),
-            selectinload(QuotationMessage.read_receipts)
-        )
-    )
-    return res.scalars().first()
-
-
-@router.get("/quotations/{quotation_id}/messages", response_model=List[QuotationMessageRead])
-async def list_quotation_messages(
-    quotation_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(RequiresPermission("sales:read"))
-):
-    res = await db.execute(select(Quotation).where(Quotation.id == quotation_id))
-    quotation = res.scalars().first()
-    if not quotation:
-        raise HTTPException(status_code=404, detail="Quotation not found")
-    check_ownership(quotation, current_user)
-    
-    msg_res = await db.execute(
-        select(QuotationMessage)
-        .where(QuotationMessage.quotation_id == quotation_id)
-        .options(
-            selectinload(QuotationMessage.mentions),
-            selectinload(QuotationMessage.read_receipts)
-        )
-        .order_by(QuotationMessage.created_at.asc())
-    )
-    return msg_res.scalars().all()
-
-
-@router.post("/quotations/messages/{message_id}/read", status_code=status.HTTP_204_NO_CONTENT)
-async def mark_message_as_read(
-    message_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(RequiresPermission("sales:read"))
-):
-    # Check if receipt already exists
-    res = await db.execute(
-        select(QuotationMessageReadReceipt)
-        .where(
-            QuotationMessageReadReceipt.message_id == message_id,
-            QuotationMessageReadReceipt.user_id == current_user.id
-        )
-    )
-    if res.scalars().first():
-        return None # already marked
-        
-    # Mark mention as read if applicable
-    mention_res = await db.execute(
-        select(QuotationMessageMention)
-        .where(
-            QuotationMessageMention.message_id == message_id,
-            QuotationMessageMention.mentioned_user_id == current_user.id
-        )
-    )
-    mention = mention_res.scalars().first()
-    if mention:
-        mention.is_read = True
-        
-    # Add read receipt
-    receipt = QuotationMessageReadReceipt(
-        message_id=message_id,
-        user_id=current_user.id
-    )
-    db.add(receipt)
-    await db.commit()
-    return None
-
-@router.get("/quotations/messages/mentions/unread", response_model=List[QuotationMessageMentionRead])
-async def get_unread_mentions(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(RequiresPermission("sales:read"))
-):
-    """
-    Returns all unread @mentions for the currently logged-in user.
-    This acts as a notification inbox.
-    """
-    res = await db.execute(
-        select(QuotationMessageMention)
-        .where(
-            QuotationMessageMention.mentioned_user_id == current_user.id,
-            QuotationMessageMention.is_read == False
-        )
-    )
-    return res.scalars().all()
+# Deprecated Phase C Collaboration (Quotation Messages) endpoints have been moved to app/core/common/messages_router.py
 
 

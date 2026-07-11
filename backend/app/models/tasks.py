@@ -33,6 +33,7 @@ class Task(CoreModel):
     # Polymorphic link to related entity
     entity_type: Mapped[str] = mapped_column(String, nullable=True) # e.g., 'lead', 'quotation', 'customer'
     entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=True)
+    granted_access_level: Mapped[str] = mapped_column(String, default="read") # Access level granted to assignee ('read' or 'write')
     
     owner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     created_by_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
