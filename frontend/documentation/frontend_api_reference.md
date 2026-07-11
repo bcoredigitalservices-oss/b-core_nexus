@@ -17,14 +17,14 @@ This file is the **single canonical list** of every API endpoint called from the
 | Method | Endpoint | Caller | Status |
 |:---|:---|:---|:---|
 | `POST` | `/auth/login` | [Login.tsx](../src/pages/Login.tsx) | ✅ |
-| `POST` | `/auth/token` | [AppContext.jsx](../src/context/AppContext.jsx) (OAuth2 form) | ✅ |
+| `POST` | `/auth/token` | [AppContext.tsx](../src/context/AppContext.tsx) (OAuth2 form) | ✅ |
 | `POST` | `/auth/refresh` | [client.ts](../src/services/api/client.ts) (Axios interceptor) | ✅ |
 | `POST` | `/auth/onboard/verify` | [Onboarding.tsx](../src/pages/Onboarding.tsx) | ✅ |
 | `POST` | `/auth/onboard/password` | [Onboarding.tsx](../src/pages/Onboarding.tsx) | ✅ |
 | `POST` | `/auth/totp/setup` | [MyProfileSettings.tsx](../src/pages/settings/MyProfileSettings.tsx) | ✅ |
-| `GET` | `/auth/me` | [AppContext.jsx](../src/context/AppContext.jsx) (bootstrap) | ✅ |
+| `GET` | `/auth/me` | [AppContext.tsx](../src/context/AppContext.tsx) (bootstrap) | ✅ |
 | `GET` | `/auth/users` | [Users.tsx](../src/pages/iam/Users.tsx), [UserDetails.tsx](../src/pages/iam/UserDetails.tsx), [TasksToDo.tsx](../src/pages/workspaces/crm/TasksToDo.tsx), [CreateTaskModal.tsx](../src/components/iam/CreateTaskModal.tsx) | ✅ |
-| `POST` | `/init/bootstrap` | [Sandbox.jsx](../src/pages/Sandbox.jsx) | ✅ |
+| `POST` | `/init/bootstrap` | [Sandbox.tsx](../src/pages/Sandbox.tsx) | ✅ |
 
 ---
 
@@ -32,10 +32,10 @@ This file is the **single canonical list** of every API endpoint called from the
 
 | Method | Endpoint | Caller | Status |
 |:---|:---|:---|:---|
-| `GET` | `/system/preferences` | [AppContext.jsx](../src/context/AppContext.jsx) (fetchPreferences) | ✅ |
-| `PUT` | `/system/preferences/personal` | [AppContext.jsx](../src/context/AppContext.jsx) (updatePersonalPreference) | ✅ |
-| `PUT` | `/system/preferences/global` | [AppContext.jsx](../src/context/AppContext.jsx) (updateGlobalPreference) | ✅ |
-| `GET` | `/system/profile` | [AppContext.jsx](../src/context/AppContext.jsx), [SystemSettingsDashboard.tsx](../src/pages/settings/SystemSettingsDashboard.tsx) | ✅ |
+| `GET` | `/system/preferences` | [AppContext.tsx](../src/context/AppContext.tsx) (fetchPreferences) | ✅ |
+| `PUT` | `/system/preferences/personal` | [AppContext.tsx](../src/context/AppContext.tsx) (updatePersonalPreference) | ✅ |
+| `PUT` | `/system/preferences/global` | [AppContext.tsx](../src/context/AppContext.tsx) (updateGlobalPreference) | ✅ |
+| `GET` | `/system/profile` | [AppContext.tsx](../src/context/AppContext.tsx), [SystemSettingsDashboard.tsx](../src/pages/settings/SystemSettingsDashboard.tsx) | ✅ |
 | `POST` | `/system/modules/{moduleKey}/toggle` | [SystemSettingsDashboard.tsx](../src/pages/settings/SystemSettingsDashboard.tsx) | ✅ |
 
 ---
@@ -111,8 +111,8 @@ This file is the **single canonical list** of every API endpoint called from the
 
 | Method | Endpoint | Caller | Status |
 |:---|:---|:---|:---|
-| `GET` | `/shell/navigation` | [AppContext.jsx](../src/context/AppContext.jsx) (bootstrap) | ✅ |
-| `GET` | `/workspace/config` | [AppContext.jsx](../src/context/AppContext.jsx) (bootstrap) | ⚠️ May 404 on some roles |
+| `GET` | `/shell/navigation` | [AppContext.tsx](../src/context/AppContext.tsx) (bootstrap) | ✅ |
+| `GET` | `/workspace/config` | [AppContext.tsx](../src/context/AppContext.tsx) (bootstrap) | ⚠️ May 404 on some roles |
 
 ---
 
@@ -149,13 +149,8 @@ These endpoints are called by the frontend but **have no backend handler**. They
 
 | Method | Endpoint | Caller | Status |
 |:---|:---|:---|:---|
-| `GET` | `/catalog/items` | [CatalogDashboard.tsx](../src/pages/dashboards/CatalogDashboard.tsx) | ❌ Missing |
-| `POST` | `/catalog/items` | [CreateItemModal.tsx](../src/components/catalog/CreateItemModal.tsx) | ❌ Missing |
-| `POST` | `/catalog/items/import` | [BulkImportModal.tsx](../src/components/catalog/BulkImportModal.tsx) | ❌ Missing |
-| `GET` | `/catalog/groups` | [CatalogDashboard.tsx](../src/pages/dashboards/CatalogDashboard.tsx), [CreateItemModal.tsx](../src/components/catalog/CreateItemModal.tsx) | ❌ Missing |
-| `POST` | `/catalog/groups` | [CreateItemGroupModal.tsx](../src/components/catalog/CreateItemGroupModal.tsx) | ❌ Missing |
 | `GET` | `/directory` | AppRouter (page route) | ❌ Missing |
-| `GET` | `/directory/profiles` | [UniversalDataGrid.jsx](../src/components/ui/UniversalDataGrid.jsx) | ❌ Missing |
+| `GET` | `/directory/profiles` | [UniversalDataGrid.tsx](../src/components/ui/UniversalDataGrid.tsx) | ❌ Missing |
 | `GET` | `/events` | AppRouter (page route) | ❌ Missing |
 
 ---
@@ -183,7 +178,6 @@ These endpoints are referenced in pluggable workspace dashboards. The workspace 
 | Connection | URI Pattern | Caller | Status |
 |:---|:---|:---|:---|
 | Global state stream | `ws://{host}/api/v1/stream?token={token}&workspace={key}` | [useGlobalWebSocket.js](../src/providers/useGlobalWebSocket.js) | ❌ Missing |
-| Admin event bus | `ws://localhost:8001/api/v1/events/ws/{UUID}?token={token}` | [CommandCenter.tsx](../src/components/admin/CommandCenter.tsx) | ❌ Missing |
 
 ---
 

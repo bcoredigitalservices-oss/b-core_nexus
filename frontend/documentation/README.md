@@ -54,4 +54,4 @@ Tracks known issues and bugs related to dashboard routing and role-based access 
 
 - **Auth flow**: All authenticated requests go through the Axios client in [`src/services/api/client.ts`](../src/services/api/client.ts) which automatically attaches `Bearer` tokens and handles 401 → refresh → retry.
 - **Base URL**: `VITE_API_URL/api/v1` (set in `.env` or passed as Docker build arg)
-- **Context provider**: [`AppContext.jsx`](../src/context/AppContext.jsx) is the single source of truth for `currentUser`, `token`, `preferences`, and the `authFetch` helper.
+- **Context provider**: [`AppContext.tsx`](../src/context/AppContext.tsx) is the single source of truth for `currentUser`, `token`, `preferences`, and the `authFetch` helper.

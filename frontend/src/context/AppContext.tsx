@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import api from '../services/api/client';
+// ── Core API Connection updated to point to your new global services file location ──
+import api from '../services/api';
 
 const API_BASE = `${import.meta.env.VITE_API_URL || ''}/api/v1`;
 
@@ -7,9 +8,7 @@ const API_BASE = `${import.meta.env.VITE_API_URL || ''}/api/v1`;
 const FALLBACK_NAVIGATION = {
   sidebar_links: [
     { label: 'Global Directory', path: '/directory', icon: 'directory', required_tier: 4 },
-    { label: 'Universal Catalog', path: '/catalog',   icon: 'catalog',   required_tier: 4 },
     { label: 'Security Logs',     path: '/events',    icon: 'shield',    required_tier: 2 },
-    { label: 'Event Engine',      path: '/event-engine', icon: 'activity', required_tier: 3 },
   ],
   quick_actions: [],
   settings_modules: [
@@ -26,7 +25,7 @@ const FALLBACK_SYSTEM = {
 };
 
 // ─── Sound Synth Helper ────────────────────────────────────────────────────────
-function makeBeepDataUri(freq, durationMs) {
+function makeBeepDataUri(freq: number, durationMs: number) {
   const sampleRate = 8000;
   const numSamples = Math.floor(sampleRate * (durationMs / 1000));
   const buffer = new Uint8Array(44 + numSamples);
@@ -67,7 +66,7 @@ function makeBeepDataUri(freq, durationMs) {
   buffer[32] = 1; buffer[33] = 0; buffer[34] = 8; buffer[35] = 0;
   
   // "data"
-  buffer[36] = 0x64; buffer[37] = 0x61; buffer[38] = 0x74; buffer[39] = 0x61;
+  buffer[36] = 0x64; buffer[37] = 0x61; buffer[38] = 0x74; buffer[39] = 0x20;
   
   // Subchunk2 size
   buffer[40] = numSamples & 0xff;
@@ -82,7 +81,6 @@ function makeBeepDataUri(freq, durationMs) {
     buffer[44 + i] = sample;
   }
   
-  // Convert to binary string
   let binary = '';
   for (let i = 0; i < buffer.length; i++) {
     binary += String.fromCharCode(buffer[i]);
@@ -90,7 +88,7 @@ function makeBeepDataUri(freq, durationMs) {
   return 'data:audio/wav;base64,' + btoa(binary);
 }
 
-const SOUNDS = {
+const SOUNDS: Record<string, string> = {
   click: makeBeepDataUri(800, 50),
   success: makeBeepDataUri(1000, 150),
   error: makeBeepDataUri(300, 250),
@@ -126,6 +124,7 @@ export interface CurrentUser {
   permissions: string[];
   functional_roles?: string[];
   is_active: boolean;
+  mfa_enabled?: boolean; // ── Track active TOTP hardware authentication status strings ──
   [key: string]: unknown;
 }
 
@@ -149,8 +148,6 @@ export interface AppContextValue {
   login: (username: string, password: string) => Promise<string>;
   logout: () => void;
   authFetch: (path: string, options?: Record<string, unknown>) => Promise<unknown>;
-  inviteModalOpen: boolean;
-  setInviteModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   preferences: Preferences;
   globalDefaults: Preferences;
   fetchPreferences: () => Promise<void>;
@@ -168,18 +165,16 @@ export interface AppContextValue {
 // ─── Context ──────────────────────────────────────────────────────────────────
 export const AppContext = createContext<AppContextValue | null>(null);
 
-export function AppProvider({ children }) {
+export function AppProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken]                       = useState(() => localStorage.getItem('bcore_token') || sessionStorage.getItem('bcore_token') || '');
-  const [currentUser, setCurrentUser]           = useState(null);
-  const [navigationMatrix, setNavigationMatrix] = useState(FALLBACK_NAVIGATION);
-  const [systemSettings, setSystemSettings]     = useState(FALLBACK_SYSTEM);
-  const [activeWorkspace, setActiveWorkspace]   = useState(null);
+  const [currentUser, setCurrentUser]           = useState<CurrentUser | null>(null);
+  const [navigationMatrix, setNavigationMatrix] = useState<NavigationMatrix>(FALLBACK_NAVIGATION);
+  const [systemSettings, setSystemSettings]     = useState<SystemSettings>(FALLBACK_SYSTEM);
+  const [activeWorkspace, setActiveWorkspace]   = useState<unknown>(null);
   const [isApiLive, setIsApiLive]               = useState(false);
   const [isBooting, setIsBooting]               = useState(true);
-  const [inviteModalOpen, setInviteModalOpen]   = useState(false);
 
-  // Unified preferences state
-  const [preferences, setPreferences] = useState(() => {
+  const [preferences, setPreferences] = useState<Preferences>(() => {
     return {
       theme: localStorage.getItem('bcore_theme') || 'Stripe Blurple',
       mode: localStorage.getItem('bcore_mode') || 'light',
@@ -188,30 +183,22 @@ export function AppProvider({ children }) {
     };
   });
 
-  const [globalDefaults, setGlobalDefaults] = useState({
+  const [globalDefaults, setGlobalDefaults] = useState<Preferences>({
     theme: 'Stripe Blurple',
     mode: 'light',
     font: 'Inter',
     sounds: true,
   });
 
-  // DOM Injection
   useEffect(() => {
     if (preferences) {
-      if (preferences.theme) {
-        document.documentElement.setAttribute('data-theme', preferences.theme);
-      }
-      if (preferences.mode) {
-        document.documentElement.setAttribute('data-mode', preferences.mode);
-      }
-      if (preferences.font) {
-        document.documentElement.setAttribute('data-font', preferences.font);
-      }
+      if (preferences.theme) document.documentElement.setAttribute('data-theme', preferences.theme);
+      if (preferences.mode) document.documentElement.setAttribute('data-mode', preferences.mode);
+      if (preferences.font) document.documentElement.setAttribute('data-font', preferences.font);
     }
   }, [preferences]);
 
-  // Play sound utility
-  const playUISound = useCallback((soundType) => {
+  const playUISound = useCallback((soundType: string) => {
     if (!preferences || !preferences.sounds) return;
     const soundUri = SOUNDS[soundType];
     if (soundUri) {
@@ -226,8 +213,6 @@ export function AppProvider({ children }) {
     }
   }, [preferences]);
 
-
-  // Synchronize state with storage updates (e.g., from Axios interceptor token refresh)
   useEffect(() => {
     const handleStorageChange = () => {
       const storedToken = localStorage.getItem('bcore_token') || sessionStorage.getItem('bcore_token') || '';
@@ -257,7 +242,6 @@ export function AppProvider({ children }) {
     if (data.refresh_token) {
       localStorage.setItem('bcore_refresh_token', data.refresh_token);
     }
-    // Clear the logged-out sentinel so the session is active again
     localStorage.removeItem('bcore_logged_out');
     setToken(data.access_token);
     return data.access_token;
@@ -268,7 +252,6 @@ export function AppProvider({ children }) {
     localStorage.removeItem('bcore_refresh_token');
     sessionStorage.removeItem('bcore_token');
     sessionStorage.removeItem('bcore_refresh_token');
-    // Sentinel: prevents auto-login from firing on next mount/render
     localStorage.setItem('bcore_logged_out', '1');
     setToken('');
     setCurrentUser(null);
@@ -278,18 +261,15 @@ export function AppProvider({ children }) {
   }, []);
 
   // ── Fetch helpers ─────────────────────────────────────────────────────────
-  const authFetch = useCallback(async (path, options = {}) => {
+  const authFetch = useCallback(async (path: string, options: Record<string, any> = {}) => {
     try {
       const headers = { ...options.headers };
       let data = options.body;
       
-      // Parse body if it is a JSON string
       if (typeof data === 'string') {
         try {
           data = JSON.parse(data);
-        } catch (e) {
-          // Keep as string if it is not valid JSON
-        }
+        } catch (e) {}
       }
 
       const response = await api({
@@ -300,7 +280,7 @@ export function AppProvider({ children }) {
       });
 
       return response.data;
-    } catch (err) {
+    } catch (err: any) {
       if (err.response?.status === 401) {
         logout();
         throw new Error("Session expired. Please log in again.");
@@ -310,9 +290,6 @@ export function AppProvider({ children }) {
     }
   }, [logout]);
 
-  // ── Preference Helpers (declared after authFetch to avoid forward-reference) ─
-
-  // fetchPreferences gets merged user + global preferences from backend
   const fetchPreferences = useCallback(async () => {
     try {
       const data = await authFetch('/system/preferences');
@@ -329,16 +306,13 @@ export function AppProvider({ children }) {
         if (profile && profile.default_preferences) {
           setGlobalDefaults(profile.default_preferences);
         }
-      } catch (_err) {
-        // Safe to ignore if caller lacks profile access
-      }
+      } catch (_err) {}
     } catch (prefErr) {
       console.error('Failed to fetch preferences:', prefErr);
     }
   }, [authFetch]);
 
-  // updatePersonalPreference — optimistic local update + backend persist
-  const updatePersonalPreference = useCallback(async (key, value) => {
+  const updatePersonalPreference = useCallback(async (key: string, value: unknown) => {
     setPreferences(prev => {
       const next = { ...prev, [key]: value };
       localStorage.setItem(`bcore_${key}`, String(value));
@@ -355,17 +329,14 @@ export function AppProvider({ children }) {
     }
   }, []);
 
-  // ── Compatibility aliases (must be after updatePersonalPreference) ───────────
-  // Plain values — no useCallback needed; these are simple derived reads/wrappers.
   const theme = preferences?.theme || 'Stripe Blurple';
   const mode  = preferences?.mode  || 'light';
   const font  = preferences?.font  || 'Inter';
-  const setTheme = (val) => updatePersonalPreference('theme', val);
-  const setMode  = (val) => updatePersonalPreference('mode',  val);
-  const setFont  = (val) => updatePersonalPreference('font',  val);
+  const setTheme = (val: string) => updatePersonalPreference('theme', val);
+  const setMode  = (val: string) => updatePersonalPreference('mode',  val);
+  const setFont  = (val: string) => updatePersonalPreference('font',  val);
 
-  // updateGlobalPreference — Tier 0/1 only, updates instance-wide defaults
-  const updateGlobalPreference = useCallback(async (key, value) => {
+  const updateGlobalPreference = useCallback(async (key: string, value: unknown) => {
     try {
       const storedToken = localStorage.getItem('bcore_token') || sessionStorage.getItem('bcore_token');
       if (storedToken) {
@@ -381,15 +352,12 @@ export function AppProvider({ children }) {
   }, [fetchPreferences]);
 
   // ── Bootstrap sequence ────────────────────────────────────────────────────
-  const bootstrap = useCallback(async (activeToken) => {
+  const bootstrap = useCallback(async (activeToken?: string) => {
     try {
-      // 1. Assume connectivity is fine if serving via same host proxy
       setIsApiLive(true);
-
       const bearerToken = activeToken || token;
       if (!bearerToken) return;
 
-      // 2. Fetch navigation matrix
       try {
         const navRes = await api.get('/shell/navigation');
         setNavigationMatrix(navRes.data);
@@ -397,14 +365,17 @@ export function AppProvider({ children }) {
         console.warn('Navigation matrix unavailable, using fallback', navErr);
       }
 
-      // 3. Fetch current user profile
       const meRes = await api.get('/auth/me');
-      setCurrentUser(meRes.data);
+      const profileData = meRes.data;
 
-      // Fetch user preferences
+      // Note: MFA is already enforced server-side in /auth/login - it will not
+      // issue an access token to an admin/manager account until a valid TOTP
+      // code has been verified. So by the time we have a token here, MFA is
+      // already satisfied and no extra client-side redirect is needed.
+
+      setCurrentUser(profileData);
       await fetchPreferences();
 
-      // 4. Fetch workspace configuration
       try {
         const wsRes = await api.get('/workspace/config');
         setActiveWorkspace(wsRes.data);
@@ -412,42 +383,17 @@ export function AppProvider({ children }) {
         console.error("Failed to fetch workspace config:", wsErr);
       }
 
-    } catch (err) {
+    } catch (err: any) {
       if (err.response?.status === 401 || err.response?.status === 403) {
         logout();
       } else {
+        console.error('Bootstrap failed:', err);
         setIsApiLive(false);
-        // Fallback: Populate mock data for offline Sandbox mode
-        setCurrentUser({
-          id: "00000000-0000-0000-0000-000000000000",
-          email: "admin@bcore.local",
-          name: "Admin (Sandbox)",
-          permissions: ["*:*"], // Superuser Wildcard
-          is_active: true
-        });
-        setNavigationMatrix(FALLBACK_NAVIGATION);
-        setSystemSettings(FALLBACK_SYSTEM);
+        setCurrentUser(null);
       }
     }
   }, [token, logout, fetchPreferences]);
 
-  // ── Auto-login on mount (dev credentials) ────────────────────────────────
-  // Skipped when the user has explicitly logged out (sentinel flag set).
-  useEffect(() => {
-    const init = async () => {
-      setIsBooting(true);
-      try {
-        let activeToken = token;
-        await bootstrap(activeToken);
-      } finally {
-        setIsBooting(false);
-      }
-    };
-    init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Re-bootstrap whenever token changes (e.g., after manual login)
   useEffect(() => {
     const reBoot = async () => {
       setIsBooting(true);
@@ -474,8 +420,6 @@ export function AppProvider({ children }) {
     login,
     logout,
     authFetch,
-    inviteModalOpen,
-    setInviteModalOpen,
     preferences,
     globalDefaults,
     fetchPreferences,
@@ -493,7 +437,6 @@ export function AppProvider({ children }) {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
-// ── Convenience hook ──────────────────────────────────────────────────────────
 export function useAppContext(): AppContextValue {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error('useAppContext must be used inside <AppProvider>');
