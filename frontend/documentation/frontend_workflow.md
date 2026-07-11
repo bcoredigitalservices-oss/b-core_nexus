@@ -6,7 +6,7 @@ This document describes the architectural lifecycle and execution workflows of t
 
 ## 1. Application Startup & Bootstrapping Workflow
 
-When a user loads the B-Core Nexus web application, the frontend follows a strict initialization (bootstrapping) sequence managed by [AppProvider](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/context/AppContext.jsx#L103).
+When a user loads the B-Core Nexus web application, the frontend follows a strict initialization (bootstrapping) sequence managed by [AppProvider](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/context/AppContext.tsx#L103).
 
 ### Bootstrapping Lifecycle Diagram
 
@@ -14,7 +14,7 @@ When a user loads the B-Core Nexus web application, the frontend follows a stric
 sequenceDiagram
     autonumber
     actor User as Browser / User
-    participant Provider as AppProvider (AppContext.jsx)
+    participant Provider as AppProvider (AppContext.tsx)
     participant API as Axios Client (client.ts)
     participant Backend as FastAPI Server
 
@@ -49,7 +49,7 @@ sequenceDiagram
 ```
 
 > [!IMPORTANT]
-> If the API server is offline or unreachable, the frontend automatically degrades into **Offline Sandbox Mode**. It loads mock data from [OfflineCacheManager.js](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/services/OfflineCacheManager.js) so that developers can test UI layouts without a running backend.
+> If the API server is offline or unreachable, the frontend automatically degrades into **Offline Sandbox Mode**. It populates a local mock sandbox state from `AppContext.tsx` and `Sandbox.tsx` so developers can still interact with the UI without a running backend.
 
 ---
 
@@ -121,21 +121,16 @@ The application stays synchronized with backend data mutations and system alerts
      ```javascript
      window.dispatchEvent(new CustomEvent('STATE_MUTATION', { detail: payload }));
      ```
-  4. Active components (like [UniversalDataGrid](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/components/ui/UniversalDataGrid.jsx)) listen to this event and trigger data re-fetching to update tables in real time.
+  4. Active components (like [UniversalDataGrid](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/components/ui/UniversalDataGrid.tsx)) listen to this event and trigger data re-fetching to update tables in real time.
 
-### 2. Emergency Broadcast Channel (Command Center)
-- **Component**: [CommandCenter.tsx](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/components/admin/CommandCenter.tsx)
-- **Path**: `ws://localhost:8001/api/v1/events/ws/00000000-0000-0000-0000-000000000000?token=<token>`
-- **Workflow**:
-  1. Administrative accounts can access the **Event Engine**.
-  2. Submitting an emergency alert sends a `blocker_beacon` payload to the socket.
-  3. The socket broadcasts a force-logout or alert banner payload to all affected client sessions.
+### 2. Administrative Broadcast Channel
+- The legacy `CommandCenter.tsx` component has been removed from the current frontend. Realtime synchronization is now handled through the global state stream in `useGlobalWebSocket.js`.
 
 ---
 
 ## 5. UI Layouts & Role-Based Access Control (RBAC)
 
-Routing in [AppRouter.jsx](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/routes/AppRouter.jsx) enforces security clearance layout boundaries using user permission strings.
+Routing in [AppRouter.tsx](file:///c:/Users/KUNAL/OneDrive/Documents/Projects/B-core_Nexus/b-core_nexus/frontend/src/routes/AppRouter.tsx) enforces security clearance layout boundaries using user permission strings.
 
 ```mermaid
 graph TD
@@ -151,6 +146,6 @@ graph TD
 ```
 
 ### Layout guards mapping
-- **`/root`**: Restricts access to System Admin dashboard (`SystemAdminDashboard.tsx`) using the `system:admin` permission guard.
+- **`/settings/config`**: Restricts access to System Settings dashboard (`SystemSettingsDashboard.tsx`) using the `system:admin` permission guard.
 - **`/executive`**: Restricts access to Executive Dashboard (`ExecutiveDashboard.tsx`) using the `organization:write` or `iam:manage` roles.
 - **`/users` & `/roles`**: Restricted by layout check ensuring user has the `"iam:manage"` capability.
