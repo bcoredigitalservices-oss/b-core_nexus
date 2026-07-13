@@ -390,6 +390,17 @@ export default function ExecutiveDashboard() {
 
             <div className="p-6 pt-0 flex flex-col gap-4">
               <button
+                onClick={() => navigate("/org")}
+                className="btn glass-panel justify-between w-full p-5 text-[0.95rem] text-left border border-[#ff0076]/30 bg-[#ff0076]/5 cursor-pointer rounded-xl flex items-center transition-all duration-200 text-text-main hover:bg-[#ff0076]/10"
+              >
+                <div className="flex items-center gap-3">
+                  <Globe size={20} color="#ff0076" />
+                  <span className="font-semibold">Organisation Setup</span>
+                </div>
+                <ArrowRight size={18} className="text-text-muted" />
+              </button>
+
+              <button
                 onClick={() => navigate("/users")}
                 className="btn glass-panel justify-between w-full p-5 text-[0.95rem] text-left border border-[#9d4edd]/30 bg-[#9d4edd]/5 cursor-pointer rounded-xl flex items-center transition-all duration-200 text-text-main hover:bg-[#9d4edd]/10"
               >

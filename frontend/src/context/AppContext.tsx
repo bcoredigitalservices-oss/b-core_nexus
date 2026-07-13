@@ -13,7 +13,7 @@ const FALLBACK_NAVIGATION = {
   quick_actions: [],
   settings_modules: [
     { label: 'My Profile',      path: '/settings/profile', icon: 'user',     required_tier: 4 },
-    { label: 'Company Settings', path: '/settings/org',    icon: 'briefcase', required_tier: 1 },
+    { label: 'Company Settings', path: '/org',    icon: 'briefcase', required_tier: 1 },
   ],
 };
 
