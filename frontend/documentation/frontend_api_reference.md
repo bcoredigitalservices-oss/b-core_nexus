@@ -131,6 +131,10 @@ This file is the **single canonical list** of every API endpoint called from the
 | `GET` | `/crm/customers` | CRM workspace pages | ✅ |
 | `POST` | `/crm/customers` | CRM workspace pages | ✅ |
 | `PUT` | `/crm/customers/{id}` | CRM workspace pages | ✅ |
+| `GET` | `/crm/deals` | [DealsPage.tsx](../src/modules/crm/pages/DealsPage.tsx) | ✅ |
+| `POST` | `/crm/deals` | [CreateDealModal.tsx](../src/modules/crm/components/deals/CreateDealModal.tsx) | ✅ |
+| `GET` | `/crm/deals/{id}` | [DealDetailsPage.tsx](../src/modules/crm/pages/DealDetailsPage.tsx) | ✅ |
+| `PUT` | `/crm/deals/{id}` | [EditDealModal.tsx](../src/modules/crm/components/deals/EditDealModal.tsx), [DealsPage.tsx](../src/modules/crm/pages/DealsPage.tsx) (for activation/deactivation) | ✅ |
 | `GET` | `/sales/products` | Sales workspace | ✅ |
 | `POST` | `/sales/products` | Sales workspace | ✅ |
 | `GET` | `/sales/quotations` | Sales workspace | ✅ |
@@ -185,7 +189,7 @@ These endpoints are referenced in pluggable workspace dashboards. The workspace 
 
 | Status | Count |
 |:---|:---:|
-| ✅ Fully Implemented | 47 |
+| ✅ Fully Implemented | 51 |
 | ⚠️ Partial / Known Issues | 2 |
 | ❌ Missing Backend Handler | 21 |
-| **Total endpoints referenced** | **70** |
+| **Total endpoints referenced** | **74** |
