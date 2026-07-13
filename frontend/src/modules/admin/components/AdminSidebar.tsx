@@ -78,9 +78,8 @@ export default function AdminSidebar({
       items: [
         {
           label: "Organisation",
-          path: "/settings/org",
+          path: "/org",
           icon: <Globe size={17} />,
-          readOnly: true,
         },
         {
           label: "System Settings",

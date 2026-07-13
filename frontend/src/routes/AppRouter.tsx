@@ -14,6 +14,7 @@ import Onboarding from "../modules/auth/pages/Onboarding";
 import AdminDashboard from "../modules/admin/pages/AdminDashboard";
 import WorkspaceHub from "../modules/admin/pages/WorkspaceHub";
 import OrganisationSetup from "../modules/admin/pages/OrganisationSetup";
+import OrganizationDashboard from "../modules/admin/pages/OrganizationDashboard";
 import SystemSettingsDashboard from "../modules/admin/pages/SystemSettingsDashboard";
 
 // ── IAM Module ─────────────────────────────────────────────────────────────
@@ -186,7 +187,7 @@ export default function AppRouter() {
         <Route path="workspace" element={isAdmin ? <WorkspaceHub /> : <Navigate to="/" replace />} />
         <Route path="users" element={isAdmin ? <UsersDashboard /> : <Navigate to="/userhomedashboard" replace />} />
         <Route path="users/:userId" element={isAdmin ? <EditUserAccess /> : <Navigate to="/" replace />} />
-        <Route path="settings/org" element={isAdmin ? <OrganisationSetup /> : <Navigate to="/" replace />} />
+        <Route path="org/*" element={isAdmin ? <OrganizationDashboard /> : <Navigate to="/" replace />} />
         <Route path="settings/config" element={isAdmin ? <SystemSettingsDashboard /> : <Navigate to="/" replace />} />
         <Route path="userhomedashboard" element={<UserHomeDashboard />} />
         <Route path="settings/profile" element={<MyProfileSettings />} />

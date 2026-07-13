@@ -1,108 +1,268 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { 
-  Building2, 
-  Mail, 
-  Phone, 
-  Globe2, 
-  Coins, 
-  FileCheck2, 
-  AlertTriangle, 
-  Upload, 
-  CheckCircle, 
-  Loader2 
+  Upload, Loader2, Bold, Italic, List, Link as LinkIcon, Mail, FileText, MessageSquare, Building, FileCheck2, Receipt
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../../context/AppContext';
 
 interface FormValues {
-  legal_name: string;
+  company_name: string;
+  trading_name: string;
+  registration_date: string;
+  primary_industry: string;
+  cin_number: string;
+  official_email: string;
   tax_id: string;
-  primary_email: string;
-  contact_phone: string;
+  phone_number: string;
+  street_address: string;
+  website_url: string; 
+  city: string;
+  state_province: string;
+  country: string;
   base_currency: string;
-  industry_vertical: 'HEALTHCARE_LOGISTICS' | 'HEAVY_MACHINERY' | 'GENERAL' | 'GENERAL_TRADING';
+  date_format: string;
+  fiscal_year_start_month: string;
+  fiscal_year_start_day: string;
+  number_format: string;
+  timezone: string;
+  default_bank_account_id: string;
+  default_dispatch_warehouse_id: string;
+  default_receiving_warehouse_id: string;
+  standard_terms: string;
 }
+
+const FieldLabel = ({ children }: { children: React.ReactNode }) => (
+  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">
+    {children}
+  </label>
+);
+const COUNTRIES_DATA = [
+  { name: 'United States', currency: 'USD' },
+  { name: 'Canada', currency: 'CAD' },
+  { name: 'Mexico', currency: 'MXN' },
+  { name: 'Brazil', currency: 'BRL' },
+  { name: 'Argentina', currency: 'ARS' },
+  { name: 'Colombia', currency: 'COP' },
+  { name: 'Chile', currency: 'CLP' },
+  { name: 'United Kingdom', currency: 'GBP' },
+  { name: 'Germany', currency: 'EUR' },
+  { name: 'France', currency: 'EUR' },
+  { name: 'Italy', currency: 'EUR' },
+  { name: 'Spain', currency: 'EUR' },
+  { name: 'Netherlands', currency: 'EUR' },
+  { name: 'Switzerland', currency: 'CHF' },
+  { name: 'Sweden', currency: 'SEK' },
+  { name: 'India', currency: 'INR' },
+  { name: 'China', currency: 'CNY' },
+  { name: 'Japan', currency: 'JPY' },
+  { name: 'Singapore', currency: 'SGD' },
+  { name: 'United Arab Emirates', currency: 'AED' },
+  { name: 'Saudi Arabia', currency: 'SAR' },
+  { name: 'South Korea', currency: 'KRW' },
+  { name: 'Indonesia', currency: 'IDR' },
+  { name: 'South Africa', currency: 'ZAR' },
+  { name: 'Nigeria', currency: 'NGN' },
+  { name: 'Kenya', currency: 'KES' },
+  { name: 'Egypt', currency: 'EGP' },
+  { name: 'Ghana', currency: 'GHS' },
+  { name: 'Morocco', currency: 'MAD' },
+  { name: 'Ethiopia', currency: 'ETB' },
+  { name: 'Tanzania', currency: 'TZS' },
+  { name: 'Uganda', currency: 'UGX' },
+  { name: 'Australia', currency: 'AUD' },
+  { name: 'New Zealand', currency: 'NZD' }
+].sort((a, b) => a.name.localeCompare(b.name));
+
+const CURRENCIES = [
+  'USD - United States Dollar',
+  'EUR - Euro',
+  'GBP - British Pound',
+  'INR - Indian Rupee',
+  'JPY - Japanese Yen',
+  'CNY - Chinese Yuan',
+  'CAD - Canadian Dollar',
+  'AUD - Australian Dollar',
+  'CHF - Swiss Franc',
+  'SGD - Singapore Dollar',
+  'AED - UAE Dirham',
+  'SAR - Saudi Riyal',
+  'ZAR - South African Rand',
+  'NGN - Nigerian Naira',
+  'KES - Kenyan Shilling',
+  'EGP - Egyptian Pound',
+  'GHS - Ghanaian Cedi',
+  'MAD - Moroccan Dirham',
+  'ETB - Ethiopian Birr',
+  'TZS - Tanzanian Shilling',
+  'UGX - Ugandan Shilling',
+  'MXN - Mexican Peso',
+  'BRL - Brazilian Real',
+  'ARS - Argentine Peso',
+  'COP - Colombian Peso',
+  'CLP - Chilean Peso',
+  'SEK - Swedish Krona',
+  'KRW - South Korean Won',
+  'IDR - Indonesian Rupiah',
+  'NZD - New Zealand Dollar'
+].sort();
+
+const TIMEZONES = [
+  '(GMT-12:00) International Date Line West',
+  '(GMT-11:00) Midway Island, Samoa',
+  '(GMT-10:00) Hawaii',
+  '(GMT-09:00) Alaska',
+  '(GMT-08:00) Pacific Time (US & Canada)',
+  '(GMT-07:00) Mountain Time (US & Canada)',
+  '(GMT-06:00) Central Time (US & Canada)',
+  '(GMT-05:00) Eastern Time (US & Canada)',
+  '(GMT-04:00) Atlantic Time (Canada)',
+  '(GMT-03:00) Buenos Aires, Georgetown',
+  '(GMT-02:00) Mid-Atlantic',
+  '(GMT-01:00) Azores, Cape Verde Is.',
+  '(GMT+00:00) Greenwich Mean Time, London',
+  '(GMT+01:00) Amsterdam, Berlin, Rome, Paris, Lagos',
+  '(GMT+02:00) Cairo, Johannesburg, Athens',
+  '(GMT+03:00) Moscow, Nairobi, Riyadh',
+  '(GMT+04:00) Abu Dhabi, Muscat',
+  '(GMT+05:00) Islamabad, Karachi',
+  '(GMT+05:30) Indian Standard Time, New Delhi',
+  '(GMT+06:00) Almaty, Dhaka',
+  '(GMT+07:00) Bangkok, Hanoi, Jakarta',
+  '(GMT+08:00) Beijing, Singapore, Perth',
+  '(GMT+09:00) Tokyo, Seoul',
+  '(GMT+10:00) Sydney, Melbourne, Brisbane',
+  '(GMT+11:00) Solomon Is., New Caledonia',
+  '(GMT+12:00) Auckland, Wellington, Fiji'
+];
 
 export default function OrganisationSetup() {
   const { token, authFetch, setActiveWorkspace } = useAppContext();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState(0);
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
+  const TABS = [
+    "General Company Profile",
+    "Legal & Contact",
+    "System & Financial",
+    "Operational Defaults"
+  ];
+
+  const { register, handleSubmit, setValue, watch } = useForm<FormValues>({
     defaultValues: {
-      legal_name: '',
+      company_name: '',
+      trading_name: '',
+      registration_date: '',
+      primary_industry: 'Information Technology',
+      cin_number: '',
+      official_email: '',
       tax_id: '',
-      primary_email: '',
-      contact_phone: '',
-      base_currency: 'USD',
-      industry_vertical: 'GENERAL_TRADING'
+      phone_number: '',
+      street_address: '',
+      website_url: '',
+      city: '',
+      state_province: '',
+      country: 'United States',
+      base_currency: 'USD - United States Dollar',
+      date_format: 'DD-MM-YYYY',
+      fiscal_year_start_month: 'January',
+      fiscal_year_start_day: '1st',
+      number_format: '1,234,567.89',
+      timezone: '(GMT-05:00) Eastern Time',
+      default_bank_account_id: '',
+      default_dispatch_warehouse_id: '',
+      default_receiving_warehouse_id: '',
+      standard_terms: ''
     }
   });
 
-  // Load existing organization profile on mount
   useEffect(() => {
     const loadProfile = async () => {
       try {
         const data = await authFetch('/organization/profile');
         if (data) {
-          setValue('legal_name', data.legal_name || '');
+          // Map backend data to frontend
+          setValue('company_name', data.company_name || data.legal_name || '');
+          setValue('trading_name', data.trading_name || '');
+          setValue('registration_date', data.registration_date || '');
+          setValue('primary_industry', data.primary_industry || data.industry_vertical || 'Information Technology');
+          setValue('cin_number', data.cin_number || '');
+          setValue('official_email', data.official_email || data.primary_email || '');
           setValue('tax_id', data.tax_id || '');
-          setValue('primary_email', data.primary_email || '');
-          setValue('contact_phone', data.contact_phone || '');
-          setValue('base_currency', data.base_currency || 'USD');
-          setValue('industry_vertical', data.industry_vertical || 'GENERAL_TRADING');
+          setValue('phone_number', data.phone_number || data.contact_phone || '');
+          setValue('street_address', data.street_address || '');
+          setValue('city', data.city || '');
+          setValue('state_province', data.state_province || '');
+          setValue('country', data.country || 'United States');
+          setValue('base_currency', data.base_currency || 'USD - United States Dollar');
+          setValue('date_format', data.date_format || 'DD-MM-YYYY');
+          
+          if (data.fiscal_year_start) {
+            const parts = data.fiscal_year_start.split(' ');
+            if (parts.length >= 2) {
+              setValue('fiscal_year_start_month', parts[0]);
+              setValue('fiscal_year_start_day', parts[1]);
+            }
+          }
+          
+          setValue('number_format', data.number_format || '1,234,567.89');
+          setValue('timezone', data.timezone || '(GMT-05:00) Eastern Time');
+          setValue('default_bank_account_id', data.default_bank_account_id || '');
+          setValue('default_dispatch_warehouse_id', data.default_dispatch_warehouse_id || '');
+          setValue('default_receiving_warehouse_id', data.default_receiving_warehouse_id || '');
+          setValue('standard_terms', data.standard_terms || '');
         }
-      } catch (err: any) {
-        console.error('Failed to load organisation profile:', err);
-        setErrorMsg('Could not fetch existing organization setup details.');
+      } catch (err) {
+        console.error('Failed to load profile:', err);
       } finally {
         setLoading(false);
       }
     };
-
-    if (token) {
-      loadProfile();
-    }
+    if (token) loadProfile();
   }, [token, authFetch, setValue]);
+
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name === 'country') {
+        const selectedCountry = COUNTRIES_DATA.find(c => c.name === value.country);
+        if (selectedCountry) {
+          const matchingCurrency = CURRENCIES.find(curr => curr.startsWith(selectedCountry.currency));
+          if (matchingCurrency) {
+            setValue('base_currency', matchingCurrency, { shouldDirty: true });
+          }
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, setValue]);
+
 
   const onSubmit = async (values: FormValues) => {
     setSaving(true);
-    setSuccessMsg('');
-    setErrorMsg('');
-
     try {
-      // 1. Save organization profile updates
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/organization/profile`, {
+      const payload: any = {
+        ...values,
+        fiscal_year_start: `${values.fiscal_year_start_month} ${values.fiscal_year_start_day}`
+      };
+
+      // Clean up empty UUIDs and Dates so FastAPI doesn't throw 422 Unprocessable Entity
+      if (!payload.default_bank_account_id) delete payload.default_bank_account_id;
+      if (!payload.default_dispatch_warehouse_id) delete payload.default_dispatch_warehouse_id;
+      if (!payload.default_receiving_warehouse_id) delete payload.default_receiving_warehouse_id;
+      if (!payload.registration_date) delete payload.registration_date;
+
+      await authFetch('/organization/profile', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify(values)
+        body: payload
       });
-
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.detail || 'Failed to update organization profile.');
-      }
-
-      setSuccessMsg('Organisation profile updated successfully!');
-
-      // 2. Fetch updated workspace configuration to dynamically reload layout
-      const configRes = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/workspace/config`, {
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        }
-      });
-      if (configRes.ok) {
-        const wsConfig = await configRes.json();
-        setActiveWorkspace(wsConfig);
-      }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Error occurred while saving configurations.');
+      
+      alert('Organization profile updated successfully!');
+      
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update organization profile.');
     } finally {
       setSaving(false);
     }
@@ -110,190 +270,256 @@ export default function OrganisationSetup() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-[var(--text-muted)] gap-4">
-        <Loader2 className="animate-spin text-[var(--accent-primary)]" size={32} />
-        <span>Syncing corporate directory...</span>
+      <div className="flex flex-col items-center justify-center min-h-screen text-gray-500 gap-4">
+        <Loader2 className="animate-spin text-blue-600" size={32} />
       </div>
     );
   }
 
+  const inputClass = "w-full p-2.5 bg-white border border-gray-400 hover:border-gray-500 rounded text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500";
+
   return (
-    <div className="max-w-[1000px] mx-auto flex flex-col gap-8 w-full">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-extrabold text-[var(--text-main)] mb-2 font-[var(--font-display)]">
-          Organisation Setup
-        </h1>
-        <p className="text-[var(--text-muted)] text-sm">
-          Configure legal identifiers, operational currencies, branding media assets, and primary industry vertical configurations.
-        </p>
-      </div>
-
-      {/* Form Container */}
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-8">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-[1100px] mx-auto pt-6 pb-12 flex flex-col gap-6">
         
-        {/* Status Messages */}
-        {successMsg && (
-          <div className="flex items-center gap-2.5 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-[#00f5a0] text-sm font-medium">
-            <CheckCircle size={18} />
-            <span>{successMsg}</span>
+        {/* HEADER */}
+        <div className="flex items-start justify-between px-6">
+          <div>
+            <h1 className="text-[26px] font-bold text-gray-900 tracking-tight">Organization Setup</h1>
+            <p className="text-[13px] text-gray-500 mt-0.5">Configure your corporate identity and system-wide default settings.</p>
           </div>
-        )}
-
-        {errorMsg && (
-          <div className="flex items-center gap-2.5 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-sm font-medium">
-            <AlertTriangle size={18} />
-            <span>{errorMsg}</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => navigate('/org')} className="px-5 py-2 text-[13px] font-bold text-gray-800 bg-white border border-dashed border-blue-300 rounded-sm hover:bg-gray-50">Dashboard</button>
+            <button className="px-5 py-2 text-[13px] font-bold text-gray-800 bg-white border border-dashed border-blue-300 rounded-sm hover:bg-gray-50">Discard</button>
+            <button onClick={handleSubmit(onSubmit)} className="px-5 py-2 text-[13px] font-bold text-white bg-[#1d4ed8] rounded-sm hover:bg-blue-800 flex items-center gap-2">
+              {saving && <Loader2 size={14} className="animate-spin" />}
+              Save Changes
+            </button>
           </div>
-        )}
+        </div>
 
-        {/* Outer Grid for Groups */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* MAIN CONTAINER */}
+        <div className="mx-6 border border-gray-200 rounded-sm overflow-hidden">
           
-          {/* Group 1: Legal Identity */}
-          <div className="glass-panel p-8 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-2xl flex flex-col gap-5">
-            <h3 className="text-base font-bold text-[var(--text-main)] border-b border-[var(--border-color)] pb-3 flex items-center gap-2">
-              <Building2 size={18} className="text-[#9d4edd]" />
-              Legal Identity
-            </h3>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-[var(--text-main)]">Company Legal Name</label>
-              <div className="relative">
-                <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-                <input 
-                  type="text" 
-                  className="pl-[38px] w-full p-3 bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg text-[var(--text-main)] text-sm focus:outline-none focus:border-[#9d4edd]"
-                  placeholder="e.g. Nexus Logistics Global Ltd"
-                  {...register('legal_name', { required: 'Legal name is required' })} 
-                />
-              </div>
-              {errors.legal_name && <p className="text-red-500 text-xs mt-1">{errors.legal_name.message}</p>}
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-[var(--text-main)]">Tax Identification Number (TIN / EIN)</label>
-              <div className="relative">
-                <FileCheck2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-                <input 
-                  type="text" 
-                  className="pl-[38px] w-full p-3 bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg text-[var(--text-main)] text-sm focus:outline-none focus:border-[#9d4edd]"
-                  placeholder="e.g. US-8849204-TX"
-                  {...register('tax_id')} 
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-[var(--text-main)]">Base Operating Currency</label>
-              <div className="relative">
-                <Coins size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-                <select 
-                  className="pl-[38px] pr-4 w-full p-3 bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg text-[var(--text-main)] text-sm focus:outline-none focus:border-[#9d4edd] appearance-none"
-                  {...register('base_currency', { required: 'Currency selection is required' })}
-                >
-                  <option value="USD">USD - United States Dollar</option>
-                  <option value="EUR">EUR - Euro</option>
-                  <option value="GBP">GBP - British Pound</option>
-                  <option value="INR">INR - Indian Rupee</option>
-                  <option value="SGD">SGD - Singapore Dollar</option>
-                </select>
-              </div>
-            </div>
+          {/* TABS */}
+          <div className="bg-[#f8f9fc] flex items-center border-b border-gray-200 px-2 pt-2">
+            {TABS.map((t, i) => (
+              <button 
+                key={t}
+                onClick={() => setActiveTab(i)}
+                className={`px-6 py-3.5 text-[13px] font-bold transition-colors ${
+                  activeTab === i 
+                    ? 'border-b-2 border-blue-600 text-blue-600 bg-white rounded-t-sm' 
+                    : 'border-b-2 border-transparent text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
           </div>
 
-          {/* Group 2: Contact & Branding */}
-          <div className="glass-panel p-8 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-2xl flex flex-col gap-5">
-            <h3 className="text-base font-bold text-[var(--text-main)] border-b border-[var(--border-color)] pb-3 flex items-center gap-2">
-              <Globe2 size={18} className="text-[#00f2fe]" />
-              Contact & Branding
-            </h3>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-[var(--text-main)]">Primary Operational Email</label>
-              <div className="relative">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-                <input 
-                  type="email" 
-                  className="pl-[38px] w-full p-3 bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg text-[var(--text-main)] text-sm focus:outline-none focus:border-[#00f2fe]"
-                  placeholder="e.g. operations@bcore.local"
-                  {...register('primary_email')} 
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-[var(--text-main)]">Contact Phone Number</label>
-              <div className="relative">
-                <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-                <input 
-                  type="text" 
-                  className="pl-[38px] w-full p-3 bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg text-[var(--text-main)] text-sm focus:outline-none focus:border-[#00f2fe]"
-                  placeholder="e.g. +1 (555) 019-2834"
-                  {...register('contact_phone')} 
-                />
-              </div>
-            </div>
-
-            {/* Logo Upload Area */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-[var(--text-main)]">Corporate Identity Logo</label>
-              <div className="border border-dashed border-white/15 bg-[var(--bg-card-hover)] rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-colors duration-200 hover:border-[#9d4edd] gap-2">
-                <Upload size={20} className="text-[var(--text-muted)]" />
-                <span className="text-sm text-[var(--accent-primary)] font-semibold">Upload Logo File</span>
-                <span className="text-xs text-[var(--text-muted)]">PNG, SVG, or JPG (max 2MB)</span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Group 3: Core Routing / Industry Vertical Selection */}
-        <div className="glass-panel p-8 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-2xl flex flex-col gap-4">
-          <h3 className="text-base font-bold text-[var(--text-main)] border-b border-[var(--border-color)] pb-3 flex items-center gap-2">
-            <AlertTriangle size={18} className="text-[#ffb703]" />
-            Core Routing & Vertical Alignment
-          </h3>
-
-          <div className="flex flex-col gap-2.5">
-            <label className="text-sm font-medium text-[var(--text-main)]">Target Industry Vertical</label>
-            <select 
-              className="w-full p-3 bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg text-[var(--text-main)] text-sm focus:outline-none focus:border-[#ffb703]"
-              {...register('industry_vertical', { required: 'Vertical alignment is required' })}
-            >
-              <option value="GENERAL_TRADING">General Trading & Stock Management</option>
-              <option value="HEALTHCARE_LOGISTICS">Healthcare Logistics (Cold Chain / Medical Batch Logs)</option>
-              <option value="HEAVY_MACHINERY">Heavy Machinery Fleet Asset Operations</option>
-            </select>
+          {/* TAB CONTENT */}
+          <div className="p-8 bg-white min-h-[350px]">
             
-            <div className="flex items-start gap-2 mt-2.5 bg-[#ffb703]/10 border border-[#ffb703]/20 p-4 rounded-lg">
-              <AlertTriangle size={16} className="text-[#ffb703] shrink-0 mt-0.5" />
-              <p className="m-0 text-xs text-[#ffb703] Regal-leading-relaxed">
-                <strong>Warning:</strong> Changing this vertical will alter the available workspace applications on your Home dashboard. Active product schemas, workflow matrices, and dynamic tracking structures will be updated instantly to support the new vertical profile.
-              </p>
-            </div>
+            {/* TAB 1: General Company Profile */}
+            {activeTab === 0 && (
+              <div className="grid grid-cols-3 gap-12">
+                <div className="col-span-2 flex flex-col gap-6">
+                  <div>
+                    <FieldLabel>COMPANY NAME</FieldLabel>
+                    <input type="text" className={inputClass} placeholder="Nexus Global Technologies Ltd." {...register('company_name')} />
+                  </div>
+                  <div>
+                    <FieldLabel>TRADING NAME</FieldLabel>
+                    <input type="text" className={inputClass} placeholder="e.g. Nexus Tech" {...register('trading_name')} />
+                  </div>
+                  <div>
+                    <FieldLabel>REGISTRATION DATE</FieldLabel>
+                    <input type="date" className={inputClass} {...register('registration_date')} />
+                  </div>
+                  <div>
+                    <FieldLabel>PRIMARY INDUSTRY / SECTOR</FieldLabel>
+                    <select className={inputClass} {...register('primary_industry')}>
+                      <option>Information Technology</option>
+                      <option>Healthcare Logistics</option>
+                      <option>Heavy Machinery</option>
+                      <option>General Trading</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="col-span-1 flex flex-col gap-6">
+                  <div>
+                    <FieldLabel>COMPANY LOGO</FieldLabel>
+                    <div className="border border-dashed border-gray-300 bg-gray-50 rounded p-6 flex flex-col items-center justify-center text-center gap-2 h-[140px]">
+                       <span className="text-sm font-bold text-blue-700 hover:underline cursor-pointer">Upload New</span>
+                       <span className="text-[11px] text-gray-500">Recommended size: 512x512px. PNG or SVG.</span>
+                    </div>
+                  </div>
+                  <div>
+                    <FieldLabel>FAVICON</FieldLabel>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 border border-gray-300 rounded flex items-center justify-center bg-gray-50">
+                        <Upload size={16} className="text-blue-600" />
+                      </div>
+                      <span className="text-sm font-bold text-blue-700 hover:underline cursor-pointer">Change</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: Legal & Contact */}
+            {activeTab === 1 && (
+              <div className="flex flex-col gap-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <FieldLabel>CIN / REGISTRATION NO.</FieldLabel>
+                    <input type="text" className={inputClass} placeholder="L12345DL2023PLC123456" {...register('cin_number')} />
+                  </div>
+                  <div>
+                    <FieldLabel>OFFICIAL EMAIL</FieldLabel>
+                    <input type="email" className={inputClass} placeholder="contact@nexusglobal.com" {...register('official_email')} />
+                  </div>
+                  <div>
+                    <FieldLabel>TAX ID (GSTIN/VAT)</FieldLabel>
+                    <input type="text" className={inputClass} placeholder="07AAAA0000A1Z5" {...register('tax_id')} />
+                  </div>
+                  <div>
+                    <FieldLabel>PHONE NUMBER</FieldLabel>
+                    <input type="text" className={inputClass} placeholder="+1 (555) 000-0000" {...register('phone_number')} />
+                  </div>
+                  <div>
+                    <FieldLabel>REGISTERED STREET ADDRESS</FieldLabel>
+                    <input type="text" className={inputClass} placeholder="123 Innovation Drive, Sector 5" {...register('street_address')} />
+                  </div>
+                  <div>
+                    <FieldLabel>WEBSITE URL</FieldLabel>
+                    <input type="text" className={inputClass} placeholder="https://www.nexusglobal.com" {...register('website_url')} />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-6">
+                  <div className="col-span-1">
+                    <FieldLabel>CITY</FieldLabel>
+                    <input type="text" className={inputClass} placeholder="e.g. New York" {...register('city')} />
+                  </div>
+                  <div className="col-span-1">
+                    <FieldLabel>STATE/PROVINCE</FieldLabel>
+                    <input type="text" className={inputClass} placeholder="e.g. NY" {...register('state_province')} />
+                  </div>
+                  <div className="col-span-2">
+                    <FieldLabel>COUNTRY</FieldLabel>
+                    <select className={inputClass} {...register('country')}>
+                      {COUNTRIES_DATA.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: System & Financial */}
+            {activeTab === 2 && (
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <FieldLabel>BASE CURRENCY</FieldLabel>
+                  <select className={inputClass} {...register('base_currency')}>
+                    {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <FieldLabel>DATE FORMAT</FieldLabel>
+                  <select className={inputClass} {...register('date_format')}>
+                    <option>DD-MM-YYYY</option>
+                    <option>MM-DD-YYYY</option>
+                    <option>YYYY-MM-DD</option>
+                  </select>
+                </div>
+                <div>
+                  <FieldLabel>FISCAL YEAR START DATE</FieldLabel>
+                  <div className="flex gap-4">
+                    <select className={inputClass} {...register('fiscal_year_start_month')}>
+                      <option>January</option>
+                      <option>April</option>
+                      <option>July</option>
+                    </select>
+                    <select className={inputClass} {...register('fiscal_year_start_day')}>
+                      <option>1st</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <FieldLabel>NUMBER FORMAT</FieldLabel>
+                  <select className={inputClass} {...register('number_format')}>
+                    <option>1,234,567.89</option>
+                    <option>1.234.567,89</option>
+                  </select>
+                </div>
+                <div>
+                  <FieldLabel>TIMEZONE</FieldLabel>
+                  <select className={inputClass} {...register('timezone')}>
+                    {TIMEZONES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: Operational Defaults */}
+            {activeTab === 3 && (
+              <div className="flex flex-col gap-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <FieldLabel>DEFAULT BANK ACCOUNT</FieldLabel>
+                    <select className={inputClass} {...register('default_bank_account_id')}>
+                      <option value="">Select Bank Account</option>
+                    </select>
+                  </div>
+                  <div>
+                    <FieldLabel>DEFAULT DISPATCH WAREHOUSE</FieldLabel>
+                    <select className={inputClass} {...register('default_dispatch_warehouse_id')}>
+                      <option value="">Select Warehouse</option>
+                    </select>
+                  </div>
+                  <div>
+                    <FieldLabel>DEFAULT RECEIVING WAREHOUSE</FieldLabel>
+                    <select className={inputClass} {...register('default_receiving_warehouse_id')}>
+                      <option value="">Select Warehouse</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div>
+                  <FieldLabel>STANDARD TERMS & CONDITIONS</FieldLabel>
+                  <div className="border border-gray-300 rounded bg-[#f8f9fc] overflow-hidden">
+                    <div className="flex items-center gap-4 px-4 py-2.5 border-b border-gray-300">
+                      <Bold size={16} className="text-gray-800 cursor-pointer" />
+                      <Italic size={16} className="text-gray-800 cursor-pointer" />
+                      <List size={16} className="text-gray-800 cursor-pointer" />
+                      <div className="w-px h-4 bg-gray-300"></div>
+                      <LinkIcon size={16} className="text-gray-800 cursor-pointer" />
+                    </div>
+                    <textarea 
+                      className="w-full h-[120px] p-4 text-sm text-gray-700 bg-white focus:outline-none resize-none" 
+                      placeholder="Enter standard legal terms to be printed on all documents..."
+                      {...register('standard_terms')}
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Submit Actions */}
-        <div className="flex justify-end gap-4">
-          <button 
-            type="submit" 
-            className="btn btn-primary px-10 py-3 text-sm font-bold flex items-center gap-2 disabled:opacity-50"
-            disabled={saving}
-          >
-            {saving ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Commiting Changes...
-              </>
-            ) : (
-              'Save Organisation Configuration'
-            )}
-          </button>
+
+        {/* FOOTER */}
+        <div className="px-6 pt-6 mt-4 border-t border-gray-200 flex items-center justify-between text-[11px] font-semibold text-gray-500">
+           <span>Nexus ERP v2.4.0 • Enterprise Edition</span>
+           <div className="flex gap-6">
+              <span className="cursor-pointer hover:text-gray-700">Privacy Policy</span>
+              <span className="cursor-pointer hover:text-gray-700">Security Protocols</span>
+           </div>
         </div>
 
-      </form>
+      </div>
     </div>
   );
 }

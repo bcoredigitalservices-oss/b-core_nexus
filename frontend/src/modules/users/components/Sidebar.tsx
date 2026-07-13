@@ -80,7 +80,7 @@ const LINK_PERMISSION_MAP = {
   "/users": ["iam:manage", "*:*"],
   "/departments": ["iam:manage", "*:*"],
   "/events": ["iam:manage", "*:*"],
-  "/settings/org": ["iam:manage", "system:write", "*:*"],
+  "/org": ["iam:manage", "system:write", "*:*"],
 };
 
 // Returns true if user can see this link (no restriction = visible to all)
