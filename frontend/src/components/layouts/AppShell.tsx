@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   LayoutGrid,
+  Loader2,
 } from "lucide-react";
 import Sidebar, {
   SIDEBAR_WIDTH_EXPANDED,
@@ -22,8 +23,14 @@ import { isAdmin as isUserAdmin, hasPermission } from "../../utils/permissions";
 const MOBILE_BREAKPOINT = 768; // px
 
 export default function AppShell() {
-  const { isApiLive, currentUser, systemSettings, logout, isBooting } =
-    useAppContext();
+  const {
+    isApiLive,
+    currentUser,
+    systemSettings,
+    logout,
+    isBooting,
+    authFetch,
+  } = useAppContext();
   const navigate = useNavigate();
   const location = useLocation();
   const isHub =
@@ -43,6 +50,96 @@ export default function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false); // Mobile Drawer Toggle
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false); // Desktop Width State
   const [userMenuOpen, setUserMenuOpen] = useState<boolean>(false);
+
+  // Notification Tray States
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
+  const [loadingNotifications, setLoadingNotifications] =
+    useState<boolean>(false);
+
+  const fetchUnreadCount = async () => {
+    if (!currentUser) return;
+    try {
+      const data = await authFetch("/notifications/count");
+      if (data && typeof data.unread_count === "number") {
+        setUnreadCount(data.unread_count);
+      }
+    } catch (e) {
+      console.error("Failed to fetch notifications count:", e);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    if (!currentUser) return;
+    setLoadingNotifications(true);
+    try {
+      const data = await authFetch("/notifications");
+      if (Array.isArray(data)) {
+        setNotifications(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch notifications:", e);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
+
+  const handleToggleNotifications = () => {
+    const nextState = !notificationsOpen;
+    setNotificationsOpen(nextState);
+    if (nextState) {
+      fetchNotifications();
+    }
+  };
+
+  useEffect(() => {
+    if (!notificationsOpen) return;
+    const close = () => setNotificationsOpen(false);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [notificationsOpen]);
+
+  const handleNotificationClick = async (notif: any) => {
+    try {
+      if (!notif.is_read) {
+        await authFetch(`/notifications/${notif.id}/read`, { method: "PATCH" });
+        setUnreadCount((c) => Math.max(0, c - 1));
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n)),
+        );
+      }
+
+      // Navigate to target entity detail page if present
+      if (notif.entity_type && notif.entity_id) {
+        let basePath = `/workspace/crm/${notif.entity_type}s`;
+        if (notif.entity_type === "sales_order") {
+          basePath = "/workspace/crm/salesorders";
+        }
+        navigate(`${basePath}/${notif.entity_id}`);
+      }
+      setNotificationsOpen(false);
+    } catch (e) {
+      console.error("Failed to process notification click:", e);
+    }
+  };
+
+  const handleMarkAllAsRead = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // prevent closing dropdown
+    try {
+      await authFetch("/notifications/read-all", { method: "POST" });
+      setUnreadCount(0);
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    } catch (e) {
+      console.error("Failed to mark all as read:", e);
+    }
+  };
 
   useEffect(() => {
     const handler = () => {
@@ -81,7 +178,6 @@ export default function AppShell() {
   const showSidebar = !isWorkspaceAppRoute;
   const isAdmin =
     isUserAdmin(currentUser) ||
-    hasPermission(currentUser, "iam:manage") ||
     currentUser?.functional_roles?.includes("manager");
 
   // Derived from Sidebar's constants or AdminSidebar's fixed footprint
@@ -141,14 +237,16 @@ export default function AppShell() {
             )}
 
             {/* Workspace Hub Quick Redirect */}
-            <button
-              id="header-hub-btn"
-              onClick={() => navigate("/workspace")}
-              className="hidden md:flex items-center gap-1.5 text-[11px] font-bold bg-card-hover border border-color rounded-lg py-1.5 px-3 cursor-pointer transition-all duration-200 mr-2 text-text-muted hover:text-text-main hover:border-accent-primary hover:border-opacity-20"
-            >
-              <LayoutGrid size={13} />
-              <span>Workspace Hub</span>
-            </button>
+            {(!showSidebar || sidebarCollapsed) && (
+              <button
+                id="header-hub-btn"
+                onClick={() => navigate("/workspace")}
+                className="hidden md:flex items-center gap-1.5 text-[11px] font-bold bg-card-hover border border-color rounded-lg py-1.5 px-3 cursor-pointer transition-all duration-200 mr-2 text-text-muted hover:text-text-main hover:border-accent-primary hover:border-opacity-20"
+              >
+                <LayoutGrid size={13} />
+                <span>Workspace Hub</span>
+              </button>
+            )}
 
             {/* API Environment Badge */}
             <div
@@ -181,14 +279,100 @@ export default function AppShell() {
 
           {/* Right Block: Actions + User Profile Menu Dropdown */}
           <div className="flex items-center justify-end gap-2.5 flex-1">
-            <button
-              id="notifications-btn"
-              className="relative w-9 h-9 flex items-center justify-center rounded-lg border border-color bg-transparent text-text-muted cursor-pointer transition-all duration-200 hover:bg-card-hover hover:text-text-main hover:border-accent-primary hover:border-opacity-40"
-              aria-label="Notifications"
-            >
-              <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-accent-danger rounded-full border border-main animate-[pulse_2s_infinite]" />
-            </button>
+            {/* Notifications Dropdown Selector Container */}
+            <div className="relative">
+              <button
+                id="notifications-btn"
+                className="relative w-9 h-9 flex items-center justify-center rounded-lg border border-color bg-transparent text-text-muted cursor-pointer transition-all duration-200 hover:bg-card-hover hover:text-text-main hover:border-accent-primary hover:border-opacity-40"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleNotifications();
+                }}
+                aria-label="Notifications"
+                aria-haspopup="true"
+                aria-expanded={notificationsOpen}
+              >
+                <Bell size={18} />
+                {unreadCount > 0 ? (
+                  <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-accent-danger text-[8px] font-extrabold text-white animate-pulse border border-main">
+                    {unreadCount}
+                  </span>
+                ) : (
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-accent-danger rounded-full border border-main" />
+                )}
+              </button>
+
+              {notificationsOpen && (
+                <div
+                  className="absolute top-[calc(100%+8px)] right-0 min-w-[320px] max-w-[360px] bg-card border border-color rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)] z-[300] animate-slideDown overflow-hidden flex flex-col"
+                  onClick={(e) => e.stopPropagation()}
+                  role="menu"
+                >
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-color bg-main/20">
+                    <span className="text-xs font-extrabold text-[var(--text-main)]">
+                      Notifications
+                    </span>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllAsRead}
+                        className="text-[10px] font-bold text-accent-primary hover:underline bg-transparent border-none cursor-pointer"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-[300px] overflow-y-auto divide-y divide-color/40">
+                    {loadingNotifications ? (
+                      <div className="flex flex-col items-center justify-center py-8 gap-1.5">
+                        <Loader2
+                          className="animate-spin text-accent-primary"
+                          size={18}
+                        />
+                        <span className="text-[10px] text-[var(--text-muted)]">
+                          Retrieving updates…
+                        </span>
+                      </div>
+                    ) : notifications.length === 0 ? (
+                      <div className="text-center py-8 text-xs text-[var(--text-muted)] italic">
+                        No notifications to show.
+                      </div>
+                    ) : (
+                      notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          onClick={() => handleNotificationClick(notif)}
+                          className={`p-3.5 flex flex-col gap-1 cursor-pointer transition text-left hover:bg-main/25 relative ${
+                            !notif.is_read
+                              ? "font-semibold text-[var(--text-main)]"
+                              : "font-normal text-[var(--text-muted)]"
+                          }`}
+                        >
+                          {!notif.is_read && (
+                            <span className="absolute left-2 top-[18px] w-1.5 h-1.5 bg-accent-primary rounded-full animate-ping" />
+                          )}
+                          <div className="flex items-center justify-between gap-2 pl-2">
+                            <span className="text-xs">{notif.title}</span>
+                            <span className="text-[9px] text-[var(--text-muted)] font-mono shrink-0">
+                              {new Date(notif.created_at).toLocaleDateString(
+                                [],
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[var(--text-muted)] m-0 leading-relaxed pl-2 font-normal">
+                            {notif.message}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* User Dropdown Selector Container */}
             <div className="relative">

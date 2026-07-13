@@ -7,7 +7,6 @@ const API_BASE = `${import.meta.env.VITE_API_URL || ''}/api/v1`;
 // ─── Default / Fallback Data ──────────────────────────────────────────────────
 const FALLBACK_NAVIGATION = {
   sidebar_links: [
-    { label: 'Global Directory', path: '/directory', icon: 'directory', required_tier: 4 },
     { label: 'Security Logs',     path: '/events',    icon: 'shield',    required_tier: 2 },
   ],
   quick_actions: [],
@@ -160,6 +159,7 @@ export interface AppContextValue {
   setMode: (val: string) => void;
   font: string;
   setFont: (val: string) => void;
+  refreshCurrentUser: () => Promise<void>;
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -238,9 +238,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     if (!res.ok) throw new Error('Login failed');
     const data = await res.json();
-    localStorage.setItem('bcore_token', data.access_token);
+    localStorage.removeItem('bcore_token');
+    localStorage.removeItem('bcore_refresh_token');
+    sessionStorage.setItem('bcore_token', data.access_token);
     if (data.refresh_token) {
-      localStorage.setItem('bcore_refresh_token', data.refresh_token);
+      sessionStorage.setItem('bcore_refresh_token', data.refresh_token);
     }
     localStorage.removeItem('bcore_logged_out');
     setToken(data.access_token);
@@ -403,8 +405,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setIsBooting(false);
       }
     };
-    if (token) reBoot();
+    if (token) {
+      reBoot();
+    } else {
+      setIsBooting(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  const refreshCurrentUser = useCallback(async () => {
+    if (!token) return;
+    try {
+      const meRes = await api.get('/auth/me');
+      setCurrentUser(meRes.data);
+    } catch (err) {
+      console.error('Failed to refresh user:', err);
+    }
   }, [token]);
 
   const value = {
@@ -432,6 +448,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setMode,
     font,
     setFont,
+    refreshCurrentUser,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -202,7 +202,8 @@ async def get_lead(
         selectinload(Lead.contacts).selectinload(LeadContactLink.contact),
         selectinload(Lead.activities),
         selectinload(Lead.tags),
-        selectinload(Lead.attachments)
+        selectinload(Lead.attachments),
+        selectinload(Lead.deals), 
     )
     res = await db.execute(query)
     lead = res.scalars().first()
@@ -463,7 +464,8 @@ async def get_customer(
 ):
     query = select(Customer).where(Customer.id == customer_id).options(
         selectinload(Customer.addresses),
-        selectinload(Customer.contacts).selectinload(CustomerContactLink.contact)
+        selectinload(Customer.contacts).selectinload(CustomerContactLink.contact),
+        selectinload(Customer.deals)
     )
     res = await db.execute(query)
     customer = res.scalars().first()

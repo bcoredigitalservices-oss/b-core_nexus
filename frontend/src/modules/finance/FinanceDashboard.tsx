@@ -40,7 +40,7 @@ export default function FinanceDashboard() {
     setLoading(true);
     setErrorMsg('');
     try {
-      const token = localStorage.getItem('bcore_token');
+      const token = localStorage.getItem('bcore_token') || sessionStorage.getItem('bcore_token');
       const response = await fetch(`${API_BASE}/accounts`, {
         headers: {
           Authorization: `Bearer ${token}`,

@@ -11,6 +11,7 @@ export function hasPermission(user: CurrentUser | null | undefined, permission: 
   if (!user) return false;
   const perms = user.permissions || [];
   if (perms.includes('*:*')) return true;
+  if (permission.startsWith('user:') && perms.includes('iam:manage')) return true;
   return perms.includes(permission);
 }
 
@@ -19,7 +20,11 @@ export function hasAnyPermission(user: CurrentUser | null | undefined, required:
   if (!user) return false;
   if (isAdmin(user)) return true;
   const perms = user.permissions || [];
-  return required.some(r => perms.includes(r));
+  return required.some(r => {
+    if (perms.includes(r)) return true;
+    if (r.startsWith('user:') && perms.includes('iam:manage')) return true;
+    return false;
+  });
 }
 
 export function permissionStatus(user: CurrentUser | null | undefined, permission: string): 'granted' | 'denied' {

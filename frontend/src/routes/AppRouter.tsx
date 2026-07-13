@@ -27,18 +27,24 @@ import MyProfileSettings from "../modules/users/pages/MyProfileSettings";
 import PermissionDenied from "../modules/users/pages/PermissionDenied";
 
 // ── CRM Module Imports ──────────────────────────────────────────────────────
-import CrmDashboard from "../modules/crm/CrmDashboard";
-import PipelineLeads from "../modules/crm/PipelineLeads";
-import Customers from "../modules/crm/Customers";
-import SalesOrders from "../modules/crm/SalesOrders";
-import Quotations from "../modules/crm/Quotations";
-import Contacts from "../modules/crm/Contacts";
-import Deals from "../modules/crm/Deals";
-import CallLog from "../modules/crm/CallLog";
-import TasksToDo from "../modules/crm/TasksToDo";
-import InteractionHistory from "../modules/crm/InteractionHistory";
-import PosWorkspace from "../modules/crm/PosWorkspace";
-import SupportWorkspace from "../modules/crm/SupportWorkspace";
+import CrmDashboard from "../modules/crm/pages/CrmDashboard";
+import Leads from "../modules/crm/pages/LeadsPage";
+import LeadDetails from "../modules/crm/pages/LeadDetailsPage";
+import Customers from "../modules/crm/pages/CustomersPage";
+import CustomerDetails from "../modules/crm/pages/CustomerDetailsPage";
+import ContactDetails from "../modules/crm/pages/ContactDetailsPage";
+import DealDetails from "../modules/crm/pages/DealDetailsPage";
+import QuotationDetails from "../modules/crm/pages/QuotationDetailsPage";
+import SalesOrders from "../modules/crm/pages/SalesOrdersPage";
+import SalesOrderDetails from "../modules/crm/pages/SalesOrderDetailsPage";
+import Quotations from "../modules/crm/pages/QuotationsPage";
+import Contacts from "../modules/crm/pages/ContactsPage";
+import Deals from "../modules/crm/pages/DealsPage";
+import CallLog from "../modules/crm/pages/CallLog";
+import TasksToDo from "../modules/crm/pages/TasksToDo";
+import InteractionHistory from "../modules/crm/pages/InteractionHistory";
+import PosWorkspace from "../modules/crm/pages/PosWorkspace";
+import SupportWorkspace from "../modules/crm/pages/SupportWorkspace";
 
 // ── Finance Module Imports ──────────────────────────────────────────────────
 import FinanceDashboard from "../modules/finance/FinanceDashboard";
@@ -155,9 +161,13 @@ export function ProtectedRoute({ children, workspaceKey }: ProtectedRouteProps) 
 export function RoleBasedIndexRoute() {
   const { currentUser } = useAppContext();
 
+  // Note: iam:manage is deliberately excluded here — AdminDashboard pulls
+  // /organization/profile and /auth/users, neither of which iam:manage
+  // authorizes server-side. Sending an iam:manage-only user here would just
+  // show them a half-empty dashboard. They land on UserHomeDashboard instead
+  // and reach /users directly, where their access actually works.
   const isAdmin =
     currentUser?.permissions?.includes("*:*") ||
-    currentUser?.permissions?.includes("iam:manage") ||
     currentUser?.functional_roles?.includes("admin") ||
     currentUser?.functional_roles?.includes("manager");
 
@@ -169,9 +179,13 @@ export default function AppRouter() {
   const { currentUser } = useAppContext();
   const isAdmin =
     currentUser?.permissions?.includes("*:*") ||
-    currentUser?.permissions?.includes("iam:manage") ||
     currentUser?.functional_roles?.includes("admin") ||
     currentUser?.functional_roles?.includes("manager");
+
+  // Backend's require_iam_privilege only guards /iam/* endpoints (users, roles,
+  // departments, permissions) — iam:manage grants no access to workspace or
+  // system settings routers. Keep the frontend gate matching that scope exactly.
+  const canAccessIAM = isAdmin || currentUser?.permissions?.includes("iam:manage");
 
   return (
     <Routes>
@@ -185,8 +199,8 @@ export default function AppRouter() {
 
         {/* ── Core Infrastructure Tracks ── */}
         <Route path="workspace" element={isAdmin ? <WorkspaceHub /> : <Navigate to="/" replace />} />
-        <Route path="users" element={isAdmin ? <UsersDashboard /> : <Navigate to="/userhomedashboard" replace />} />
-        <Route path="users/:userId" element={isAdmin ? <EditUserAccess /> : <Navigate to="/" replace />} />
+        <Route path="users" element={canAccessIAM ? <UsersDashboard /> : <Navigate to="/userhomedashboard" replace />} />
+        <Route path="users/:userId" element={canAccessIAM ? <EditUserAccess /> : <Navigate to="/" replace />} />
         <Route path="org/*" element={isAdmin ? <OrganizationDashboard /> : <Navigate to="/" replace />} />
         <Route path="settings/config" element={isAdmin ? <SystemSettingsDashboard /> : <Navigate to="/" replace />} />
         <Route path="userhomedashboard" element={<UserHomeDashboard />} />
@@ -343,16 +357,26 @@ export default function AppRouter() {
 
         {/* ── CRM Module Workspace Track ── */}
         <Route path="workspace/crm" element={<ProtectedRoute workspaceKey="crm"><CrmDashboard /></ProtectedRoute>} />
-        <Route path="workspace/crm/pipeline" element={<ProtectedRoute workspaceKey="crm"><PipelineLeads /></ProtectedRoute>} />
+        <Route path="workspace/crm/leads" element={<ProtectedRoute workspaceKey="crm"><Leads /></ProtectedRoute>} />
+        <Route path="workspace/crm/leads/:leadId" element={<ProtectedRoute workspaceKey="crm"><LeadDetails /></ProtectedRoute>} />
         <Route path="workspace/crm/customers" element={<ProtectedRoute workspaceKey="crm"><Customers /></ProtectedRoute>} />
+        <Route path="workspace/crm/customers/:customerId" element={<ProtectedRoute workspaceKey="crm"><CustomerDetails /></ProtectedRoute>} />
         <Route path="workspace/crm/sales-orders" element={<ProtectedRoute workspaceKey="crm"><SalesOrders /></ProtectedRoute>} />
+        <Route path="workspace/crm/sales-orders/:orderId" element={<ProtectedRoute workspaceKey="crm"><SalesOrderDetails /></ProtectedRoute>} />
         <Route path="workspace/crm/sales" element={<ProtectedRoute workspaceKey="crm"><SalesOrders /></ProtectedRoute>} />
         <Route path="workspace/crm/quotations" element={<ProtectedRoute workspaceKey="crm"><Quotations /></ProtectedRoute>} />
+        <Route path="workspace/crm/quotations/:quotationId" element={<ProtectedRoute workspaceKey="crm"><QuotationDetails /></ProtectedRoute>} />
         <Route path="workspace/crm/contacts" element={<ProtectedRoute workspaceKey="crm"><Contacts /></ProtectedRoute>} />
+        <Route path="workspace/crm/contacts/:contactId" element={<ProtectedRoute workspaceKey="crm"><ContactDetails /></ProtectedRoute>} />
         <Route path="workspace/crm/deals" element={<ProtectedRoute workspaceKey="crm"><Deals /></ProtectedRoute>} />
+        <Route path="workspace/crm/deals/:dealId" element={<ProtectedRoute workspaceKey="crm"><DealDetails /></ProtectedRoute>} />
         <Route path="workspace/crm/call-log" element={<ProtectedRoute workspaceKey="crm"><CallLog /></ProtectedRoute>} />
         <Route path="workspace/crm/tasks" element={<ProtectedRoute workspaceKey="crm"><TasksToDo /></ProtectedRoute>} />
+        <Route path="workspace/crm/meetings" element={<ProtectedRoute workspaceKey="crm"><TasksToDo /></ProtectedRoute>} />
+        <Route path="workspace/crm/emails" element={<ProtectedRoute workspaceKey="crm"><InteractionHistory /></ProtectedRoute>} />
         <Route path="workspace/crm/interactions" element={<ProtectedRoute workspaceKey="crm"><InteractionHistory /></ProtectedRoute>} />
+        <Route path="workspace/crm/reports" element={<ProtectedRoute workspaceKey="crm"><CrmDashboard /></ProtectedRoute>} />
+        <Route path="workspace/crm/settings" element={<ProtectedRoute workspaceKey="crm"><CrmDashboard /></ProtectedRoute>} />
         <Route path="workspace/crm/pos" element={<ProtectedRoute workspaceKey="pos"><PosWorkspace /></ProtectedRoute>} />
         <Route path="workspace/crm/support" element={<ProtectedRoute workspaceKey="support"><SupportWorkspace /></ProtectedRoute>} />
 

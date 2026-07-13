@@ -205,6 +205,10 @@ export default function EditUserAccess() {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [mobileNo, setMobileNo] = useState("");
+  const [gender, setGender] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [bio, setBio] = useState("");
   const [designation, setDesignation] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [isActive, setIsActive] = useState(true);
@@ -280,13 +284,25 @@ export default function EditUserAccess() {
             if (matchedUser) {
               setFirstName(matchedUser.first_name || "");
               setLastName(matchedUser.last_name || "");
+              setMobileNo(matchedUser.mobile_no || "");
+              setGender(matchedUser.gender || "");
+              setBirthDate(matchedUser.birth_date || "");
+              setBio(matchedUser.bio || "");
             } else {
               setFirstName(data.first_name || "");
               setLastName(data.last_name || "");
+              setMobileNo("");
+              setGender("");
+              setBirthDate("");
+              setBio("");
             }
           } catch (err) {
             setFirstName(data.first_name || "");
             setLastName(data.last_name || "");
+            setMobileNo("");
+            setGender("");
+            setBirthDate("");
+            setBio("");
           }
 
           if (data.roles && data.roles.length > 0) {
@@ -312,11 +328,26 @@ export default function EditUserAccess() {
   }, [userId, token]);
 
   const handleTogglePermission = (permId: string) => {
-    setSelectedPermissionIds((prev) =>
-      prev.includes(permId)
-        ? prev.filter((id) => id !== permId)
-        : [...prev, permId],
-    );
+    setSelectedPermissionIds((prev) => {
+      const isGranting = !prev.includes(permId);
+      let next = isGranting ? [...prev, permId] : prev.filter((id) => id !== permId);
+
+      const iamManagePerm = allPermissions.find((p) => p.name === "iam:manage");
+      if (iamManagePerm && permId === iamManagePerm.id) {
+        const userPerms = allPermissions.filter((p) =>
+          ["user:read", "user:write", "user:invite", "user:update"].includes(p.name)
+        );
+        const userPermIds = userPerms.map((p) => p.id);
+        if (isGranting) {
+          userPermIds.forEach((id) => {
+            if (!next.includes(id)) next.push(id);
+          });
+        } else {
+          next = next.filter((id) => !userPermIds.includes(id));
+        }
+      }
+      return next;
+    });
   };
 
   const handleToggleModuleAll = (
@@ -401,6 +432,20 @@ export default function EditUserAccess() {
     setErrorMsg("");
 
     try {
+      // 1. Update user profile details
+      await authFetch(`/iam/users/${userId}/profile`, {
+        method: "PUT",
+        body: JSON.stringify({
+          first_name: firstName.trim() || null,
+          last_name: lastName.trim() || null,
+          mobile_no: mobileNo.trim() || null,
+          gender: gender || null,
+          birth_date: birthDate || null,
+          bio: bio.trim() || null,
+        }),
+      });
+
+      // 2. Update baseline role if selected
       if (selectedRoleId) {
         await authFetch(`/iam/users/${userId}/roles`, {
           method: "PUT",
@@ -408,12 +453,26 @@ export default function EditUserAccess() {
         });
       }
 
+      // Automatically include user:* permissions if iam:manage is granted
+      let finalPermissionIds = [...selectedPermissionIds];
+      const iamManagePerm = allPermissions.find((p) => p.name === "iam:manage");
+      if (iamManagePerm && selectedPermissionIds.includes(iamManagePerm.id)) {
+        const autoPermNames = ["user:read", "user:write", "user:invite", "user:update"];
+        const autoPerms = allPermissions.filter((p) => autoPermNames.includes(p.name));
+        autoPerms.forEach((p) => {
+          if (!finalPermissionIds.includes(p.id)) {
+            finalPermissionIds.push(p.id);
+          }
+        });
+      }
+
+      // 3. Update direct overrides
       await authFetch(`/iam/users/${userId}/permissions`, {
         method: "PUT",
-        body: JSON.stringify({ permission_ids: selectedPermissionIds }),
+        body: JSON.stringify({ permission_ids: finalPermissionIds }),
       });
 
-      setSuccessMsg("User security parameters synchronized successfully.");
+      setSuccessMsg("User profile and security overrides synchronized successfully.");
     } catch (err: any) {
       setErrorMsg(
         err.message || "Failed to save access profile modifications.",
@@ -617,24 +676,78 @@ export default function EditUserAccess() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-[0.7rem] text-text-muted font-bold uppercase tracking-wider mb-2">
-                  Designation
+                  Mobile Number
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Lead Operations Analyst"
-                  value={designation}
-                  onChange={(e) => setDesignation(e.target.value)}
+                  placeholder="e.g. +1 555-0199"
+                  value={mobileNo}
+                  onChange={(e) => setMobileNo(e.target.value)}
                   className="w-full rounded-lg border border-color bg-card py-2.5 px-3.5 text-sm text-text-main outline-none focus:border-accent-primary"
                 />
               </div>
               <div>
                 <label className="block text-[0.7rem] text-text-muted font-bold uppercase tracking-wider mb-2">
-                  Department Assignment
+                  Gender
                 </label>
                 <select
-                  value={departmentId}
-                  onChange={(e) => setDepartmentId(e.target.value)}
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
                   className="w-full rounded-lg border border-color bg-card py-2.5 px-3.5 text-sm text-text-main outline-none focus:border-accent-primary cursor-pointer"
+                >
+                  <option value="">-- Select Gender --</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-[0.7rem] text-text-muted font-bold uppercase tracking-wider mb-2">
+                  Birth Date
+                </label>
+                <input
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  className="w-full rounded-lg border border-color bg-card py-2.5 px-3.5 text-sm text-text-main outline-none focus:border-accent-primary cursor-pointer"
+                />
+              </div>
+              <div>
+                <label className="block text-[0.7rem] text-text-muted font-bold uppercase tracking-wider mb-2">
+                  Bio / Notes
+                </label>
+                <textarea
+                  placeholder="Tell us about this operator..."
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={1}
+                  className="w-full rounded-lg border border-color bg-card py-2.5 px-3.5 text-sm text-text-main outline-none focus:border-accent-primary resize-none min-h-[42px]"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-[0.7rem] text-text-muted font-bold uppercase tracking-wider mb-2">
+                  Designation (Read-Only)
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  placeholder="e.g. Lead Operations Analyst"
+                  value={designation}
+                  className="w-full rounded-lg border border-color bg-card-hover py-2.5 px-3.5 text-sm text-text-muted outline-none cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="block text-[0.7rem] text-text-muted font-bold uppercase tracking-wider mb-2">
+                  Department Assignment (Read-Only)
+                </label>
+                <select
+                  disabled
+                  value={departmentId}
+                  className="w-full rounded-lg border border-color bg-card-hover py-2.5 px-3.5 text-sm text-text-muted outline-none cursor-not-allowed"
                 >
                   <option value="">
                     -- Unassigned (Root/Independent Operator) --
@@ -836,60 +949,6 @@ export default function EditUserAccess() {
 
               {/* Functional Permission Chip Blocks Layout Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                {/* ── 1. STANDALONE USER MANAGEMENT CLEARANCES CARD ── */}
-                {parsed.identity.userControls.length > 0 &&
-                  (() => {
-                    const uPerms = parsed.identity.userControls;
-                    const isAllChecked = uPerms.every((p) =>
-                      selectedPermissionIds.includes(p.id),
-                    );
-                    return (
-                      <div className="bg-card border border-color rounded-xl flex flex-col overflow-hidden shadow-2xs">
-                        <div className="flex justify-between items-center px-4 py-2.5 bg-card-hover border-b border-color">
-                          <span className="text-[0.8rem] font-bold text-text-main flex items-center gap-2">
-                            <UserIcon
-                              size={13}
-                              className="text-accent-primary"
-                            />
-                            User Management Clearances
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleToggleModuleAll("user", uPerms)
-                            }
-                            className="text-[0.65rem] font-bold uppercase px-2 py-0.5 rounded border border-color text-text-muted hover:text-accent-primary cursor-pointer transition-colors bg-card"
-                          >
-                            {isAllChecked ? "Clear" : "Select"}
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 p-3.5">
-                          {sortPermissionsByAction(uPerms).map((p) => {
-                            const isChecked = selectedPermissionIds.includes(
-                              p.id,
-                            );
-                            return (
-                              <button
-                                key={p.id}
-                                type="button"
-                                onClick={() => handleTogglePermission(p.id)}
-                                className={`flex items-center justify-between px-2.5 py-1.5 rounded-md border text-[0.72rem] font-bold uppercase cursor-pointer transition-all ${
-                                  isChecked
-                                    ? "border-accent-primary bg-accent-primary/5 text-accent-primary"
-                                    : "border-color text-text-muted"
-                                }`}
-                              >
-                                <span>{p.name.split(":")[1] || p.name}</span>
-                                <span
-                                  className={`w-1.5 h-1.5 rounded-full ${isChecked ? "bg-accent-primary" : "bg-color"}`}
-                                />
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })()}
 
                 {/* IAM Directory Manager Box */}
                 {parsed.identity.iamManage && (

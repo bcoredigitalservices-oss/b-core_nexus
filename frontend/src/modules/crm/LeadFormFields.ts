@@ -1,16 +1,14 @@
 export interface ExtendedLeadFormValues {
   // Lead Info
-  series: string;
   product_title: string;
   lead_owner: string;
-  salutation: string;
-  first_name: string; // Required
+  first_name: string; 
   middle_name: string;
   last_name: string;
   gender: string;
-  lifecycle_status: string; // Maps to Status
-  lead_potential: string; // Required
-  recontact_interval_days: string; // Required
+  lifecycle_status: string; 
+  lead_potential: string; 
+  recontact_interval_days: string; 
   request_type: string;
   type_of_lead: string;
 
@@ -22,16 +20,5 @@ export interface ExtendedLeadFormValues {
   phone_ext: string;
 
   // Organization
-  organization_name: string; // Maps to company_name, Required
-  annual_revenue: string;
-  territory: string;
-  no_of_employees: string;
-  industry: string;
-  fax: string;
-  market_segment: string;
-
-  // Address
-  city: string;
-  state_province: string;
-  country: string;
+  organization_name: string; 
 }
