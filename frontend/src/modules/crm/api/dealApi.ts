@@ -15,4 +15,9 @@ export const getDealsApi = (authFetch: (path: string, options?: Record<string, a
       method: "PUT",
       body: JSON.stringify(payload),
     }),
+
+  deleteDeal: (id: string): Promise<any> =>
+    authFetch(`/crm/deals/${id}`, {
+      method: "DELETE",
+    }),
 });

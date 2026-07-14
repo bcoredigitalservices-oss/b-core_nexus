@@ -470,6 +470,19 @@ export default function Login() {
                   )}
                 </button>
 
+                <div className="text-center mt-4">
+                  <span className="text-[12px] text-[#8E8B82] font-medium">
+                    First time setting up?
+                    <button
+                      type="button"
+                      onClick={() => navigate('/bootstrap')}
+                      className="text-[12px] text-[#0F2E59] font-bold transition-all duration-200 hover:underline bg-transparent border-none cursor-pointer p-0 ml-1.5"
+                    >
+                      Bootstrap first admin user
+                    </button>
+                  </span>
+                </div>
+
               </form>
             )}
 

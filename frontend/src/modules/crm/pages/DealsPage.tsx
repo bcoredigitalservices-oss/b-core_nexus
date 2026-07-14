@@ -106,8 +106,7 @@ export default function DealsPage() {
     setDeactivating(true);
     try {
       await authFetch(`/crm/deals/${deactivateDeal.id}`, {
-        method: "PUT",
-        body: JSON.stringify({ is_active: false }),
+        method: "DELETE",
       });
       setDeals((prev) =>
         prev.map((d) => (d.id === deactivateDeal.id ? { ...d, is_active: false } : d))

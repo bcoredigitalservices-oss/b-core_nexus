@@ -9,6 +9,7 @@ import UniversalDataGrid from "../components/ui/UniversalDataGrid";
 // ── Auth Module ────────────────────────────────────────────────────────────
 import Login from "../modules/auth/pages/Login";
 import Onboarding from "../modules/auth/pages/Onboarding";
+import Bootstrap from "../modules/auth/pages/Bootstrap";
 
 // ── Admin Module ───────────────────────────────────────────────────────────
 import AdminDashboard from "../modules/admin/pages/AdminDashboard";
@@ -192,6 +193,7 @@ export default function AppRouter() {
       {/* ── Standalone Gateway Entries ── */}
       <Route path="/login" element={<Login />} />
       <Route path="/onboard" element={<Onboarding />} />
+      <Route path="/bootstrap" element={<Bootstrap />} />
 
       {/* ── Authenticated System Viewport Wrapper ── */}
       <Route path="/" element={<AppShellOrTierZero />}>

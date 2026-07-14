@@ -22,6 +22,7 @@ import { useAppContext } from "../../../context/AppContext";
 import WorkspaceLayout from "../../users/components/WorkspaceLayout";
 import { CRM_SIDEBAR } from "../crmSidebarConfig";
 import { User, Customer, Lead, Product } from "../types/types";
+import { RecordShareCard } from "../../../components/ui/RecordShareCard";
 
 interface QuotationLineItem {
   id: string;
@@ -75,7 +76,7 @@ interface QuotationDetails {
 
 export default function QuotationDetailsPage() {
   const { quotationId } = useParams<{ quotationId: string }>();
-  const { token, authFetch } = useAppContext();
+  const { token, authFetch, currentUser } = useAppContext();
   const navigate = useNavigate();
 
   // Data states
@@ -789,6 +790,14 @@ export default function QuotationDetailsPage() {
                 </div>
               </div>
             </div>
+
+            <RecordShareCard
+              entityType="quotation"
+              entityId={quotationId || ""}
+              users={users}
+              currentUserId={currentUser?.id}
+              ownerId={ownerId}
+            />
 
             {/* Section: Associated Pipeline Records */}
             <div className="bg-card border border-color rounded-2xl p-5 flex flex-col gap-3 shadow-sm">
