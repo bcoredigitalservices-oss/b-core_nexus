@@ -26,33 +26,19 @@ import { LeadContactsList } from "../components/leads/LeadContactsList";
 import { LeadActivities } from "../components/leads/LeadActivities";
 import { LeadTags } from "../components/leads/LeadTags";
 import { EntityChatBox } from "../../../components/ui/EntityChatBox";
+import { RecordShareCard } from "../../../components/ui/RecordShareCard";
 
-interface ExtendedLeadData {
+interface ContactDetailsData {
   firstName: string;
-  middleName: string;
   lastName: string;
-  gender: string;
-  requestType: string;
-  recontactInterval: string;
-  leadPotential: string;
-  leadType: string;
-  phoneExt: string;
-  whatsapp: string;
-  website: string;
   jobTitle: string;
   department: string;
-  addressLine1: string;
-  addressLine2: string;
-  city: string;
-  state: string;
-  country: string;
-  zipCode: string;
 }
 
 export default function LeadDetailsPage() {
   const { leadId } = useParams<{ leadId: string }>();
   const navigate = useNavigate();
-  const { authFetch, token } = useAppContext();
+  const { authFetch, token, currentUser } = useAppContext();
 
   const [lead, setLead] = useState<Lead | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -63,7 +49,7 @@ export default function LeadDetailsPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [activeTab, setActiveTab] = useState<
-    "details" | "activities" | "address" | "connections" | "chat"
+    "details" | "activities" | "connections" | "chat"
   >("details");
 
   const [associatedQuotations, setAssociatedQuotations] = useState<any[]>([]);
@@ -72,34 +58,21 @@ export default function LeadDetailsPage() {
   // Core Form States (mirrored from backend)
   const [title, setTitle] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [leadType, setLeadType] = useState<"person" | "company">("person");
   const [pipelineStage, setPipelineStage] = useState("lead");
   const [priority, setPriority] = useState("Medium");
   const [leadSource, setLeadSource] = useState("Website");
   const [ownerId, setOwnerId] = useState("");
 
-  // Ext Form States (mirrored from local storage)
-  const [ext, setExt] = useState<ExtendedLeadData>({
+  // Ext Form States (associated contact fields)
+  const [ext, setExt] = useState<ContactDetailsData>({
     firstName: "",
     lastName: "",
-    gender: "Male",
-    requestType: "Information Request",
-    recontactInterval: "Weekly Ping",
-    leadPotential: "Medium",
-    leadType: "Client Partner",
-    phoneExt: "",
-    whatsapp: "",
-    website: "",
     jobTitle: "",
     department: "",
-    addressLine1: "",
-    addressLine2: "",
-    city: "",
-    state: "",
-    country: "",
-    zipCode: "",
   });
 
-  // Flat DB mock details saved locally (mirrored from form fields)
+  // Flat DB details saved locally on lead primary contact
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
 
@@ -134,53 +107,22 @@ export default function LeadDetailsPage() {
         const matchedOrders = allOrders.filter((o: any) => quotIds.includes(o.quotation_id));
         setAssociatedOrders(matchedOrders);
 
-        // Sync local mockup parameters and database contact fields
+        // Sync database contact fields and assign to states
         const primaryLink =
           leadData.contacts?.find(
             (link: any) => link.role_at_lead === "Primary Contact",
           ) || leadData.contacts?.[0];
         const contact = primaryLink?.contact;
 
+        setLeadType(leadData.lead_type || "person");
         setEmail(contact?.email || leadData.email || "");
         setPhone(contact?.phone || leadData.phone || "");
 
-        // 2. Load Extended local parameters
-        const stored = localStorage.getItem(`lead_extended_${leadId}`);
-        let storedExt: any = {};
-        if (stored) {
-          try {
-            storedExt = JSON.parse(stored);
-          } catch (e) {}
-        }
-
         setExt({
-          firstName:
-            contact?.first_name ||
-            storedExt.firstName ||
-            leadData.title?.split(" ")[0] ||
-            "",
-          middleName: storedExt.middleName || "",
-          lastName:
-            contact?.last_name ||
-            storedExt.lastName ||
-            leadData.title?.split(" ")[1] ||
-            "",
-          gender: storedExt.gender || "Male",
-          requestType: storedExt.requestType || "Information Request",
-          recontactInterval: storedExt.recontactInterval || "Weekly Ping",
-          leadPotential: leadData.priority || "Medium",
-          leadType: storedExt.leadType || "Client Partner",
-          phoneExt: storedExt.phoneExt || "",
-          whatsapp: storedExt.whatsapp || "",
-          website: storedExt.website || leadData.website || "",
-          jobTitle: contact?.job_title || storedExt.jobTitle || "",
-          department: contact?.department || storedExt.department || "",
-          addressLine1: storedExt.addressLine1 || "",
-          addressLine2: storedExt.addressLine2 || "",
-          city: storedExt.city || "",
-          state: storedExt.state || "",
-          country: storedExt.country || "",
-          zipCode: storedExt.zipCode || "",
+          firstName: contact?.first_name || leadData.title?.split(" ")[0] || "",
+          lastName: contact?.last_name || leadData.title?.split(" ")[1] || "",
+          jobTitle: contact?.job_title || "",
+          department: contact?.department || "",
         });
       }
       setUsers(usersData);
@@ -211,6 +153,7 @@ export default function LeadDetailsPage() {
         method: "PUT",
         body: JSON.stringify({
           title: title.trim(),
+          lead_type: leadType,
           company_name: companyName.trim() || null,
           pipeline_stage: pipelineStage,
           priority: priority,
@@ -263,9 +206,6 @@ export default function LeadDetailsPage() {
           });
         }
       }
-
-      // 3. Save extended UI fields in browser local storage
-      localStorage.setItem(`lead_extended_${leadId}`, JSON.stringify(ext));
 
       setSuccessMsg("Lead parameters updated successfully.");
       await fetchDetails();
@@ -539,12 +479,6 @@ export default function LeadDetailsPage() {
                 Activities
               </button>
               <button
-                onClick={() => setActiveTab("address")}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition cursor-pointer text-center ${activeTab === "address" ? "bg-accent-primary text-white" : "text-[var(--text-muted)] hover:bg-main"}`}
-              >
-                Address
-              </button>
-              <button
                 onClick={() => setActiveTab("connections")}
                 className={`flex-1 py-2 text-xs font-bold rounded-xl transition cursor-pointer text-center ${activeTab === "connections" ? "bg-accent-primary text-white" : "text-[var(--text-muted)] hover:bg-main"}`}
               >
@@ -566,12 +500,16 @@ export default function LeadDetailsPage() {
                   setTitle={setTitle}
                   companyName={companyName}
                   setCompanyName={setCompanyName}
-                  ext={ext}
-                  setExt={setExt}
+                  leadType={leadType}
+                  setLeadType={setLeadType}
                   pipelineStage={pipelineStage}
                   setPipelineStage={setPipelineStage}
                   leadSource={leadSource}
                   setLeadSource={setLeadSource}
+                  priority={priority}
+                  setPriority={setPriority}
+                  ext={ext}
+                  setExt={setExt}
                 />
 
                 <LeadContacts
@@ -593,100 +531,6 @@ export default function LeadDetailsPage() {
                   users={users}
                   onAddActivity={handleAddActivity}
                 />
-              </div>
-            )}
-
-            {/* Tab: Address */}
-            {activeTab === "address" && (
-              <div className="bg-card border border-color rounded-2xl p-6 shadow-sm flex flex-col gap-4 animate-[fadeIn_0.15s_ease]">
-                <div className="flex items-center gap-2 border-b border-color pb-3 mb-1">
-                  <Building className="text-accent-primary" size={16} />
-                  <h3 className="text-sm font-extrabold text-[var(--text-main)] m-0">
-                    Lead Customer Address Details
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Address Line 1 */}
-                  <div className="flex flex-col gap-1 md:col-span-2">
-                    <label className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-wider pl-1">
-                      Address Line 1
-                    </label>
-                    <input
-                      type="text"
-                      value={ext.addressLine1}
-                      onChange={(e) => setExt((prev: any) => ({ ...prev, addressLine1: e.target.value }))}
-                      className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)] font-semibold"
-                      placeholder="e.g. 123 Business Rd"
-                    />
-                  </div>
-
-                  {/* Address Line 2 */}
-                  <div className="flex flex-col gap-1 md:col-span-2">
-                    <label className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-wider pl-1">
-                      Address Line 2 (Suite, Office, etc.)
-                    </label>
-                    <input
-                      type="text"
-                      value={ext.addressLine2}
-                      onChange={(e) => setExt((prev: any) => ({ ...prev, addressLine2: e.target.value }))}
-                      className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)]"
-                      placeholder="e.g. Suite 400"
-                    />
-                  </div>
-
-                  {/* City */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-wider pl-1">
-                      City
-                    </label>
-                    <input
-                      type="text"
-                      value={ext.city}
-                      onChange={(e) => setExt((prev: any) => ({ ...prev, city: e.target.value }))}
-                      className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)]"
-                    />
-                  </div>
-
-                  {/* State / Province */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-wider pl-1">
-                      State / Province
-                    </label>
-                    <input
-                      type="text"
-                      value={ext.state}
-                      onChange={(e) => setExt((prev: any) => ({ ...prev, state: e.target.value }))}
-                      className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)]"
-                    />
-                  </div>
-
-                  {/* Country */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-wider pl-1">
-                      Country
-                    </label>
-                    <input
-                      type="text"
-                      value={ext.country}
-                      onChange={(e) => setExt((prev: any) => ({ ...prev, country: e.target.value }))}
-                      className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)] font-semibold"
-                    />
-                  </div>
-
-                  {/* Zip / Postal Code */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-wider pl-1">
-                      Zip / Postal Code
-                    </label>
-                    <input
-                      type="text"
-                      value={ext.zipCode}
-                      onChange={(e) => setExt((prev: any) => ({ ...prev, zipCode: e.target.value }))}
-                      className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)] font-mono"
-                    />
-                  </div>
-                </div>
               </div>
             )}
 
@@ -742,6 +586,14 @@ export default function LeadDetailsPage() {
                 </div>
               </div>
             </div>
+
+            <RecordShareCard
+              entityType="lead"
+              entityId={leadId || ""}
+              users={users}
+              currentUserId={currentUser?.id}
+              ownerId={ownerId}
+            />
 
             {/* Section: Attachments Upload */}
             <div className="bg-card border border-color rounded-2xl p-5 flex flex-col gap-3 shadow-sm">

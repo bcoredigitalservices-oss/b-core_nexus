@@ -22,6 +22,7 @@ import WorkspaceLayout from "../../users/components/WorkspaceLayout";
 import { CRM_SIDEBAR } from "../crmSidebarConfig";
 import { User, Contact } from "../types/types";
 import { EntityChatBox } from "../../../components/ui/EntityChatBox";
+import { RecordShareCard } from "../../../components/ui/RecordShareCard";
 
 interface CustomerAddress {
   id: string;
@@ -57,7 +58,7 @@ interface CustomerDetails {
 
 export default function CustomerDetailsPage() {
   const { customerId } = useParams<{ customerId: string }>();
-  const { token, authFetch } = useAppContext();
+  const { token, authFetch, currentUser } = useAppContext();
   const navigate = useNavigate();
 
   // Data states
@@ -803,6 +804,14 @@ export default function CustomerDetailsPage() {
                 </div>
               </div>
             </div>
+
+            <RecordShareCard
+              entityType="customer"
+              entityId={customerId || ""}
+              users={users}
+              currentUserId={currentUser?.id}
+              ownerId={ownerId}
+            />
 
             {/* Section: Associated Sales Documents */}
             <div className="bg-card border border-color rounded-2xl p-5 flex flex-col gap-3 shadow-sm">

@@ -21,6 +21,7 @@ export function EditLeadModal({
 
   // Fields matching PUT /crm/leads/{id} exactly
   const [leadName, setLeadName] = useState("");
+  const [leadType, setLeadType] = useState<"person" | "company">("person");
   const [company, setCompany] = useState("");
   const [source, setSource] = useState("Website");
   const [status, setStatus] = useState("lead");
@@ -42,6 +43,7 @@ export function EditLeadModal({
   useEffect(() => {
     if (isOpen && leadToEdit) {
       setLeadName(leadToEdit.title || "");
+      setLeadType((leadToEdit as any).lead_type || "person");
       setCompany(leadToEdit.company_name || "");
       setSource(leadToEdit.lead_source || "Website");
       setStatus(leadToEdit.pipeline_stage || "lead");
@@ -79,6 +81,7 @@ export function EditLeadModal({
         method: "PUT",
         body: JSON.stringify({
           title: leadName.trim(),
+          lead_type: leadType,
           pipeline_stage: status,
           priority,
           company_name: company.trim() || null,
@@ -166,21 +169,38 @@ export function EditLeadModal({
               value={leadName}
               onChange={(e) => setLeadName(e.target.value)}
               disabled={submitting}
-              className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)]"
+              className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)] font-semibold"
             />
+          </div>
+
+          {/* Lead Type */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-wider pl-1">
+              Lead Type
+            </label>
+            <select
+              value={leadType}
+              onChange={(e) => setLeadType(e.target.value as "person" | "company")}
+              disabled={submitting}
+              className="w-full rounded-lg border border-color bg-main py-2 px-2 text-xs focus:border-accent-primary outline-none text-[var(--text-main)] cursor-pointer font-semibold"
+            >
+              <option value="person">Individual (Person)</option>
+              <option value="company">Organization (Company)</option>
+            </select>
           </div>
 
           {/* Company */}
           <div className="flex flex-col gap-1">
             <label className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-wider pl-1">
-              Company
+              Company Name
             </label>
             <input
               type="text"
+              disabled={submitting || leadType !== "company"}
+              placeholder={leadType !== "company" ? "N/A (Individual Lead)" : "e.g. Acme Corp"}
               value={company}
               onChange={(e) => setCompany(e.target.value)}
-              disabled={submitting}
-              className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)]"
+              className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)] disabled:opacity-50 font-semibold"
             />
           </div>
 

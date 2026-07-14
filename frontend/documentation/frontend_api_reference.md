@@ -25,6 +25,7 @@ This file is the **single canonical list** of every API endpoint called from the
 | `GET` | `/auth/me` | [AppContext.tsx](../src/context/AppContext.tsx) (bootstrap) | ✅ |
 | `GET` | `/auth/users` | [Users.tsx](../src/pages/iam/Users.tsx), [UserDetails.tsx](../src/pages/iam/UserDetails.tsx), [TasksToDo.tsx](../src/pages/workspaces/crm/TasksToDo.tsx), [CreateTaskModal.tsx](../src/components/iam/CreateTaskModal.tsx) | ✅ |
 | `POST` | `/init/bootstrap` | [Sandbox.tsx](../src/pages/Sandbox.tsx) | ✅ |
+| `POST` | `/bootstrap` | [Bootstrap.tsx](../src/modules/auth/pages/Bootstrap.tsx) | ✅ |
 
 ---
 
@@ -134,7 +135,15 @@ This file is the **single canonical list** of every API endpoint called from the
 | `GET` | `/crm/deals` | [DealsPage.tsx](../src/modules/crm/pages/DealsPage.tsx) | ✅ |
 | `POST` | `/crm/deals` | [CreateDealModal.tsx](../src/modules/crm/components/deals/CreateDealModal.tsx) | ✅ |
 | `GET` | `/crm/deals/{id}` | [DealDetailsPage.tsx](../src/modules/crm/pages/DealDetailsPage.tsx) | ✅ |
-| `PUT` | `/crm/deals/{id}` | [EditDealModal.tsx](../src/modules/crm/components/deals/EditDealModal.tsx), [DealsPage.tsx](../src/modules/crm/pages/DealsPage.tsx) (for activation/deactivation) | ✅ |
+| `PUT` | `/crm/deals/{id}` | [EditDealModal.tsx](../src/modules/crm/components/deals/EditDealModal.tsx), [DealsPage.tsx](../src/modules/crm/pages/DealsPage.tsx) (for activation) | ✅ |
+| `DELETE` | `/crm/deals/{id}` | [DealsPage.tsx](../src/modules/crm/pages/DealsPage.tsx) (for deactivation) | ✅ |
+| `POST` | `/crm/share` | [RecordShareCard.tsx](../src/components/ui/RecordShareCard.tsx) | ✅ |
+| `DELETE` | `/crm/share/{id}` | [RecordShareCard.tsx](../src/components/ui/RecordShareCard.tsx) | ✅ |
+| `GET` | `/search` | [AppShell.tsx](../src/components/layouts/AppShell.tsx) | ✅ |
+| `GET` | `/messages/mentions/unread` | [AppShell.tsx](../src/components/layouts/AppShell.tsx) | ✅ |
+| `POST` | `/messages/{id}/read` | [EntityChatBox.tsx](../src/components/ui/EntityChatBox.tsx), [AppShell.tsx](../src/components/layouts/AppShell.tsx) | ✅ |
+| `GET` | `/messages/{entity_type}/{entity_id}` | [EntityChatBox.tsx](../src/components/ui/EntityChatBox.tsx) | ✅ |
+| `POST` | `/messages/{entity_type}/{entity_id}` | [EntityChatBox.tsx](../src/components/ui/EntityChatBox.tsx) | ✅ |
 | `GET` | `/sales/products` | Sales workspace | ✅ |
 | `POST` | `/sales/products` | Sales workspace | ✅ |
 | `GET` | `/sales/quotations` | Sales workspace | ✅ |
@@ -189,7 +198,7 @@ These endpoints are referenced in pluggable workspace dashboards. The workspace 
 
 | Status | Count |
 |:---|:---:|
-| ✅ Fully Implemented | 51 |
+| ✅ Fully Implemented | 60 |
 | ⚠️ Partial / Known Issues | 2 |
 | ❌ Missing Backend Handler | 21 |
-| **Total endpoints referenced** | **74** |
+| **Total endpoints referenced** | **83** |

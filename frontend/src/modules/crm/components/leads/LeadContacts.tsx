@@ -1,5 +1,5 @@
 import React from "react";
-import { Globe, Phone, Mail } from "lucide-react";
+import { Phone, Mail } from "lucide-react";
 
 interface LeadContactsProps {
   email: string;
@@ -7,9 +7,8 @@ interface LeadContactsProps {
   phone: string;
   setPhone: (p: string) => void;
   ext: {
-    phoneExt: string;
-    whatsapp: string;
-    website: string;
+    jobTitle: string;
+    department: string;
   };
   setExt: React.Dispatch<React.SetStateAction<any>>;
 }
@@ -31,7 +30,7 @@ export function LeadContacts({
       <div className="flex items-center gap-2 border-b border-color pb-3">
         <Mail className="text-accent-primary" size={16} />
         <h3 className="text-sm font-extrabold text-[var(--text-main)] m-0">
-          Contact Details & Organisation
+          Primary Contact Details
         </h3>
       </div>
 
@@ -47,7 +46,7 @@ export function LeadContacts({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-color bg-main py-2 pl-9 pr-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)]"
+              className="w-full rounded-lg border border-color bg-main py-2 pl-9 pr-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)] font-semibold"
             />
           </div>
         </div>
@@ -63,35 +62,9 @@ export function LeadContacts({
               type="text"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full rounded-lg border border-color bg-main py-2 pl-9 pr-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)]"
+              className="w-full rounded-lg border border-color bg-main py-2 pl-9 pr-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)] font-semibold"
             />
           </div>
-        </div>
-
-        {/* Phone Extension */}
-        <div className="flex flex-col gap-1">
-          <label className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-wider pl-1">
-            Phone Extension (Ext)
-          </label>
-          <input
-            type="text"
-            value={ext.phoneExt}
-            onChange={(e) => updateExt("phoneExt", e.target.value)}
-            className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)]"
-          />
-        </div>
-
-        {/* WhatsApp Mobile */}
-        <div className="flex flex-col gap-1">
-          <label className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-wider pl-1">
-            WhatsApp Mobile
-          </label>
-          <input
-            type="text"
-            value={ext.whatsapp}
-            onChange={(e) => updateExt("whatsapp", e.target.value)}
-            className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)]"
-          />
         </div>
 
         {/* Job Title */}
@@ -104,7 +77,7 @@ export function LeadContacts({
             value={ext.jobTitle || ""}
             onChange={(e) => updateExt("jobTitle", e.target.value)}
             placeholder="e.g. Purchase Manager"
-            className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)]"
+            className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)] font-semibold"
           />
         </div>
 
@@ -118,24 +91,8 @@ export function LeadContacts({
             value={ext.department || ""}
             onChange={(e) => updateExt("department", e.target.value)}
             placeholder="e.g. Procurement"
-            className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)]"
+            className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)] font-semibold"
           />
-        </div>
-
-        {/* Website URL */}
-        <div className="flex flex-col gap-1 md:col-span-2">
-          <label className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-wider pl-1">
-            Website URL
-          </label>
-          <div className="relative flex items-center">
-            <Globe size={13} className="absolute left-3 text-[var(--text-muted)]" />
-            <input
-              type="text"
-              value={ext.website}
-              onChange={(e) => updateExt("website", e.target.value)}
-              className="w-full rounded-lg border border-color bg-main py-2 pl-9 pr-3 text-xs focus:border-accent-primary outline-none text-[var(--text-main)]"
-            />
-          </div>
         </div>
       </div>
     </div>

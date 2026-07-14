@@ -19,6 +19,7 @@ import WorkspaceLayout from "../../users/components/WorkspaceLayout";
 import { CRM_SIDEBAR } from "../crmSidebarConfig";
 import { User as UserItem, Customer, Lead } from "../types/types";
 import { EntityChatBox } from "../../../components/ui/EntityChatBox";
+import { RecordShareCard } from "../../../components/ui/RecordShareCard";
 
 interface DealDetails {
   id: string;
@@ -37,7 +38,7 @@ interface DealDetails {
 
 export default function DealDetailsPage() {
   const { dealId } = useParams<{ dealId: string }>();
-  const { token, authFetch } = useAppContext();
+  const { token, authFetch, currentUser } = useAppContext();
 
   // Data states
   const [deal, setDeal] = useState<DealDetails | null>(null);
@@ -529,6 +530,14 @@ export default function DealDetailsPage() {
                 </div>
               </div>
             </div>
+
+            <RecordShareCard
+              entityType="deal"
+              entityId={dealId || ""}
+              users={users}
+              currentUserId={currentUser?.id}
+              ownerId={ownerId}
+            />
 
             {/* Section: Associated Sales Documents */}
             <div className="bg-card border border-color rounded-2xl p-5 flex flex-col gap-3 shadow-sm">

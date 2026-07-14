@@ -29,7 +29,7 @@ export function RecordShareCard({
   const { authFetch } = useAppContext();
 
   const [shares, setShares] = useState<Share[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -38,33 +38,6 @@ export function RecordShareCard({
   const [accessLevel, setAccessLevel] = useState<"read" | "write">("read");
 
   const isOwner = currentUserId === ownerId;
-
-  const fetchShares = async () => {
-    try {
-      setLoading(true);
-      setErrorMsg("");
-      // Call list endpoint (if supported, otherwise fallback to local/empty)
-      const data = await authFetch(`/crm/share/${entityType}/${entityId}`);
-      if (Array.isArray(data)) {
-        setShares(data);
-      }
-    } catch (e: any) {
-      // 404 or other errors mean backend doesn't support listing shares, so we fallback gracefully
-      if (e.status === 403) {
-        setShares([]);
-      } else {
-        console.warn("Backend shares listing not supported or returned error, using local state:", e);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (entityId) {
-      fetchShares();
-    }
-  }, [entityId, entityType]);
 
   const handleShare = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,32 +61,15 @@ export function RecordShareCard({
 
       setSuccessMsg("Record shared successfully.");
       
-      // If we get a response with id, use it, otherwise mock
       if (res && res.id) {
-        setShares((prev) => [...prev, res]);
-      } else {
-        const fallbackShare = {
-          id: Math.random().toString(),
-          entity_type: entityType,
-          entity_id: entityId,
-          shared_with_user_id: selectedUserId,
-          access_level: accessLevel,
-        };
-        setShares((prev) => [...prev, fallbackShare]);
+        setShares((prev) => {
+          const filtered = prev.filter((s) => s.shared_with_user_id !== selectedUserId);
+          return [...filtered, res];
+        });
       }
       setSelectedUserId("");
     } catch (err: any) {
-      // Fallback in case of mock/unsupported environments
-      const fallbackShare = {
-        id: Math.random().toString(),
-        entity_type: entityType,
-        entity_id: entityId,
-        shared_with_user_id: selectedUserId,
-        access_level: accessLevel,
-      };
-      setShares((prev) => [...prev, fallbackShare]);
-      setSuccessMsg("Record shared successfully (Local Session).");
-      setSelectedUserId("");
+      setErrorMsg(err.message || "Failed to share record.");
     } finally {
       setSharing(false);
     }
@@ -123,18 +79,13 @@ export function RecordShareCard({
     setErrorMsg("");
     setSuccessMsg("");
     try {
-      // Only call DELETE if it's a real UUID (not our random float fallback id)
-      if (shareId.includes("-")) {
-        await authFetch(`/crm/share/${shareId}`, {
-          method: "DELETE",
-        });
-      }
+      await authFetch(`/crm/share/${shareId}`, {
+        method: "DELETE",
+      });
       setSuccessMsg("Share permissions revoked.");
       setShares((prev) => prev.filter((s) => s.id !== shareId));
     } catch (err: any) {
-      // Always remove from local state even if delete endpoint fails
-      setShares((prev) => prev.filter((s) => s.id !== shareId));
-      setSuccessMsg("Share permissions revoked.");
+      setErrorMsg(err.message || "Failed to revoke share permissions.");
     }
   };
 

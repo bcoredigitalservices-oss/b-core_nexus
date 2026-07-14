@@ -20,6 +20,7 @@ import { useAppContext } from "../../../context/AppContext";
 import WorkspaceLayout from "../../users/components/WorkspaceLayout";
 import { CRM_SIDEBAR } from "../crmSidebarConfig";
 import { User, Customer, Quotation, Product, PriceList, PriceListItem } from "../../crm/types/types";
+import { RecordShareCard } from "../../../components/ui/RecordShareCard";
 import { Plus, Coins } from "lucide-react";
 
 interface SalesOrderLineItem {
@@ -58,7 +59,7 @@ interface SalesOrderDetails {
 
 export default function SalesOrderDetailsPage() {
   const { orderId } = useParams<{ orderId: string }>();
-  const { token, authFetch } = useAppContext();
+  const { token, authFetch, currentUser } = useAppContext();
 
   // Data states
   const [order, setOrder] = useState<SalesOrderDetails | null>(null);
@@ -149,14 +150,17 @@ export default function SalesOrderDetailsPage() {
         setInternalNotes(orderRes.internal_notes || "");
         setOwnerId(orderRes.owner_id || "");
 
-        // Fetch parent customer's addresses and linked contacts if available
+        // Fetch parent customer details (which contains addresses and contacts)
         if (orderRes.customer_id) {
-          const [addressesRes, contactsRes] = await Promise.all([
-            authFetch(`/crm/customers/${orderRes.customer_id}/addresses`).catch(() => []),
-            authFetch(`/crm/customers/${orderRes.customer_id}/contacts`).catch(() => []),
-          ]);
-          setCustomerAddresses(addressesRes);
-          setCustomerContacts(contactsRes);
+          try {
+            const customerDetail = await authFetch(`/crm/customers/${orderRes.customer_id}`);
+            if (customerDetail) {
+              setCustomerAddresses(customerDetail.addresses || []);
+              setCustomerContacts(customerDetail.contacts || []);
+            }
+          } catch (e) {
+            console.error("Failed to load customer details for addresses/contacts:", e);
+          }
         }
       }
       setCustomers(customersRes);
@@ -1107,6 +1111,14 @@ export default function SalesOrderDetailsPage() {
                 </div>
               </div>
             </div>
+
+            <RecordShareCard
+              entityType="sales_order"
+              entityId={orderId || ""}
+              users={users}
+              currentUserId={currentUser?.id}
+              ownerId={ownerId}
+            />
 
             {/* Section: Associated Pipeline Records */}
             <div className="bg-card border border-color rounded-2xl p-5 flex flex-col gap-3 shadow-sm text-xs">

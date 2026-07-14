@@ -17,6 +17,7 @@ import { useAppContext } from "../../../context/AppContext";
 import WorkspaceLayout from "../../users/components/WorkspaceLayout";
 import { CRM_SIDEBAR } from "../crmSidebarConfig";
 import { User as UserItem } from "../types/types";
+import { RecordShareCard } from "../../../components/ui/RecordShareCard";
 
 interface ContactDetails {
   id: string;
@@ -33,7 +34,7 @@ interface ContactDetails {
 
 export default function ContactDetailsPage() {
   const { contactId } = useParams<{ contactId: string }>();
-  const { token, authFetch } = useAppContext();
+  const { token, authFetch, currentUser } = useAppContext();
 
   // Data states
   const [contact, setContact] = useState<ContactDetails | null>(null);
@@ -477,6 +478,14 @@ export default function ContactDetailsPage() {
                 </div>
               </div>
             </div>
+
+            <RecordShareCard
+              entityType="contact"
+              entityId={contactId || ""}
+              users={users}
+              currentUserId={currentUser?.id}
+              ownerId={ownerId}
+            />
 
             {/* Quick Metadata */}
             <div className="bg-card border border-color rounded-2xl p-5 flex flex-col gap-3 shadow-sm text-xs">

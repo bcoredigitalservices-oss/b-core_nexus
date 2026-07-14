@@ -11,6 +11,12 @@ import {
   LogOut,
   LayoutGrid,
   Loader2,
+  AtSign,
+  Search,
+  Building,
+  Target,
+  FileText,
+  HelpCircle,
 } from "lucide-react";
 import Sidebar, {
   SIDEBAR_WIDTH_EXPANDED,
@@ -58,6 +64,56 @@ export default function AppShell() {
   const [loadingNotifications, setLoadingNotifications] =
     useState<boolean>(false);
 
+  // Mentions Tray States
+  const [unreadMentions, setUnreadMentions] = useState<any[]>([]);
+  const [unreadMentionsCount, setUnreadMentionsCount] = useState<number>(0);
+  const [mentionsOpen, setMentionsOpen] = useState<boolean>(false);
+  const [loadingMentions, setLoadingMentions] = useState<boolean>(false);
+
+  // Global Search States & Hooks
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    setSearchLoading(true);
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const data = await authFetch(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+        if (Array.isArray(data)) {
+          setSearchResults(data);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (err) {
+        console.error("Global search failed:", err);
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, authFetch]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setSearchFocused(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const fetchUnreadCount = async () => {
     if (!currentUser) return;
     try {
@@ -85,19 +141,58 @@ export default function AppShell() {
     }
   };
 
+  const fetchUnreadMentions = async () => {
+    if (!currentUser) return;
+    setLoadingMentions(true);
+    try {
+      const data = await authFetch("/messages/mentions/unread");
+      if (Array.isArray(data)) {
+        setUnreadMentions(data);
+        setUnreadMentionsCount(data.length);
+      }
+    } catch (e) {
+      console.error("Failed to fetch unread mentions:", e);
+    } finally {
+      setLoadingMentions(false);
+    }
+  };
+
+  const handleMarkMentionRead = async (messageId: string) => {
+    try {
+      await authFetch(`/messages/${messageId}/read`, { method: "POST" });
+      setUnreadMentions((prev) => prev.filter((m) => m.message_id !== messageId));
+      setUnreadMentionsCount((c) => Math.max(0, c - 1));
+    } catch (e) {
+      console.error("Failed to mark mention as read:", e);
+    }
+  };
+
   useEffect(() => {
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000);
+    fetchUnreadMentions();
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+      fetchUnreadMentions();
+    }, 30000);
     return () => clearInterval(interval);
   }, [currentUser]);
 
   const handleToggleNotifications = () => {
     const nextState = !notificationsOpen;
     setNotificationsOpen(nextState);
+    setMentionsOpen(false);
     if (nextState) {
       fetchNotifications();
     }
   };
+
+  // Close mentions dropdown when clicking outside
+  useEffect(() => {
+    if (!mentionsOpen) return;
+    const close = () => setMentionsOpen(false);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [mentionsOpen]);
 
   useEffect(() => {
     if (!notificationsOpen) return;
@@ -120,7 +215,7 @@ export default function AppShell() {
       if (notif.entity_type && notif.entity_id) {
         let basePath = `/workspace/crm/${notif.entity_type}s`;
         if (notif.entity_type === "sales_order") {
-          basePath = "/workspace/crm/salesorders";
+          basePath = "/workspace/crm/sales-orders";
         }
         navigate(`${basePath}/${notif.entity_id}`);
       }
@@ -270,15 +365,195 @@ export default function AppShell() {
             </div>
           </div>
 
-          {/* Center Block: Organization Display */}
-          <div className="flex-none text-center">
+          {/* Center Block: Organization Display on mobile, Search Bar on desktop */}
+          <div className="flex-none text-center md:hidden">
             <span className="font-display text-[13px] md:text-sm font-bold text-text-muted tracking-wider whitespace-nowrap">
               {systemSettings?.organization_name ?? "B-Core Nexus"}
             </span>
           </div>
 
+          <div ref={searchRef} className="flex-1 max-w-xs md:max-w-sm relative mx-auto hidden md:block">
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 text-[var(--text-muted)]" size={14} />
+              <input
+                type="text"
+                placeholder="Global search (by Ref No)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                className="w-full bg-white/5 border border-color rounded-xl pl-9 pr-8 py-1.5 text-xs text-[var(--text-main)] placeholder-[var(--text-muted)] focus:outline-none focus:border-accent-primary focus:bg-white/10 transition-all font-semibold shadow-sm"
+              />
+              {searchLoading && (
+                <Loader2 className="absolute right-3 top-2.5 animate-spin text-accent-primary" size={14} />
+              )}
+            </div>
+
+            {/* Results Overlay */}
+            {searchFocused && searchQuery.trim().length >= 2 && (
+              <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-card/90 backdrop-blur-md border border-color rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)] z-[300] max-h-[320px] overflow-y-auto flex flex-col divide-y divide-color/40 text-left animate-slideDown">
+                {searchLoading && searchResults.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 gap-2">
+                    <Loader2 className="animate-spin text-accent-primary" size={18} />
+                    <span className="text-[10px] text-[var(--text-muted)] font-medium">Searching database...</span>
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+                    <HelpCircle className="text-[var(--text-muted)] mb-1" size={18} />
+                    <span className="text-xs text-[var(--text-muted)] italic font-semibold">No records found matching "{searchQuery}"</span>
+                  </div>
+                ) : (
+                  searchResults.map((result) => {
+                    let routePath = "/";
+                    let IconComponent = HelpCircle;
+                    let badgeColor = "bg-accent-primary/10 text-accent-primary";
+                    let entityLabel = result.entity_type;
+
+                    if (result.entity_type === "lead") {
+                      routePath = `/workspace/crm/leads/${result.entity_id}`;
+                      IconComponent = User;
+                      badgeColor = "bg-accent-purple/10 text-accent-purple";
+                      entityLabel = "Lead";
+                    } else if (result.entity_type === "customer") {
+                      routePath = `/workspace/crm/customers/${result.entity_id}`;
+                      IconComponent = Building;
+                      badgeColor = "bg-accent-green/10 text-accent-green";
+                      entityLabel = "Customer";
+                    } else if (result.entity_type === "deal") {
+                      routePath = `/workspace/crm/deals/${result.entity_id}`;
+                      IconComponent = Target;
+                      badgeColor = "bg-accent-blue/10 text-accent-blue";
+                      entityLabel = "Deal";
+                    } else if (result.entity_type === "quotation") {
+                      routePath = `/workspace/crm/quotations/${result.entity_id}`;
+                      IconComponent = FileText;
+                      badgeColor = "bg-amber-500/10 text-amber-500";
+                      entityLabel = "Quotation";
+                    } else if (result.entity_type === "sales_order") {
+                      routePath = `/workspace/crm/sales-orders/${result.entity_id}`;
+                      IconComponent = FileText;
+                      badgeColor = "bg-rose-500/10 text-rose-500";
+                      entityLabel = "Sales Order";
+                    }
+
+                    return (
+                      <div
+                        key={`${result.entity_type}-${result.entity_id}`}
+                        onClick={() => {
+                          navigate(routePath);
+                          setSearchQuery("");
+                          setSearchFocused(false);
+                        }}
+                        className="p-3.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-main/25 transition text-[var(--text-main)]"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-main/30 border border-color flex items-center justify-center shrink-0">
+                            <IconComponent size={14} className="text-accent-primary" />
+                          </div>
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            <span className="text-xs font-bold truncate">
+                              {result.display_name}
+                            </span>
+                            <span className="text-[10px] text-[var(--text-muted)] font-mono">
+                              {result.reference_number}
+                            </span>
+                          </div>
+                        </div>
+                        <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider ${badgeColor} shrink-0`}>
+                          {entityLabel}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Right Block: Actions + User Profile Menu Dropdown */}
           <div className="flex items-center justify-end gap-2.5 flex-1">
+            {/* Mentions Dropdown Selector Container */}
+            <div className="relative">
+              <button
+                id="mentions-btn"
+                className="relative w-9 h-9 flex items-center justify-center rounded-lg border border-color bg-transparent text-text-muted cursor-pointer transition-all duration-200 hover:bg-card-hover hover:text-text-main hover:border-accent-primary hover:border-opacity-40"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMentionsOpen(!mentionsOpen);
+                  setNotificationsOpen(false); // Close notifications panel
+                }}
+                aria-label="Mentions"
+                aria-haspopup="true"
+                aria-expanded={mentionsOpen}
+              >
+                <AtSign size={17} />
+                {unreadMentionsCount > 0 ? (
+                  <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-accent-primary text-[8px] font-extrabold text-white animate-pulse border border-main">
+                    {unreadMentionsCount}
+                  </span>
+                ) : (
+                  null
+                )}
+              </button>
+
+              {mentionsOpen && (
+                <div
+                  className="absolute top-[calc(100%+8px)] right-0 min-w-[320px] max-w-[360px] bg-card border border-color rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)] z-[300] animate-slideDown overflow-hidden flex flex-col"
+                  onClick={(e) => e.stopPropagation()}
+                  role="menu"
+                >
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-color bg-main/20">
+                    <span className="text-xs font-extrabold text-[var(--text-main)] flex items-center gap-1.5">
+                      <AtSign size={13} className="text-accent-primary" />
+                      Unread Mentions
+                    </span>
+                  </div>
+
+                  <div className="max-h-[300px] overflow-y-auto divide-y divide-color/40">
+                    {loadingMentions ? (
+                      <div className="flex flex-col items-center justify-center py-8 gap-1.5">
+                        <Loader2
+                          className="animate-spin text-accent-primary"
+                          size={18}
+                        />
+                        <span className="text-[10px] text-[var(--text-muted)]">
+                          Retrieving mentions…
+                        </span>
+                      </div>
+                    ) : unreadMentions.length === 0 ? (
+                      <div className="text-center py-8 text-xs text-[var(--text-muted)] italic">
+                        No unread mentions.
+                      </div>
+                    ) : (
+                      unreadMentions.map((mention) => (
+                        <div
+                          key={mention.id}
+                          className="p-3.5 flex flex-col gap-2 transition text-left hover:bg-main/25 relative text-[var(--text-main)]"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                              <span className="text-xs font-bold flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 bg-accent-primary rounded-full shrink-0 animate-pulse" />
+                                You were @mentioned
+                              </span>
+                              <span className="text-[10px] text-[var(--text-muted)] font-mono truncate block">
+                                Msg ID: {mention.message_id}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => handleMarkMentionRead(mention.message_id)}
+                              className="text-[10px] font-bold text-accent-primary hover:underline bg-transparent border-none cursor-pointer px-2 py-1 hover:bg-accent-primary/5 rounded border border-accent-primary/20 shrink-0"
+                            >
+                              Mark Read
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Notifications Dropdown Selector Container */}
             <div className="relative">
               <button
