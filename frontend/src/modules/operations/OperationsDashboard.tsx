@@ -74,7 +74,7 @@ export default function OperationsDashboard() {
     setLoading(true);
     setErrorMsg("");
     try {
-      const token = localStorage.getItem("bcore_token");
+      const token = localStorage.getItem("bcore_token") || sessionStorage.getItem("bcore_token");
 
       // Fetch projects and tasks in parallel
       const [projRes, taskRes] = await Promise.all([

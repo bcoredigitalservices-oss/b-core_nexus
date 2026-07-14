@@ -38,7 +38,6 @@ export default function ProvisionUserModal({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [roleId, setRoleId] = useState("");
-  const [designation, setDesignation] = useState("");
   const [departmentId, setDepartmentId] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
@@ -98,7 +97,7 @@ export default function ProvisionUserModal({
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           role_id: roleId,
-          designation: designation.trim() || null,
+          designation: null,
           department_id: departmentId || null,
         }),
       });
@@ -110,7 +109,6 @@ export default function ProvisionUserModal({
       setEmail("");
       setFirstName("");
       setLastName("");
-      setDesignation("");
       setDepartmentId("");
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to provision workspace operator.");
@@ -145,21 +143,39 @@ export default function ProvisionUserModal({
           <div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <div className="grid grid-cols-2 gap-4">
-              <input type="text" required placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} disabled={submitting} className="w-full rounded-lg border border-color bg-card py-2 px-3 text-sm focus:border-accent-primary outline-none" />
-              <input type="text" required placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} disabled={submitting} className="w-full rounded-lg border border-color bg-card py-2 px-3 text-sm focus:border-accent-primary outline-none" />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] text-text-muted font-bold uppercase tracking-wider pl-1">Operator Name</label>
+              <div className="grid grid-cols-2 gap-4">
+                <input type="text" required placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} disabled={submitting} className="w-full rounded-lg border border-color bg-card py-2.5 px-3.5 text-sm focus:border-accent-primary outline-none" />
+                <input type="text" required placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} disabled={submitting} className="w-full rounded-lg border border-color bg-card py-2.5 px-3.5 text-sm focus:border-accent-primary outline-none" />
+              </div>
             </div>
 
-            <input type="email" required className="w-full rounded-lg border border-color bg-card py-2 px-3 text-sm focus:border-accent-primary outline-none" placeholder="operator@company.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={submitting} />
-
-            <div className="grid grid-cols-2 gap-4">
-              <select value={roleId} onChange={(e) => setRoleId(e.target.value)} required className="w-full rounded-lg border border-color bg-card py-2 px-3 text-sm focus:border-accent-primary outline-none">
-                {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-              </select>
-              <input type="text" placeholder="Designation" value={designation} onChange={(e) => setDesignation(e.target.value)} disabled={submitting} className="w-full rounded-lg border border-color bg-card py-2 px-3 text-sm focus:border-accent-primary outline-none" />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] text-text-muted font-bold uppercase tracking-wider pl-1">Email Address</label>
+              <div className="relative flex items-center">
+                <Mail size={14} className="absolute left-3 text-text-muted" />
+                <input type="email" required className="pl-9 w-full rounded-lg border border-color bg-card py-2.5 px-3.5 text-sm focus:border-accent-primary outline-none" placeholder="operator@company.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={submitting} />
+              </div>
             </div>
 
-            <button type="submit" className="w-full rounded-lg py-3 px-4 font-bold bg-accent-primary text-white hover:brightness-110 cursor-pointer" disabled={submitting}>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-text-muted font-bold uppercase tracking-wider pl-1">Baseline Role</label>
+                <select value={roleId} onChange={(e) => setRoleId(e.target.value)} required className="w-full rounded-lg border border-color bg-card py-2.5 px-3 text-sm focus:border-accent-primary outline-none cursor-pointer">
+                  {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-text-muted font-bold uppercase tracking-wider pl-1">Department</label>
+                <select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} className="w-full rounded-lg border border-color bg-card py-2.5 px-3 text-sm focus:border-accent-primary outline-none cursor-pointer">
+                  <option value="">-- None / Root --</option>
+                  {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" className="w-full rounded-lg py-3 px-4 font-bold bg-accent-primary text-white hover:brightness-110 cursor-pointer transition shadow-md mt-2" disabled={submitting}>
               {submitting ? "Processing..." : "Generate Invitation"}
             </button>
           </form>

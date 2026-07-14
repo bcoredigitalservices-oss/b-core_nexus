@@ -213,13 +213,14 @@ export default function InventoryDashboard() {
   const fetchMetrics = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem('bcore_token') || sessionStorage.getItem('bcore_token');
       // Fetch paginated items total (limit=1 is enough to get the `total` field)
       const [itemsRes, warehousesRes] = await Promise.allSettled([
         fetch(`${API_BASE}/inventory/items?limit=1&offset=0`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('bcore_token')}` },
+          headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`${API_BASE}/inventory/warehouses?is_active=true`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('bcore_token')}` },
+          headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
 

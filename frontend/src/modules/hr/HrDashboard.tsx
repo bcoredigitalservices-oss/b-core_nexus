@@ -58,7 +58,7 @@ export default function HrDashboard() {
     setLoading(true);
     setErrorMsg('');
     try {
-      const token = localStorage.getItem('bcore_token');
+      const token = localStorage.getItem('bcore_token') || sessionStorage.getItem('bcore_token');
       const response = await fetch(`${API_BASE}/employees?page=1&page_size=10`, {
         headers: {
           Authorization: `Bearer ${token}`,

@@ -18,10 +18,9 @@ import {
   ArrowUpRight,
   Filter,
 } from "lucide-react";
-import { useAppContext } from "../../context/AppContext";
-// ── Updated WorkspaceLayout Import to target your active users directory ──
-import WorkspaceLayout from "../users/components/WorkspaceLayout";
-import { CRM_SIDEBAR } from "./crmSidebarConfig";
+import { useAppContext } from "../../../context/AppContext";
+import WorkspaceLayout from "../../users/components/WorkspaceLayout";
+import { CRM_SIDEBAR } from "../crmSidebarConfig";
 
 interface Customer {
   id: string;
@@ -487,7 +486,6 @@ export default function CrmDashboard() {
           </div>
         </div>
 
-        {/* Floating Interactive Tooltip Node */}
         {hoveredPoint && (
           <div style={{ position: "absolute", left: `${(hoveredPoint.x / 1000) * 100}%`, top: `${hoveredPoint.y - 15}px`, transform: "translateX(-50%)", background: "var(--bg-card)", border: "1px solid var(--border-color)", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", borderRadius: "6px", padding: "6px 10px", pointerEvents: "none", zIndex: 10, display: "flex", flexDirection: "column", gap: "2px", minWidth: "110px" }}>
             <span style={{ fontSize: "0.62rem", color: "var(--text-muted)", fontWeight: 500 }}>{hoveredPoint.label}</span>

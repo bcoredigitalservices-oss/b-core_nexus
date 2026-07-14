@@ -24,12 +24,17 @@ export interface WorkspaceSidebarItem {
   badge?: string | number;  // optional count/status badge
 }
 
+export interface WorkspaceSidebarGroup {
+  groupName: string;
+  items: WorkspaceSidebarItem[];
+}
+
 export interface WorkspaceLayoutConfig {
   workspaceKey: string;       // e.g. "inventory"
   workspaceName: string;      // e.g. "Inventory"
   accentColor: string;        // e.g. "#ffb703"
   icon: React.ReactNode;
-  navItems: WorkspaceSidebarItem[];
+  navItems: (WorkspaceSidebarItem | WorkspaceSidebarGroup)[];
 }
 
 interface WorkspaceLayoutProps {
@@ -49,7 +54,8 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
 
   /** Resolve whether a nav item is active based on current URL */
   const isActive = (item: WorkspaceSidebarItem): boolean => {
-    const fullPath = item.subPath ? `${basePath}/${item.subPath}` : basePath;
+    const pathOnly = item.subPath.split('?')[0];
+    const fullPath = pathOnly ? `${basePath}/${pathOnly}` : basePath;
     if (item.subPath === '') {
       // Dashboard root — only exact match
       return location.pathname === basePath || location.pathname === `${basePath}/`;
@@ -60,7 +66,7 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
   return (
     <div className="flex h-full w-full overflow-hidden bg-[var(--bg-main)]">
       {/* ── Workspace Localized Sidebar ── */}
-      <aside className="flex h-full w-[230px] shrink-0 flex-col overflow-y-auto border-r border-[var(--border-color)] bg-[var(--bg-card)]">
+      <aside className="flex h-full w-[240px] shrink-0 flex-col overflow-y-auto border-r border-[var(--border-color)] bg-[var(--bg-card)]">
         {/* Back-to-Home button */}
         <button
           id="ws-back-to-home"
@@ -100,46 +106,83 @@ export default function WorkspaceLayout({ config, children }: WorkspaceLayoutPro
         </div>
 
         {/* Nav Items */}
-        <nav className="flex flex-1 flex-col gap-0.5 px-2.5 py-1">
-          {navItems.map((item) => {
+        <nav className="flex flex-1 flex-col gap-0.5 py-4">
+          {navItems.map((itemOrGroup, idx) => {
+            if ("groupName" in itemOrGroup) {
+              return (
+                <div key={itemOrGroup.groupName || idx} className="flex flex-col gap-1 mt-4 mb-2 first:mt-0">
+                  <span className="text-[9px] font-bold text-[var(--text-muted)] opacity-55 uppercase tracking-widest px-5 select-none block">
+                    {itemOrGroup.groupName}
+                  </span>
+                  <div className="flex flex-col gap-0.5">
+                    {itemOrGroup.items.map((item, itemIdx) => {
+                      const active = isActive(item);
+                      const fullPath = item.subPath ? `${basePath}/${item.subPath}` : basePath;
+                      return (
+                        <button
+                          key={item.label || itemIdx}
+                          onClick={() => navigate(fullPath)}
+                          className={`relative flex w-full items-center gap-2.5 py-2.5 px-5 text-left text-[13px] border-l-2 transition-all duration-[150ms] group ${
+                            active
+                              ? 'font-semibold text-[var(--text-main)]'
+                              : 'border-transparent font-medium text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-main)]'
+                          }`}
+                          style={
+                            active
+                              ? {
+                                  borderColor: accentColor,
+                                  background: `linear-gradient(90deg, ${accentColor}18, ${accentColor}06)`,
+                                }
+                              : undefined
+                          }
+                        >
+                          <span
+                            className="flex items-center justify-center opacity-85 shrink-0 transition-colors duration-[150ms]"
+                            style={{ color: active ? accentColor : 'inherit' }}
+                          >
+                            {item.icon}
+                          </span>
+                          <span className="flex-1 truncate">{item.label}</span>
+                          {active && <ChevronRight size={13} style={{ color: accentColor, opacity: 0.7 }} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            }
+
+            // Normal Flat Item
+            const item = itemOrGroup;
             const active = isActive(item);
             const fullPath = item.subPath ? `${basePath}/${item.subPath}` : basePath;
-
             return (
               <button
-                key={item.label}
+                key={item.label || idx}
                 id={`ws-nav-${item.subPath || 'dashboard'}`}
                 onClick={() => navigate(fullPath)}
-                className={`relative flex w-full items-center gap-2.5 rounded-lg border px-3 py-[9px] text-left text-[0.82rem] transition-all duration-[180ms] ${
+                className={`relative flex w-full items-center gap-2.5 py-2.5 px-5 text-left text-[13px] border-l-2 transition-all duration-[150ms] group ${
                   active
-                    ? 'border-transparent font-bold text-[var(--text-main)]'
+                    ? 'font-semibold text-[var(--text-main)]'
                     : 'border-transparent font-medium text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-main)]'
                 }`}
                 style={
                   active
                     ? {
+                        borderColor: accentColor,
                         background: `linear-gradient(90deg, ${accentColor}18, ${accentColor}06)`,
-                        borderColor: `${accentColor}30`,
                       }
                     : undefined
                 }
               >
-                {/* Active left-bar accent */}
-                {active && (
-                  <div
-                    className="absolute bottom-[20%] left-[-0.625rem] top-[20%] w-[3px] rounded-r-[2px]"
-                    style={{ background: accentColor }}
-                  />
-                )}
-
                 <span
-                  className="flex items-center transition-colors duration-[180ms]"
+                  className="flex items-center justify-center opacity-85 shrink-0 transition-colors duration-[150ms]"
                   style={{ color: active ? accentColor : 'inherit' }}
                 >
                   {item.icon}
                 </span>
 
-                <span className="flex-1">{item.label}</span>
+                <span className="flex-1 truncate">{item.label}</span>
 
                 {item.badge !== undefined && (
                   <span

@@ -84,7 +84,7 @@ const LINK_PERMISSION_MAP = {
 };
 
 // Returns true if user can see this link (no restriction = visible to all)
-import { hasAnyPermission, isAdmin } from "../../../utils/permissions";
+import { hasAnyPermission, isAdmin, hasPermission } from "../../../utils/permissions";
 
 function canSeeLink(item, currentUser) {
   const required = LINK_PERMISSION_MAP[item.path];
@@ -175,9 +175,13 @@ export default function Sidebar({
       : "-translate-x-full"
     : "translate-x-0";
 
-  const handleAsideClick = (e) => {
+  const handleAsideClick = (e: React.MouseEvent) => {
     if (isMobile) return;
-    const isInteractive = e.target.closest("a, button, input, select");
+    if (collapsed) {
+      handleCollapseToggle();
+      return;
+    }
+    const isInteractive = (e.target as HTMLElement).closest("a, button, input, select");
     if (isInteractive) return;
     handleCollapseToggle();
   };
@@ -203,8 +207,8 @@ export default function Sidebar({
         {/* ── Brand Header ──────────────────────────────────────────── */}
         <div className="flex items-center justify-between p-4 border-b border-color h-16 shrink-0">
           {!effectiveCollapsed && (
-            <Link
-              to="/"
+            <div
+              onClick={handleCollapseToggle}
               className="flex items-center gap-2.5 overflow-hidden whitespace-nowrap no-underline text-inherit cursor-pointer"
             >
               <div className="w-8.5 h-8.5 bg-card border border-color rounded-lg flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(99,91,255,0.15)]">
@@ -218,7 +222,7 @@ export default function Sidebar({
                   {systemSettings?.organization_name ?? "Nexus ERP"}
                 </span>
               </div>
-            </Link>
+            </div>
           )}
 
           {/* Desktop collapse toggle */}
@@ -284,8 +288,8 @@ export default function Sidebar({
             ))}
         </nav>
 
-        {/* ── Settings Modules ──────────────────────────────────────── */}
-        {navigationMatrix.settings_modules?.length > 0 && (
+        {/* ── Settings Modules / Access Control ────────────────────────── */}
+        {(navigationMatrix.settings_modules?.length > 0 || hasPermission(currentUser, "iam:manage")) && (
           <nav
             className="flex flex-col gap-0.5 p-3 flex-none border-t border-color pt-3.5"
             aria-label="Settings navigation"
@@ -295,7 +299,7 @@ export default function Sidebar({
                 Settings
               </p>
             )}
-            {navigationMatrix.settings_modules.map((item) => (
+            {navigationMatrix.settings_modules?.map((item) => (
               <SidebarLink
                 key={item.path}
                 item={item}
@@ -303,6 +307,13 @@ export default function Sidebar({
                 onClick={isMobile ? onClose : undefined}
               />
             ))}
+            {hasPermission(currentUser, "iam:manage") && (
+              <SidebarLink
+                item={{ label: "Users", path: "/users", icon: "directory" }}
+                collapsed={effectiveCollapsed}
+                onClick={isMobile ? onClose : undefined}
+              />
+            )}
           </nav>
         )}
 

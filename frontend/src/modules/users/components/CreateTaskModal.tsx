@@ -119,27 +119,33 @@ export default function CreateTaskModal({
     setSubmitting(true);
     setErrorMsg("");
 
-    const payload = {
-      title: title.trim(),
-      description: description.trim() || null,
-      status,
-      priority,
-      due_date: dueDate || null,
-      owner_id: ownerId,
-    };
-
     try {
       if (task) {
-        // Edit flow
+        // Edit flow: ONLY send TaskUpdate fields
+        const updatePayload = {
+          title: title.trim(),
+          description: description.trim() || null,
+          status,
+          priority,
+          due_date: dueDate || null,
+        };
         await authFetch(`/tasks/${task.id}`, {
           method: "PUT",
-          body: JSON.stringify(payload),
+          body: JSON.stringify(updatePayload),
         });
       } else {
-        // Create flow
+        // Create flow: send TaskCreate payload
+        const createPayload = {
+          title: title.trim(),
+          description: description.trim() || null,
+          status,
+          priority,
+          due_date: dueDate || null,
+          assignee_id: ownerId,
+        };
         await authFetch("/tasks", {
           method: "POST",
-          body: JSON.stringify(payload),
+          body: JSON.stringify(createPayload),
         });
       }
       onSuccess();

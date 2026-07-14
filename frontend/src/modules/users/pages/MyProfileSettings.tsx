@@ -17,7 +17,24 @@ import {
 import { useAppContext } from "../../../context/AppContext";
 
 export default function MyProfileSettings() {
-  const { currentUser, authFetch } = useAppContext();
+  const { currentUser, authFetch, refreshCurrentUser } = useAppContext();
+
+  // ── Profile Settings State ────────────────────────────────────────────
+  const [firstName, setFirstName] = useState(currentUser?.first_name || "");
+  const [lastName, setLastName] = useState(currentUser?.last_name || "");
+  const [mobileNo, setMobileNo] = useState(currentUser?.mobile_no || "");
+  const [gender, setGender] = useState(currentUser?.gender || "Male");
+  const [birthDate, setBirthDate] = useState(
+    currentUser?.birth_date
+      ? typeof currentUser.birth_date === "string"
+        ? currentUser.birth_date.split("T")[0]
+        : ""
+      : "",
+  );
+  const [bio, setBio] = useState(currentUser?.bio || "");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState("");
+  const [profileError, setProfileError] = useState("");
 
   // ── MFA State ────────────────────────────────────────────────────────
   const [mfaStatus, setMfaStatus] = useState<boolean>(
@@ -38,10 +55,100 @@ export default function MyProfileSettings() {
   const [verifySuccess, setVerifySuccess] = useState("");
   const [step, setStep] = useState<"idle" | "scan" | "verify">("idle");
 
-  // Sync mfaStatus from currentUser on mount
+  // ── Password Reset State ──────────────────────────────────────────────
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [requireMfaReset, setRequireMfaReset] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState("");
+
+  // Sync mfaStatus and editable profile fields from currentUser on mount/load
   useEffect(() => {
     setMfaStatus(currentUser?.is_totp_enabled ?? false);
+    if (currentUser) {
+      setFirstName(currentUser.first_name || "");
+      setLastName(currentUser.last_name || "");
+      setMobileNo(currentUser.mobile_no || "");
+      setGender(currentUser.gender || "Male");
+      setBirthDate(
+        currentUser.birth_date
+          ? typeof currentUser.birth_date === "string"
+            ? currentUser.birth_date.split("T")[0]
+            : ""
+          : "",
+      );
+      setBio(currentUser.bio || "");
+    }
   }, [currentUser]);
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 12) {
+      setResetError("Password must be at least 12 characters long.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setResetError("Passwords do not match.");
+      return;
+    }
+    setResetLoading(true);
+    setResetError("");
+    setResetSuccess("");
+    try {
+      if (!currentUser?.id) {
+        throw new Error("Unable to identify current user ID.");
+      }
+      await authFetch(`/iam/users/${currentUser.id}/reset-password`, {
+        method: "POST",
+        body: {
+          new_password: newPassword,
+          require_mfa_reset: requireMfaReset,
+        },
+      });
+      setResetSuccess("✓ Password successfully updated. Old sessions terminated.");
+      setNewPassword("");
+      setConfirmPassword("");
+      setRequireMfaReset(false);
+      if (requireMfaReset) {
+        setMfaStatus(false);
+      }
+    } catch (err: any) {
+      setResetError(err.message || "Failed to reset password.");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    setProfileError("");
+    setProfileSuccess("");
+
+    try {
+      await authFetch("/auth/me/profile", {
+        method: "PUT",
+        body: {
+          first_name: firstName.trim() || null,
+          last_name: lastName.trim() || null,
+          mobile_no: mobileNo.trim() || null,
+          gender: gender || null,
+          birth_date: birthDate || null,
+          bio: bio.trim() || null,
+        },
+      });
+
+      setProfileSuccess("✓ Profile updated successfully.");
+      await refreshCurrentUser();
+      setTimeout(() => setProfileSuccess(""), 4000);
+    } catch (err: any) {
+      setProfileError(err.message || "Failed to update profile settings.");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   // ── Start MFA Setup ───────────────────────────────────────────────────
   const handleStartSetup = async () => {
@@ -542,7 +649,100 @@ export default function MyProfileSettings() {
           </div>
         </div>
 
-        {/* ── Account Info ─────────────────────────────────────────────────── */}
+        {/* ── Reset Password Section ───────────────────────────────────────── */}
+        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-sm">
+          <div className="flex items-center gap-3 px-6 py-5 border-b border-[var(--border-color)]">
+            <div className="w-9 h-9 rounded-xl bg-[rgba(0,160,223,0.1)] border border-[rgba(0,160,223,0.2)] flex items-center justify-center">
+              <Key size={16} className="text-[var(--accent-primary)]" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-[var(--text-main)]">
+                Reset Account Password
+              </h2>
+              <p className="text-xs text-[var(--text-muted)]">
+                Update your credentials. Note: This will invalidate all your current active sessions.
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleResetPassword} className="p-6 flex flex-col gap-5">
+            {resetSuccess && (
+              <div className="flex items-center gap-3 p-4 bg-[rgba(0,245,160,0.06)] border border-[rgba(0,245,160,0.2)] rounded-xl text-[var(--accent-green)] text-xs font-semibold">
+                <CheckCircle2 size={16} className="shrink-0" />
+                <span>{resetSuccess}</span>
+              </div>
+            )}
+
+            {resetError && (
+              <div className="flex items-center gap-3 p-4 bg-[rgba(255,51,102,0.08)] border border-[rgba(255,51,102,0.25)] rounded-xl text-[#ff8099] text-xs font-semibold">
+                <AlertCircle size={16} className="shrink-0" />
+                <span>{resetError}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  New Password
+                </label>
+                <div className="relative flex items-center">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="At least 12 characters"
+                    required
+                    className="w-full py-2.5 pl-4 pr-10 bg-white/5 border border-[var(--border-color)] rounded-xl text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[#00a0df] focus:border-transparent transition text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 bg-transparent border-none text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer p-0 flex items-center"
+                  >
+                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Confirm New Password
+                </label>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repeat new password"
+                  required
+                  className="w-full py-2.5 px-4 bg-white/5 border border-[var(--border-color)] rounded-xl text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[#00a0df] focus:border-transparent transition text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-start gap-2">
+              <label className="flex items-center gap-2 text-xs text-[var(--text-muted)] cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={requireMfaReset}
+                  onChange={(e) => setRequireMfaReset(e.target.checked)}
+                  className="appearance-none w-4 h-4 border border-[var(--border-color)] bg-transparent rounded cursor-pointer relative checked:bg-[var(--accent-primary)] checked:after:content-['✓'] checked:after:text-[10px] checked:after:text-white checked:after:absolute checked:after:left-1 checked:after:top-0 transition"
+                />
+                <span>Also reset multi-factor authentication (MFA / TOTP)</span>
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              disabled={resetLoading || !newPassword || !confirmPassword}
+              className="flex items-center justify-center gap-2 self-start px-5 py-2.5 rounded-xl font-semibold text-sm border-none cursor-pointer bg-gradient-to-r from-[#00f5a0] to-[#00a0df] text-[#0a0f1a] shadow-[0_0_15px_rgba(0,245,160,0.15)] transition-all hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {resetLoading && <Loader2 size={14} className="animate-spin" />}
+              {resetLoading ? "Updating..." : "Update Password"}
+            </button>
+          </form>
+        </div>
+
+        {/* ── Account Info & Profile Settings ─────────────────────────────── */}
         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-sm">
           <div className="flex items-center gap-3 px-6 py-5 border-b border-[var(--border-color)]">
             <div className="w-9 h-9 rounded-xl bg-[rgba(0,160,223,0.1)] border border-[rgba(0,160,223,0.2)] flex items-center justify-center">
@@ -550,36 +750,128 @@ export default function MyProfileSettings() {
             </div>
             <div>
               <h2 className="text-sm font-bold text-[var(--text-main)]">
-                Account Information
+                Account Profile Settings
               </h2>
               <p className="text-xs text-[var(--text-muted)]">
-                Your identity details as configured by your administrator.
+                Update your personal identity details.
               </p>
             </div>
           </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-            {[
-              { label: "Full Name", value: fullName },
-              { label: "Email Address", value: currentUser?.email || "—" },
-              {
-                label: "Designation",
-                value: currentUser?.designation || "Not assigned",
-              },
-              {
-                label: "Account Status",
-                value: currentUser?.is_active ? "Active" : "Inactive",
-              },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                  {label}
-                </span>
-                <span className="text-sm text-[var(--text-main)] font-medium">
-                  {value}
-                </span>
+
+          <form onSubmit={handleSaveProfile} className="p-6 flex flex-col gap-5">
+            {profileSuccess && (
+              <div className="flex items-center gap-3 p-4 bg-[rgba(0,245,160,0.06)] border border-[rgba(0,245,160,0.2)] rounded-xl text-[var(--accent-green)] text-xs font-semibold">
+                <CheckCircle2 size={16} className="shrink-0" />
+                <span>{profileSuccess}</span>
               </div>
-            ))}
-          </div>
+            )}
+
+            {profileError && (
+              <div className="flex items-center gap-3 p-4 bg-[rgba(255,51,102,0.08)] border border-[rgba(255,51,102,0.25)] rounded-xl text-[#ff8099] text-xs font-semibold">
+                <AlertCircle size={16} className="shrink-0" />
+                <span>{profileError}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* First Name */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First Name"
+                  className="w-full py-2.5 px-4 bg-white/5 border border-[var(--border-color)] rounded-xl text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[#00a0df] focus:border-transparent transition text-sm font-semibold"
+                />
+              </div>
+
+              {/* Last Name */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Last Name"
+                  className="w-full py-2.5 px-4 bg-white/5 border border-[var(--border-color)] rounded-xl text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[#00a0df] focus:border-transparent transition text-sm font-semibold"
+                />
+              </div>
+
+              {/* Mobile Number */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Mobile Number
+                </label>
+                <input
+                  type="text"
+                  value={mobileNo}
+                  onChange={(e) => setMobileNo(e.target.value)}
+                  placeholder="e.g. +1234567890"
+                  className="w-full py-2.5 px-4 bg-white/5 border border-[var(--border-color)] rounded-xl text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[#00a0df] focus:border-transparent transition text-sm"
+                />
+              </div>
+
+              {/* Gender */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Gender
+                </label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full py-2.5 px-4 bg-[#141a27] border border-[var(--border-color)] rounded-xl text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[#00a0df] focus:border-transparent transition text-sm cursor-pointer"
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                  <option value="Rather Not Say">Rather Not Say</option>
+                </select>
+              </div>
+
+              {/* Birth Date */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Birth Date
+                </label>
+                <input
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  className="w-full py-2.5 px-4 bg-white/5 border border-[var(--border-color)] rounded-xl text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[#00a0df] focus:border-transparent transition text-sm"
+                />
+              </div>
+
+
+
+              {/* Bio */}
+              <div className="flex flex-col gap-1.5 md:col-span-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Bio / About Me
+                </label>
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Tell us about yourself..."
+                  rows={4}
+                  className="w-full py-2.5 px-4 bg-white/5 border border-[var(--border-color)] rounded-xl text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[#00a0df] focus:border-transparent transition text-sm resize-y"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={profileSaving}
+              className="flex items-center justify-center gap-2 self-start px-5 py-2.5 rounded-xl font-semibold text-sm border-none cursor-pointer bg-gradient-to-r from-[#00f5a0] to-[#00a0df] text-[#0a0f1a] shadow-[0_0_15px_rgba(0,245,160,0.15)] transition-all hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {profileSaving && <Loader2 size={14} className="animate-spin" />}
+              {profileSaving ? "Saving..." : "Save Profile Details"}
+            </button>
+          </form>
         </div>
       </div>
     </div>

@@ -105,6 +105,10 @@ export default function AdminSidebar({
 
   const handleAsideClick = (e: React.MouseEvent) => {
     if (isMobile) return;
+    if (collapsed) {
+      handleCollapseToggle();
+      return;
+    }
     const isInteractive = (e.target as HTMLElement).closest(
       "a, button, input, select",
     );

@@ -72,6 +72,8 @@ export default function Login() {
       }
     } else {
       localStorage.removeItem('bcore_remember_email');
+      localStorage.removeItem('bcore_token');
+      localStorage.removeItem('bcore_refresh_token');
       sessionStorage.setItem('bcore_token', accessToken);
       if (refreshToken) {
         sessionStorage.setItem('bcore_refresh_token', refreshToken);
