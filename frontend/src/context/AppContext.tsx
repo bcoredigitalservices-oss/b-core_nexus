@@ -7,12 +7,12 @@ const API_BASE = `${import.meta.env.VITE_API_URL || ''}/api/v1`;
 // ─── Default / Fallback Data ──────────────────────────────────────────────────
 const FALLBACK_NAVIGATION = {
   sidebar_links: [
-    { label: 'Security Logs',     path: '/events',    icon: 'shield',    required_tier: 2 },
+    { label: 'Security Logs',     path: '/events',    icon: 'shield' },
   ],
   quick_actions: [],
   settings_modules: [
-    { label: 'My Profile',      path: '/settings/profile', icon: 'user',     required_tier: 4 },
-    { label: 'Company Settings', path: '/org',    icon: 'briefcase', required_tier: 1 },
+    { label: 'My Profile',      path: '/settings/profile', icon: 'user' },
+    { label: 'Company Settings', path: '/org',    icon: 'briefcase' },
   ],
 };
 
@@ -105,7 +105,6 @@ export interface NavItem {
   label: string;
   path: string;
   icon: string;
-  required_tier?: number;
 }
 
 export interface NavigationMatrix {
@@ -131,6 +130,10 @@ export interface SystemSettings {
   organization_name: string;
   base_currency: string;
   timezone: string;
+  date_format?: string;
+  number_format?: string;
+  logo_url?: string;
+  favicon_url?: string;
   is_initialized: boolean;
 }
 
@@ -160,6 +163,7 @@ export interface AppContextValue {
   font: string;
   setFont: (val: string) => void;
   refreshCurrentUser: () => Promise<void>;
+  refreshSystemSettings: () => Promise<void>;
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -197,6 +201,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (preferences.font) document.documentElement.setAttribute('data-font', preferences.font);
     }
   }, [preferences]);
+
+  useEffect(() => {
+    if (systemSettings) {
+      if (systemSettings.organization_name) {
+        document.title = systemSettings.organization_name;
+      }
+      if (systemSettings.favicon_url) {
+        let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = 'icon';
+          document.getElementsByTagName('head')[0].appendChild(link);
+        }
+        link.href = systemSettings.favicon_url;
+      }
+    }
+  }, [systemSettings]);
 
   const playUISound = useCallback((soundType: string) => {
     if (!preferences || !preferences.sounds) return;
@@ -353,6 +374,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [fetchPreferences]);
 
+  const refreshSystemSettings = useCallback(async () => {
+    try {
+      const orgRes = await api.get('/organization/profile');
+      if (orgRes && orgRes.data) {
+        const orgData = orgRes.data;
+        setSystemSettings({
+          organization_name: orgData.company_name || orgData.legal_name || 'B-Core Nexus',
+          base_currency: orgData.base_currency || 'USD',
+          timezone: orgData.timezone || 'UTC',
+          date_format: orgData.date_format || 'DD-MM-YYYY',
+          number_format: orgData.number_format || '1,234,567.89',
+          logo_url: orgData.logo_url || '',
+          favicon_url: orgData.favicon_url || '',
+          is_initialized: true,
+        });
+      }
+    } catch (orgErr) {
+      console.error("Failed to refresh organization profile:", orgErr);
+    }
+  }, []);
+
   // ── Bootstrap sequence ────────────────────────────────────────────────────
   const bootstrap = useCallback(async (activeToken?: string) => {
     try {
@@ -378,6 +420,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setCurrentUser(profileData);
       await fetchPreferences();
 
+      const permissions = profileData.permissions || [];
+      const functionalRoles = profileData.functional_roles || [];
+      const isAdmin = permissions.includes("system:admin") || 
+                      permissions.includes("*:*") || 
+                      functionalRoles.includes("admin") || 
+                      functionalRoles.includes("root");
+
+      if (isAdmin) {
+        try {
+          await refreshSystemSettings();
+        } catch (orgErr) {
+          console.error("Failed to fetch organization profile in bootstrap:", orgErr);
+        }
+      }
+
       try {
         const wsRes = await api.get('/workspace/config');
         setActiveWorkspace(wsRes.data);
@@ -394,7 +451,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setCurrentUser(null);
       }
     }
-  }, [token, logout, fetchPreferences]);
+  }, [token, logout, fetchPreferences, refreshSystemSettings]);
 
   useEffect(() => {
     const reBoot = async () => {
@@ -449,6 +506,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     font,
     setFont,
     refreshCurrentUser,
+    refreshSystemSettings,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

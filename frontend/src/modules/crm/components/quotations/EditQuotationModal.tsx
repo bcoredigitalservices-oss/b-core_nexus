@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Loader2, DollarSign, Calendar } from "lucide-react";
 import { User, Customer, Quotation } from "../../types/types";
+import { useAppContext } from "../../../../context/AppContext";
 
 interface EditQuotationModalProps {
   isOpen: boolean;
@@ -26,7 +27,9 @@ export function EditQuotationModal({
   const [status, setStatus] = useState("draft");
   const [validityDate, setValidityDate] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("Net 30");
-  const [currency, setCurrency] = useState("USD");
+  const { systemSettings } = useAppContext();
+  const baseCurrency = systemSettings?.base_currency || "USD";
+  const [currency, setCurrency] = useState(baseCurrency);
   const [grandTotal, setGrandTotal] = useState("0");
   const [assignedOwner, setAssignedOwner] = useState("");
 
@@ -48,7 +51,7 @@ export function EditQuotationModal({
       setStatus(quotationToEdit.status || "draft");
       setValidityDate(quotationToEdit.validity_date ? quotationToEdit.validity_date.split("T")[0] : "");
       setPaymentTerms(quotationToEdit.payment_terms || "Net 30");
-      setCurrency(quotationToEdit.currency || "USD");
+      setCurrency(quotationToEdit.currency || baseCurrency);
       setGrandTotal(String(quotationToEdit.grand_total || 0));
       setAssignedOwner(quotationToEdit.owner_id || "");
       setErrorMsg("");
@@ -200,8 +203,9 @@ export function EditQuotationModal({
                 onChange={(e) => setCurrency(e.target.value)}
                 className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs outline-none focus:border-accent-primary text-[var(--text-main)] cursor-pointer"
               >
-                <option value="USD">USD ($)</option>
-                <option value="NGN">NGN (₦)</option>
+                {Array.from(new Set(["USD", "NGN", baseCurrency])).map((curr) => (
+                  <option key={curr} value={curr}>{curr}</option>
+                ))}
               </select>
             </div>
 

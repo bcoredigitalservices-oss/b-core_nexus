@@ -59,7 +59,8 @@ interface SalesOrderDetails {
 
 export default function SalesOrderDetailsPage() {
   const { orderId } = useParams<{ orderId: string }>();
-  const { token, authFetch, currentUser } = useAppContext();
+  const { token, authFetch, currentUser, systemSettings } = useAppContext();
+  const baseCurrency = systemSettings?.base_currency || "USD";
 
   // Data states
   const [order, setOrder] = useState<SalesOrderDetails | null>(null);
@@ -116,7 +117,7 @@ export default function SalesOrderDetailsPage() {
 
   // Form states for creating Price List
   const [plName, setPlName] = useState("");
-  const [plCurrency, setPlCurrency] = useState("NGN");
+  const [plCurrency, setPlCurrency] = useState(baseCurrency);
   const [plDefault, setPlDefault] = useState(false);
 
   // Form states for adding Price List Item
@@ -341,7 +342,7 @@ export default function SalesOrderDetailsPage() {
       setSuccessMsg("Price List created successfully.");
       setCreatePriceListOpen(false);
       setPlName("");
-      setPlCurrency("NGN");
+      setPlCurrency(baseCurrency);
       setPlDefault(false);
       setTimeout(() => setSuccessMsg(""), 2500);
     } catch (err: any) {
@@ -1461,10 +1462,9 @@ export default function SalesOrderDetailsPage() {
               <div className="flex flex-col gap-1">
                 <label className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-wider pl-1">Currency *</label>
                 <select value={plCurrency} onChange={(e) => setPlCurrency(e.target.value)} className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs outline-none focus:border-accent-primary text-[var(--text-main)] cursor-pointer">
-                  <option value="NGN">NGN (₦)</option>
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="GBP">GBP (£)</option>
+                  {Array.from(new Set(["NGN", "USD", "EUR", "GBP", baseCurrency])).map((curr) => (
+                    <option key={curr} value={curr}>{curr}</option>
+                  ))}
                 </select>
               </div>
               <div className="flex items-center gap-2 mt-2">

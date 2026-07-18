@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Edit2 } from "lucide-react";
 import { SalesOrder, Customer, User } from "../../types/types";
+import { useAppContext } from "../../../../context/AppContext";
 
 interface SalesOrderTableProps {
   salesOrders: SalesOrder[];
@@ -17,6 +18,7 @@ export function SalesOrderTable({
   onEditClick,
 }: SalesOrderTableProps) {
   const navigate = useNavigate();
+  const { systemSettings } = useAppContext();
 
   const getCustomerName = (customerId: string) => {
     const cust = customers.find((c) => c.id === customerId);
@@ -38,8 +40,8 @@ export function SalesOrderTable({
     return "bg-sky-500/10 text-sky-500 border border-sky-500/20"; // Confirmed / default
   };
 
-  const formatCurrency = (amount: number, currencyCode: string = "USD") => {
-    const curr = currencyCode === "NGN" ? "NGN" : "USD";
+  const formatCurrency = (amount: number, currencyCode?: string) => {
+    const curr = currencyCode || systemSettings?.base_currency || "USD";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: curr,

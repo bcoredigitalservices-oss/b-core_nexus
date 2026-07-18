@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Edit2, TrendingUp, Power, PowerOff } from "lucide-react";
 import { Deal, User, Customer, Lead } from "../../types/types";
+import { useAppContext } from "../../../../context/AppContext";
 
 interface DealTableProps {
   deals: Deal[];
@@ -21,6 +22,8 @@ export function DealTable({
   onToggleActiveClick,
 }: DealTableProps) {
   const navigate = useNavigate();
+  const { systemSettings } = useAppContext();
+  const baseCurrency = systemSettings?.base_currency || "USD";
 
   const getOwnerName = (id?: string | null) => {
     if (!id) return "Unassigned";
@@ -52,7 +55,7 @@ export function DealTable({
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: baseCurrency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);

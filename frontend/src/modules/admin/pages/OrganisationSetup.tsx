@@ -137,7 +137,7 @@ const TIMEZONES = [
 ];
 
 export default function OrganisationSetup() {
-  const { token, authFetch, setActiveWorkspace } = useAppContext();
+  const { token, authFetch, setActiveWorkspace, refreshSystemSettings } = useAppContext();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -258,6 +258,7 @@ export default function OrganisationSetup() {
         body: payload
       });
       
+      await refreshSystemSettings();
       alert('Organization profile updated successfully!');
       
     } catch (err) {
