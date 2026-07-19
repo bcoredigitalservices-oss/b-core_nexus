@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Loader2, DollarSign, Calendar } from "lucide-react";
 import { Customer, Quotation, Lead } from "../../types/types";
+import { useAppContext } from "../../../../context/AppContext";
 
 interface CreateQuotationModalProps {
   isOpen: boolean;
@@ -24,7 +25,9 @@ export function CreateQuotationModal({
   const [validityDate, setValidityDate] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("Net 30");
   const [deliveryTerms, setDeliveryTerms] = useState("");
-  const [currency, setCurrency] = useState("USD");
+  const { systemSettings } = useAppContext();
+  const baseCurrency = systemSettings?.base_currency || "USD";
+  const [currency, setCurrency] = useState(baseCurrency);
   const [grandTotal, setGrandTotal] = useState("0");
   const [quotationType, setQuotationType] = useState("daily_usage");
   const [internalNotes, setInternalNotes] = useState("");
@@ -105,7 +108,7 @@ export function CreateQuotationModal({
         setValidityDate("");
         setPaymentTerms("Net 30");
         setDeliveryTerms("");
-        setCurrency("USD");
+        setCurrency(baseCurrency);
         setGrandTotal("0");
         setQuotationType("daily_usage");
         setInternalNotes("");
@@ -236,8 +239,9 @@ export function CreateQuotationModal({
                 onChange={(e) => setCurrency(e.target.value)}
                 className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs outline-none focus:border-accent-primary text-[var(--text-main)] cursor-pointer font-bold"
               >
-                <option value="USD">USD ($)</option>
-                <option value="NGN">NGN (₦)</option>
+                {Array.from(new Set(["USD", "NGN", baseCurrency])).map((curr) => (
+                  <option key={curr} value={curr}>{curr}</option>
+                ))}
               </select>
             </div>
 

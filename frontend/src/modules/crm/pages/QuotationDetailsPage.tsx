@@ -76,7 +76,8 @@ interface QuotationDetails {
 
 export default function QuotationDetailsPage() {
   const { quotationId } = useParams<{ quotationId: string }>();
-  const { token, authFetch, currentUser } = useAppContext();
+  const { token, authFetch, currentUser, systemSettings } = useAppContext();
+  const baseCurrency = systemSettings?.base_currency || "USD";
   const navigate = useNavigate();
 
   // Data states
@@ -102,7 +103,7 @@ export default function QuotationDetailsPage() {
   const [validityDate, setValidityDate] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("");
   const [deliveryTerms, setDeliveryTerms] = useState("");
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState(baseCurrency);
   const [subtotal, setSubtotal] = useState(0.0);
   const [grandTotal, setGrandTotal] = useState(0.0);
   const [quotationType, setQuotationType] = useState("");
@@ -545,8 +546,9 @@ export default function QuotationDetailsPage() {
                       onChange={(e) => setCurrency(e.target.value)}
                       className="w-full rounded-lg border border-color bg-main py-2 px-3 text-xs outline-none focus:border-accent-primary text-[var(--text-main)] cursor-pointer font-bold"
                     >
-                      <option value="USD">USD ($)</option>
-                      <option value="NGN">NGN (₦)</option>
+                      {Array.from(new Set(["USD", "NGN", baseCurrency])).map((curr) => (
+                        <option key={curr} value={curr}>{curr}</option>
+                      ))}
                     </select>
                   </div>
 

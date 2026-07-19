@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Edit2, ShoppingBag, Loader2 } from "lucide-react";
 import { Quotation, Customer, User } from "../../types/types";
+import { useAppContext } from "../../../../context/AppContext";
 
 interface QuotationTableProps {
   quotations: Quotation[];
@@ -21,6 +22,7 @@ export function QuotationTable({
   convertingId,
 }: QuotationTableProps) {
   const navigate = useNavigate();
+  const { systemSettings } = useAppContext();
 
   const getCustomerName = (customerId: string) => {
     const cust = customers.find((c) => c.id === customerId);
@@ -42,8 +44,8 @@ export function QuotationTable({
     return "bg-slate-500/10 text-[var(--text-muted)] border border-color";
   };
 
-  const formatCurrency = (amount: number, currencyCode: string = "USD") => {
-    const curr = currencyCode === "NGN" ? "NGN" : "USD";
+  const formatCurrency = (amount: number, currencyCode?: string) => {
+    const curr = currencyCode || systemSettings?.base_currency || "USD";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: curr,

@@ -33,7 +33,6 @@ interface NavItem {
   path: string;
   label: string;
   icon: string;
-  required_tier?: number;
 }
 
 interface SidebarProps {
@@ -212,7 +211,7 @@ export default function Sidebar({
               className="flex items-center gap-2.5 overflow-hidden whitespace-nowrap no-underline text-inherit cursor-pointer"
             >
               <div className="w-8.5 h-8.5 bg-card border border-color rounded-lg flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(99,91,255,0.15)]">
-                <img src="/favicon.svg" alt="B-Core Logo" className="w-5 h-5" />
+                <img src={systemSettings?.logo_url || "/favicon.svg"} alt="B-Core Logo" className="w-5 h-5 object-contain" />
               </div>
               <div className="flex flex-col leading-none">
                 <span className="font-display text-sm font-extrabold tracking-wider text-text-main">
